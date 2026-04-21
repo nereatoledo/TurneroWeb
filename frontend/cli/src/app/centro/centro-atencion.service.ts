@@ -7,12 +7,15 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class CentroAtencionService {
-  // La URL de tu servidor Java
   private apiUrl = 'http://localhost:8080/centros';
 
   constructor(private http: HttpClient) { }
 
   crear(centro: CentroAtencion): Observable<any> {
     return this.http.post(this.apiUrl, centro);
+  }
+
+  get(id: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/${id}`);
   }
 }

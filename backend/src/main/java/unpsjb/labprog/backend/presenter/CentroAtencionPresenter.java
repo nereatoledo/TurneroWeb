@@ -16,29 +16,58 @@ public class CentroAtencionPresenter {
     @Autowired
     CentroAtencionService service;
 
-    @RequestMapping(method = RequestMethod.POST)
+    @RequestMapping(method=RequestMethod.POST)
     public ResponseEntity<Object> crearCentro(@RequestBody CentroAtencion centro) {
         
-        // 1. Validaciones de campos requeridos (Status 400)
         if (centro.getNombre() == null || centro.getNombre().trim().isEmpty()) {
             return Response.response(HttpStatus.BAD_REQUEST, "El nombre es requerido", null);
         }
+        
         if (centro.getDireccion() == null || centro.getDireccion().trim().isEmpty()) {
             return Response.response(HttpStatus.BAD_REQUEST, "La dirección es requerida", null);
         }
-        
-        // Validación simple para rechazar letras en las coordenadas (como pide tu ejemplo "abc, xyz")
-        if (centro.getCoordenadas() == null || centro.getCoordenadas().matches(".*[a-zA-Z].*")) {
-            return Response.response(HttpStatus.BAD_REQUEST, "Las coordenadas son inválidas", null);
+
+        if (centro.getTelefono() == null || centro.getTelefono().trim().isEmpty()) {
+            return Response.response(HttpStatus.BAD_REQUEST, "El teléfono es requerido", null);
         }
 
-        // 2. Validación de Conflictos en la Base de Datos (Status 409)
-        if (service.existeConflicto(centro.getNombre(), centro.getDireccion())) {
+        if (centro.getCoordenadas() == null) {
+            return Response.response(HttpStatus.BAD_REQUEST, "Las coordenadas son requeridas", null);
+        }
+
+        if (service.existeConflictoNombreDireccion(centro.getNombre(), centro.getDireccion())) {
             return Response.response(HttpStatus.CONFLICT, "Ya existe un centro de atención con ese nombre y dirección", null);
         }
 
-        // 3. Camino feliz: Todo está bien, lo guardamos (Status 200)
+        if (service.existeDireccion(centro.getDireccion())) {
+            return Response.response(HttpStatus.CONFLICT, "Ya existe un centro de atención con esa dirección", null);
+        }
+
         CentroAtencion centroGuardado = service.save(centro);
         return Response.response(HttpStatus.OK, "Centro de atención creado", centroGuardado);
+    }
+    @RequestMapping(method=RequestMethod.GET)
+    public ResponseEntity<Object> findAll() {
+        return Response.ok(service.findAll());
+    }
+
+    @RequestMapping(value="/id/{id}", method=RequestMethod.GET)
+    public ResponseEntity<Object> findById(@PathVariable("id") int id) {
+        CentroAtencion aCentroOrNull = service.findById(id);
+        return (aCentroOrNull != null)?
+            Response.ok(aCentroOrNull):
+            Response.notFound("Centro de Atención id " + id + " no encontrado.");
+    }
+    
+    @RequestMapping(value = "/search/{term}", method = RequestMethod.GET)
+    public ResponseEntity<Object> search(@PathVariable("term") String term) {
+        return Response.ok(service.search(term));
+    }
+
+        @RequestMapping(value="/page", method=RequestMethod.GET)
+    public ResponseEntity<Object> findByPage(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size) {
+            return Response.ok(service.findByPage(page, size));
     }
 }

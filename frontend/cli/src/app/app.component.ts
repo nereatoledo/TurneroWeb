@@ -1,72 +1,22 @@
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import { CentroAtencion } from './centro-atencion';
-import { CentroAtencionService } from './centro-atencion.service';
+import { Component, signal } from '@angular/core';
+import { RouterModule, RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
-  standalone: true,
-  imports: [FormsModule, CommonModule],
-
+  imports: [RouterOutlet, RouterModule],
   template: `
-    <div style="padding: 20px; max-width: 400px; font-family: sans-serif;">
-      <h2>Crear Centro de Atención</h2>
-      
-      <div *ngIf="mensaje" [style.color]="error ? 'red' : 'green'" style="margin-bottom: 10px; font-weight: bold;">
-        {{ mensaje }}
-      </div>
-
-      <form (ngSubmit)="guardar()">
-        <div style="margin-bottom: 10px;">
-            <input [(ngModel)]="nuevoCentro.nombre" name="nombre" placeholder="Nombre" required style="width: 100%; padding: 8px;">
-        </div>
-        <div style="margin-bottom: 10px;">
-            <input [(ngModel)]="nuevoCentro.direccion" name="direccion" placeholder="Dirección" required style="width: 100%; padding: 8px;">
-        </div>
-        <div style="margin-bottom: 10px;">
-            <input [(ngModel)]="nuevoCentro.localidad" name="localidad" placeholder="Localidad" style="width: 100%; padding: 8px;">
-        </div>
-        <div style="margin-bottom: 10px;">
-            <input [(ngModel)]="nuevoCentro.provincia" name="provincia" placeholder="Provincia" style="width: 100%; padding: 8px;">
-        </div>
-        <div style="margin-bottom: 10px;">
-            <input [(ngModel)]="nuevoCentro.coordenadas" name="coordenadas" placeholder="Coordenadas (ej: -42.7, -65.0)" style="width: 100%; padding: 8px;">
-        </div>
-        
-        <button type="submit" style="padding: 10px 15px; cursor: pointer;">Guardar Centro</button>
-      </form>
+    <div class="d-flex flex-column flex-md-row align-items-center p-3 bg-light border-bottom">
+      <h5 class="my-0 mr-md-auto font-weight-normal">Turnero Web</h5>
+      <nav class="my-2 mr-md-0 mr-md-3">
+        <a class="p-2 text-dark" routerLink="/centro_atencion/new">Crear Centro</a>
+      </nav>
     </div>
-  `
+    <div class="container mt-4">
+      <router-outlet></router-outlet>
+    </div>
+  `,
+  styles: [],
 })
 export class AppComponent {
-  // Creamos el objeto vacío
-  nuevoCentro: CentroAtencion = {
-    nombre: '',
-    direccion: '',
-    localidad: '',
-    provincia: '',
-    coordenadas: ''
-  };
-
-  mensaje: string = '';
-  error: boolean = false;
-
-  constructor(private service: CentroAtencionService) {}
-
-  guardar() {
-    this.service.crear(this.nuevoCentro).subscribe({
-
-      next: (res: any) => {
-        this.mensaje = "¡Éxito! " + res.message;
-        this.error = false;
-        this.nuevoCentro = { nombre: '', direccion: '', localidad: '', provincia: '', coordenadas: '' };
-      },
-      
-      error: (err: any) => {
-        this.mensaje = "ERROR. " + err.error.message;
-        this.error = true;
-      }
-    });
-  }
+  protected readonly title = signal('Nere');
 }

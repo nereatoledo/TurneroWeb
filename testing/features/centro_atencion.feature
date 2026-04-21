@@ -5,8 +5,8 @@ Antecedentes:
   Dado que existe un sistema de gestión de centros de atención
 
 Esquema del escenario: Crear un centro de atención exitosamente
-  Cuando el administrador ingresa los datos del centro de atención: "<Nombre>", "<Dirección>", "<Localidad>", "<Provincia>", "<Teléfono>" y Coordenadas
-  Entonces el sistema responde con <status_code> y "<status_text>"
+  Cuando el administrador ingresa los datos del centro de atención: "<Nombre>", "<Dirección>", "<Localidad>", "<Provincia>", "<Teléfono>" y "<Coordenadas>"
+  Entonces el sistema responde con <status_code> y <status_text>
 
 Ejemplos: Centros de atención exitosos
   | Nombre                      | Dirección                                     | Localidad      | Provincia | Teléfono    | Coordenadas      | status_code | status_text                   |
@@ -21,7 +21,7 @@ Ejemplos: Centros de atención exitosos
   | Centro Médico del Este      | Avenida Fontana 987                           | Puerto Madryn  | Chubut    | 2804456677  | -42.777, -65.011 | 200         | "Centro de atención creado"   |
 
 Esquema del escenario: Crear un centro de atención con conflictos
-  Cuando el administrador ingresa los datos del centro de atención: "<Nombre>", "<Dirección>", "<Localidad>", "<Provincia>", "<Teléfono>" y <Coordenadas>
+  Cuando el administrador ingresa los datos del centro de atención: "<Nombre>", "<Dirección>", "<Localidad>", "<Provincia>", "<Teléfono>" y "<Coordenadas>"
   Entonces el sistema responde con <status_code> y <status_text>
 
 Ejemplos: Centros de atención con conflictos

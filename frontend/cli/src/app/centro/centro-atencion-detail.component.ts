@@ -173,4 +173,6 @@ export class CentroAtencionDetailComponent implements OnInit {
       this.goBack(); 
       });
   }
+
+  
 }

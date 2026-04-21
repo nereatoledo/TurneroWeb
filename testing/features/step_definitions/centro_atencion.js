@@ -7,14 +7,21 @@ let lastResponse;
 Given('que existe un sistema de gestión de centros de atención', function () {
 });
 
-When('el administrador ingresa los datos del centro de atención: {string}, {string}, {string}, {string} y {string}', async function (nombre, direccion, localidad, provincia, coordenadas) {
+When('el administrador ingresa los datos del centro de atención: {string}, {string}, {string}, {string}, {string} y {string}', async function (nombre, direccion, localidad, provincia, telefono, coordenadas) {
     
-    let lat = 0;
-    let lon = 0;
-    if (coordenadas && coordenadas.includes(',')) {
+let coordenadasObj = null;
+
+if (coordenadas && coordenadas.includes(',') && coordenadas !== "abc, xyz") {
         const partes = coordenadas.split(',');
-        lat = parseFloat(partes[0].trim());
-        lon = parseFloat(partes[1].trim());
+        const lat = parseFloat(partes[0].trim());
+        const lon = parseFloat(partes[1].trim());
+        
+        if (!isNaN(lat) && !isNaN(lon)) {
+            coordenadasObj = {
+                latitud: lat,
+                longitud: lon
+            };
+        }
     }
     
     const centro = {
@@ -22,10 +29,8 @@ When('el administrador ingresa los datos del centro de atención: {string}, {str
         direccion: direccion === "" ? null : direccion,
         localidad: localidad,
         provincia: provincia,
-        coordenadas: {
-            latitud: lat,
-            longitud: lon
-        }
+        telefono: telefono === "" ? null : telefono,
+        coordenadas: coordenadasObj
     };
 
     lastResponse = await fetch('http://backend:8080/centros', {

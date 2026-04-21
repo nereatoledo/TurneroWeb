@@ -32,7 +32,7 @@ public class CentroAtencionPresenter {
         }
 
         if (centro.getCoordenadas() == null) {
-            return Response.response(HttpStatus.BAD_REQUEST, "Las coordenadas son requeridas", null);
+            return Response.response(HttpStatus.BAD_REQUEST, "Las coordenadas son inválidas", null);
         }
 
         if (service.existeConflictoNombreDireccion(centro.getNombre(), centro.getDireccion())) {

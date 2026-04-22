@@ -1,13 +1,14 @@
 const { Given, When, Then } = require('@cucumber/cucumber');
 const assert = require('assert');
-const fetch = require('node-fetch');
+const request = require('sync-request');
 
 let lastResponse;
+let respuesta;
 
 Given('que existe un sistema de gestión de centros de atención', function () {
 });
 
-When('el administrador ingresa los datos del centro de atención: {string}, {string}, {string}, {string}, {string} y {string}', async function (nombre, direccion, localidad, provincia, telefono, coordenadas) {
+When('el administrador ingresa los datos del centro de atención: {string}, {string}, {string}, {string}, {string} y {string}', function (nombre, direccion, localidad, provincia, telefono, coordenadas) {
     
 let coordenadasObj = null;
 
@@ -33,13 +34,14 @@ if (coordenadas && coordenadas.includes(',') && coordenadas !== "abc, xyz") {
         coordenadas: coordenadasObj
     };
 
-    lastResponse = await fetch('http://backend:8080/centros', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(centro)
+    lastResponse = request('POST', 'http://backend:8080/centros', {
+        json: centro
     });
+    
 });
 
-Then('el sistema responde con {int} y {string}', async function (codigoEsperado, textoEsperado) {
-    assert.strictEqual(lastResponse.status, codigoEsperado, `Falló: Se esperaba ${codigoEsperado} pero devolvió ${lastResponse.status}`);
+Then('el sistema responde con {int} y {string}', function (codigoEsperado, textoEsperado) {
+    assert.strictEqual(lastResponse.statusCode, codigoEsperado);
+    const respuestaJson = JSON.parse(lastResponse.body.toString('utf8'));
+    assert.strictEqual(respuestaJson.message, textoEsperado);
 });

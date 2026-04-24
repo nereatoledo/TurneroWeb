@@ -8,15 +8,31 @@ import { DataPackage } from '../data-package';
   providedIn: 'root'
 })
 export class CentroAtencionService {
-  private apiUrl = 'http://localhost:8080/centros';
+  private centrosUrl = "/rest/centros";
 
   constructor(private http: HttpClient) { }
 
+  search(searchTerm: string): Observable<DataPackage> {
+    return this.http.get<DataPackage>(`${this.centrosUrl}/search/${searchTerm}`);
+  }
+
+  remove(id: number): Observable<DataPackage> {
+    return this.http.delete<DataPackage>(`${this.centrosUrl}/${id}`);
+  }
+
   save(centro: CentroAtencion): Observable<DataPackage> {
-    return this.http.post<DataPackage>(this.apiUrl, centro);
+    return this.http.post<DataPackage>(this.centrosUrl, centro);
   }
 
   get(id: string): Observable<DataPackage> {
-    return this.http.get<DataPackage>(`${this.apiUrl}/${id}`);
+    return this.http.get<DataPackage>(`${this.centrosUrl}/${id}`);
+  }
+
+  byPage(page: number, size: number): Observable<DataPackage> {
+    return this.http.get<DataPackage>(`${this.centrosUrl}/page?page=${page - 1}&size=${size}`);
+  }
+
+  byId(id: number): Observable<DataPackage> {
+    return this.http.get<DataPackage>(`${this.centrosUrl}/${id}`);
   }
 }

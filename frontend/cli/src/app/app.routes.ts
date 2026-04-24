@@ -1,9 +1,9 @@
 import { Routes } from '@angular/router';
 import { CentroAtencionDetailComponent } from './centro/centro-atencion-detail.component';
+import { CentrosAtencionComponent } from './centro/centros-atencion.component';
 
 
 export const routes: Routes = [
-    {path: 'centro_atencion/new', component: CentroAtencionDetailComponent},
-
-
+    {path: 'centros_atencion/new', component: CentroAtencionDetailComponent},
+    {path: 'centros_atencion', component: CentrosAtencionComponent},
 ];

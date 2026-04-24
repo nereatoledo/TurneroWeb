@@ -8,7 +8,7 @@ import { RouterModule, RouterOutlet } from '@angular/router';
     <div class="d-flex flex-column flex-md-row align-items-center p-3 bg-light border-bottom">
       <h5 class="my-0 mr-md-auto font-weight-normal">Turnero Web</h5>
       <nav class="my-2 mr-md-0 mr-md-3">
-        <a class="p-2 text-dark" routerLink="/centro_atencion/new">Crear Centro</a>
+        <a class="p-2 text-dark" routerLink="/centros_atencion">Centros de Atención</a>
       </nav>
     </div>
     <div class="container mt-4">

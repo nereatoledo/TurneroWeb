@@ -2,11 +2,28 @@ const { Given, When, Then } = require('@cucumber/cucumber');
 const assert = require('assert');
 const request = require('sync-request');
 
-let lastResponse;
-let respuesta;
+function limpiarCentro(centro) {
+    const limpio = { ...centro };
+
+    delete limpio.id;
+    delete limpio.telefono;
+
+    if (limpio.coordenadas) {
+        delete limpio.coordenadas.id;
+    }
+
+    return limpio;
+}
+
+function ordenarCentros(arr) {
+    return arr.sort((a, b) => {
+        const nombreA = a.nombre || '';
+        const nombreB = b.nombre || '';
+        return nombreA.localeCompare(nombreB);
+    });
+}
 
 Given('que existen centros de atención creados en el sistema', function () {
-    // Write code here that turns the phrase above into concrete actions
 });
 
 Given('los siguientes centros de atención han sido registrados:', function (dataTable) {
@@ -15,8 +32,8 @@ Given('los siguientes centros de atención han sido registrados:', function (dat
     for (const fila of centros) {
         const coordsArray = fila.Coordenadas.split(',').map(coord => coord.trim());
         const coordenadasObj = {
-            lat: parseFloat(coordsArray[0]),
-            lng: parseFloat(coordsArray[1])
+            latitud: parseFloat(coordsArray[0]),
+            longitud: parseFloat(coordsArray[1])
         };
 
         const centro = {
@@ -31,11 +48,14 @@ Given('los siguientes centros de atención han sido registrados:', function (dat
         this.lastResponse = request('POST', 'http://backend:8080/centros', {
             json: centro
         });
+    const bodyString = this.lastResponse.body.toString('utf8');
+    const jsonParseado = JSON.parse(bodyString);
+    assert.strictEqual(jsonParseado.status, 200);
+
     }
 });
 
 When('el usuario solicita la lista de centros de atención', function () {
-
     this.lastResponse = request('GET', 'http://backend:8080/centros');
     const bodyString = this.lastResponse.body.toString('utf8');
     const jsonParseado = JSON.parse(bodyString);
@@ -51,5 +71,15 @@ Then('el sistema responde con status_code {int} y status_text {string}', functio
 });
 
 Then('el cuerpo de la respuesta contiene un array JSON con la siguiente estructura:', function (docString) {
-    assert.strictEqual(this.respuesta, docString);
+    
+    let centrosEsperados = JSON.parse(docString).data;
+    let centrosObtenidos = this.respuesta;
+
+    centrosEsperados = centrosEsperados.map(limpiarCentro);
+    centrosObtenidos = centrosObtenidos.map(limpiarCentro);
+
+    centrosEsperados = ordenarCentros(centrosEsperados);
+    centrosObtenidos = ordenarCentros(centrosObtenidos);
+
+    assert.deepStrictEqual(centrosObtenidos, centrosEsperados);
 });

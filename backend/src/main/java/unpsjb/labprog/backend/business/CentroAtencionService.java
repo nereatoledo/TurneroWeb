@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+
+import jakarta.transaction.Transactional;
 import unpsjb.labprog.backend.model.CentroAtencion;
 
 @Service
@@ -45,6 +47,9 @@ public class CentroAtencionService {
     public CentroAtencion findById(int id){
         return repository.findById(id).orElse(null);
     }
-
+    @Transactional
+    public void delete(int id){
+        repository.deleteById(id);
+    }
     
 }

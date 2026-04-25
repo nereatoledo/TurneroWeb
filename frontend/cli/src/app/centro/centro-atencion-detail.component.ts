@@ -197,7 +197,7 @@ export class CentroAtencionDetailComponent implements OnInit {
   }
 
   save(): void {
-    this.centro_service.save(this.centro_atencion).subscribe({
+    this.centro_service.save(this.centro_atencion).subscribe({                                                          
       next: (dataPackage: DataPackage) => {
         this.modalService.confirm("¡Éxito!", dataPackage.message, "");
         this.goBack();

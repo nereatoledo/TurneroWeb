@@ -70,4 +70,10 @@ public class CentroAtencionPresenter {
         @RequestParam(defaultValue = "10") int size) {
             return Response.ok(service.findByPage(page, size));
     }
+        @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
+    public ResponseEntity<Object> delete (@PathVariable("id") int id){
+        service.delete(id);
+        return Response.ok("Centro De Atención borrado con éxito.", "Centro De Atención borrado con éxito.");
+    }
+
 }

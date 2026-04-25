@@ -6,11 +6,12 @@ import { CentroAtencionService } from "./centro-atencion.service";
 import { ModalService } from "../modal/modal.service";
 import { PaginationComponent } from "../pagination/pagination.component";
 import { ResultsPage } from "../results-page";
+import { DataPackage } from "../data-package";
 
 @Component({
-    selector: "app-customer",
-    imports: [CommonModule, RouterModule, PaginationComponent],
-    template: `
+  selector: "app-customer",
+  imports: [CommonModule, RouterModule, PaginationComponent],
+  template: `
     <div class="container">
       <h2>Centros de Atención</h2>
       <a routerLink="/centros_atencion/new" class="btn btn-success mb-3"
@@ -59,49 +60,51 @@ import { ResultsPage } from "../results-page";
       </div>
     </div>
   `,
-    styles: ``,
+  styles: ``,
 })
 export class CentrosAtencionComponent {
-    centros_atencion: CentroAtencion[] = [];
-    resultsPage: ResultsPage = <ResultsPage>{};
-    currentPage: number = 1;
+  centros_atencion: CentroAtencion[] = [];
+  resultsPage: ResultsPage = <ResultsPage>{};
+  currentPage: number = 1;
 
-    constructor(
-        private centro_atencionService: CentroAtencionService,
-        private modalService: ModalService,
-    ) { }
+  constructor(
+    private centro_atencionService: CentroAtencionService,
+    private modalService: ModalService,
+  ) { }
 
-    getCentros(): void {
-        this.centro_atencionService
-            .byPage(this.currentPage, 10)
-            .subscribe((dataPackage) => {
-                this.resultsPage = <ResultsPage>dataPackage.data;
-                console.log(this.resultsPage.content);
-            });
-    }
+  getCentros(): void {
+    this.centro_atencionService
+      .byPage(this.currentPage, 10)
+      .subscribe((dataPackage) => {
+        this.resultsPage = <ResultsPage>dataPackage.data;
+        console.log(this.resultsPage.content);
+      });
+  }
 
-    remove(centro_atencion: CentroAtencion): void {
-        this.modalService
-            .confirm(
-                "Eliminar centro de atención",
-                `¿Está seguro de que desea eliminar a ${centro_atencion.nombre}?`,
-                "Esta acción no se puede deshacer.",
-            )
-            .then(() => {
-                if (centro_atencion.id != null) {
-                    this.centro_atencionService.remove(centro_atencion.id).subscribe(() => {
-                        this.getCentros();
-                    });
-                }
-            });
-    }
+remove(centro_atencion: CentroAtencion): void {
+    this.modalService
+      .confirm(
+        "Eliminar centro de atención",
+        `¿Está seguro de que desea eliminar a ${centro_atencion.nombre}?`,
+        "Esta acción no se puede deshacer.",
+      )
+      .then(() => {
+        if (centro_atencion.id != null) {
+          this.centro_atencionService.remove(centro_atencion.id).subscribe({
+            next: (dataPackage: DataPackage) => {
+              this.getCentros();
+              this.modalService.confirm("¡Éxito!", dataPackage.message, "");
+            } 
+          }); 
+        }
+      });
+  }
+  onPageChangeRequested(page: number): void {
+    this.currentPage = page;
+    this.getCentros();
+  }
 
-    onPageChangeRequested(page: number): void {
-        this.currentPage = page;
-        this.getCentros();
-    }
-
-    ngOnInit(): void {
-        this.getCentros();
-    }
+  ngOnInit(): void {
+    this.getCentros();
+  }
 }

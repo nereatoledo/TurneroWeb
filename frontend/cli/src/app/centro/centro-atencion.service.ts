@@ -21,11 +21,12 @@ export class CentroAtencionService {
   }
 
   save(centro: CentroAtencion): Observable<DataPackage> {
-    return this.http.post<DataPackage>(this.centrosUrl, centro);
+    return centro.id ? this.http.put<DataPackage>(this.centrosUrl, centro) :
+      this.http.post<DataPackage>(this.centrosUrl, centro);
   }
 
   get(id: string): Observable<DataPackage> {
-    return this.http.get<DataPackage>(`${this.centrosUrl}/${id}`);
+    return this.http.get<DataPackage>(`${this.centrosUrl}/id/${id}`);
   }
 
   byPage(page: number, size: number): Observable<DataPackage> {
@@ -33,6 +34,6 @@ export class CentroAtencionService {
   }
 
   byId(id: number): Observable<DataPackage> {
-    return this.http.get<DataPackage>(`${this.centrosUrl}/${id}`);
+    return this.http.get<DataPackage>(`${this.centrosUrl}/id/${id}`);
   }
 }

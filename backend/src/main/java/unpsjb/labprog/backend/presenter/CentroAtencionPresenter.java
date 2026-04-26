@@ -108,6 +108,10 @@ public class CentroAtencionPresenter {
         if (c.getProvincia() == null || c.getProvincia().trim().isEmpty()) return "La provincia es requerida";
         if (c.getTelefono() == null || c.getTelefono().trim().isEmpty()) return "El teléfono es requerido";
         if (c.getCoordenadas() == null) return "Las coordenadas son inválidas";
+
+        if (!c.getTelefono().matches("^[0-9 \\-\\+]+$")) {
+            return "El formato del teléfono es inválido. Solo se aceptan números.";
+        }
         return null;
     }
 

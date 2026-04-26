@@ -10,13 +10,14 @@ import { DataPackage } from "../data-package";
 
 @Component({
   selector: "app-customer",
+  standalone: true,
   imports: [CommonModule, RouterModule, PaginationComponent],
   template: `
     <div class="container">
       <h2>Centros de Atención</h2>
-      <a routerLink="/centros_atencion/new" class="btn btn-success mb-3"
-        >Nuevo Centro de Atención</a
-      >
+      <a routerLink="/centros_atencion/new" class="btn btn-success mb-3">
+        Nuevo Centro de Atención
+      </a>
       <div class="table-responsive">
         <table class="table table-striped table-sm">
           <thead>
@@ -32,7 +33,7 @@ import { DataPackage } from "../data-package";
               <td>{{ centro_atencion.nombre }}</td>
               <td class="text-right">
                 <a
-                  [routerLink]="['/centros', centro_atencion.id]"
+                  [routerLink]="['/centros_atencion', centro_atencion.id]"
                   class="btn btn-sm btn-primary mr-2"
                 >
                   <i class="fa fa-pencil"></i> Editar
@@ -77,11 +78,10 @@ export class CentrosAtencionComponent {
       .byPage(this.currentPage, 10)
       .subscribe((dataPackage) => {
         this.resultsPage = <ResultsPage>dataPackage.data;
-        console.log(this.resultsPage.content);
       });
   }
 
-remove(centro_atencion: CentroAtencion): void {
+  remove(centro_atencion: CentroAtencion): void {
     this.modalService
       .confirm(
         "Eliminar centro de atención",
@@ -99,6 +99,7 @@ remove(centro_atencion: CentroAtencion): void {
         }
       });
   }
+
   onPageChangeRequested(page: number): void {
     this.currentPage = page;
     this.getCentros();

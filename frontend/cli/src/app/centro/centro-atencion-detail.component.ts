@@ -14,7 +14,7 @@ import { DataPackage } from "../data-package";
   template: `
     <div class="container mt-4">
       <div *ngIf="centro_atencion">
-        <h2>{{ centro_atencion.nombre || "Nuevo Centro" | uppercase }}</h2>
+        <h2>{{ (centro_atencion.id ? 'Editar Centro: ' + centro_atencion.nombre : 'Nuevo Centro') | uppercase }}</h2>
         <form #form="ngForm">
           <div class="form-group mb-3">
             <label for="nombre">Nombre:</label>
@@ -25,10 +25,7 @@ import { DataPackage } from "../data-package";
               required
               #nombre="ngModel"
             />
-            <div
-              *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)"
-              class="text-danger"
-            >
+            <div *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)" class="text-danger">
               El nombre es requerido.
             </div>
           </div>
@@ -42,12 +39,7 @@ import { DataPackage } from "../data-package";
               required
               #direccion="ngModel"
             />
-            <div
-              *ngIf="
-                direccion.invalid && (direccion.dirty || direccion.touched)
-              "
-              class="text-danger"
-            >
+            <div *ngIf="direccion.invalid && (direccion.dirty || direccion.touched)" class="text-danger">
               La dirección es requerida.
             </div>
           </div>
@@ -59,14 +51,13 @@ import { DataPackage } from "../data-package";
               name="telefono"
               class="form-control"
               required
+              pattern="^[0-9 \\-\\+]+$"
               #telefono="ngModel"
               placeholder="Ej: 0280 445-XXXX"
             />
-            <div
-              *ngIf="telefono.invalid && (telefono.dirty || telefono.touched)"
-              class="text-danger"
-            >
-              El teléfono es requerido.
+            <div *ngIf="telefono.invalid && (telefono.dirty || telefono.touched)" class="text-danger">
+              <div *ngIf="telefono.errors?.['required']">El teléfono es requerido.</div>
+              <div *ngIf="telefono.errors?.['pattern']">Formato inválido (solo números, espacios, - o +).</div>
             </div>
           </div>
 
@@ -79,12 +70,7 @@ import { DataPackage } from "../data-package";
               required
               #localidad="ngModel"
             />
-            <div
-              *ngIf="
-                localidad.invalid && (localidad.dirty || localidad.touched)
-              "
-              class="text-danger"
-            >
+            <div *ngIf="localidad.invalid && (localidad.dirty || localidad.touched)" class="text-danger">
               La localidad es requerida.
             </div>
           </div>
@@ -98,12 +84,7 @@ import { DataPackage } from "../data-package";
               required
               #provincia="ngModel"
             />
-            <div
-              *ngIf="
-                provincia.invalid && (provincia.dirty || provincia.touched)
-              "
-              class="text-danger"
-            >
+            <div *ngIf="provincia.invalid && (provincia.dirty || provincia.touched)" class="text-danger">
               La provincia es requerida.
             </div>
           </div>
@@ -120,12 +101,6 @@ import { DataPackage } from "../data-package";
                 required
                 #latitud="ngModel"
               />
-              <div
-                *ngIf="latitud.invalid && (latitud.dirty || latitud.touched)"
-                class="text-danger"
-              >
-                La latitud es requerida.
-              </div>
             </div>
             <div class="form-group mb-3 col-md-6">
               <label for="longitud">Longitud:</label>
@@ -138,24 +113,12 @@ import { DataPackage } from "../data-package";
                 required
                 #longitud="ngModel"
               />
-              <div
-                *ngIf="longitud.invalid && (longitud.dirty || longitud.touched)"
-                class="text-danger"
-              >
-                La longitud es requerida.
-              </div>
             </div>
           </div>
 
-          <button (click)="goBack()" class="btn btn-danger mt-3 mr-2">
-            Atrás
-          </button>
-          <button
-            (click)="save()"
-            class="btn btn-success mt-3"
-            [disabled]="form.invalid"
-          >
-            Guardar
+          <button (click)="goBack()" class="btn btn-danger mt-3 mr-2">Atrás</button>
+          <button (click)="save()" class="btn btn-success mt-3" [disabled]="form.invalid">
+            {{ centro_atencion.id ? 'Actualizar' : 'Guardar' }}
           </button>
         </form>
       </div>
@@ -197,20 +160,15 @@ export class CentroAtencionDetailComponent implements OnInit {
   }
 
   save(): void {
-    this.centro_service.save(this.centro_atencion).subscribe({                                                          
+    this.centro_service.save(this.centro_atencion).subscribe({
       next: (dataPackage: DataPackage) => {
         this.modalService.confirm("¡Éxito!", dataPackage.message, "");
         this.goBack();
       },
       error: (err) => {
         const errorResponse: DataPackage = err.error;
-
-        if (err.status === 409) {
-          this.modalService.confirm(
-            "Error al crear:",
-            errorResponse.message,
-            "",
-          );
+        if (err.status === 409 || err.status === 400) {
+          this.modalService.confirm("Error:", errorResponse.message, "");
         } else {
           console.error("Error inesperado", err);
         }

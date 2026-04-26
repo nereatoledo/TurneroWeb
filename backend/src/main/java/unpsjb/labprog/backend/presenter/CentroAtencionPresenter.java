@@ -16,29 +16,21 @@ public class CentroAtencionPresenter {
     @Autowired
     CentroAtencionService service;
 
-    @RequestMapping(method=RequestMethod.POST)
+    // ==========================================
+    // ENDPOINTS PÚBLICOS
+    // ==========================================
+
+    @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<Object> crearCentro(@RequestBody CentroAtencion centro) {
-        
-        if (centro.getNombre() == null || centro.getNombre().trim().isEmpty()) {
-            return Response.response(HttpStatus.BAD_REQUEST, "El nombre es requerido", null);
-        }
-        
-        if (centro.getDireccion() == null || centro.getDireccion().trim().isEmpty()) {
-            return Response.response(HttpStatus.BAD_REQUEST, "La dirección es requerida", null);
-        }
 
-        if (centro.getTelefono() == null || centro.getTelefono().trim().isEmpty()) {
-            return Response.response(HttpStatus.BAD_REQUEST, "El teléfono es requerido", null);
-        }
-
-        if (centro.getCoordenadas() == null) {
-            return Response.response(HttpStatus.BAD_REQUEST, "Las coordenadas son inválidas", null);
+        String errorCampos = validarCamposObligatorios(centro);
+        if (errorCampos != null) {
+            return Response.response(HttpStatus.BAD_REQUEST, errorCampos, null);
         }
 
         if (service.existeConflictoNombreDireccion(centro.getNombre(), centro.getDireccion())) {
             return Response.response(HttpStatus.CONFLICT, "Ya existe un centro de atención con ese nombre y dirección", null);
         }
-
         if (service.existeDireccion(centro.getDireccion())) {
             return Response.response(HttpStatus.CONFLICT, "Ya existe un centro de atención con esa dirección", null);
         }
@@ -46,34 +38,111 @@ public class CentroAtencionPresenter {
         CentroAtencion centroGuardado = service.save(centro);
         return Response.response(HttpStatus.OK, "Centro de atención creado", centroGuardado);
     }
-    @RequestMapping(method=RequestMethod.GET)
+
+    @RequestMapping(method=RequestMethod.PUT)
+    public ResponseEntity<Object> update(@RequestBody CentroAtencion centroActualizado) {
+        
+        if(centroActualizado.getId() <= 0){
+            return Response.error(centroActualizado, "Debe especificar un id válido para poder modificar un Centro de Atención.");
+        }
+
+        String errorCampos = validarCamposObligatorios(centroActualizado);
+        if (errorCampos != null) {
+            return Response.response(HttpStatus.BAD_REQUEST, errorCampos, null);
+        }
+
+        CentroAtencion centroExistente = service.findById(centroActualizado.getId());
+        if (centroExistente == null) {
+            return Response.error(centroActualizado, "Debe especificar un id válido para poder modificar un Centro de Atención.");
+        }
+
+        ResponseEntity<Object> errorConflicto = validarConflictosDeEdicion(centroExistente, centroActualizado);
+        if (errorConflicto != null) {
+            return errorConflicto;
+        }
+
+        mapearDatos(centroExistente, centroActualizado);
+        service.save(centroExistente);
+        
+        return Response.response(HttpStatus.OK, "Centro de atención modificado", centroExistente);
+    }
+
+    @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<Object> findAll() {
         return Response.ok(service.findAll());
     }
 
-    @RequestMapping(value="/id/{id}", method=RequestMethod.GET)
+    @RequestMapping(value = "/id/{id}", method = RequestMethod.GET)
     public ResponseEntity<Object> findById(@PathVariable("id") int id) {
         CentroAtencion aCentroOrNull = service.findById(id);
-        return (aCentroOrNull != null)?
-            Response.ok(aCentroOrNull):
-            Response.notFound("Centro de Atención id " + id + " no encontrado.");
+        return (aCentroOrNull != null) ? Response.ok(aCentroOrNull)
+                : Response.notFound("Centro de Atención id " + id + " no encontrado.");
     }
-    
+
     @RequestMapping(value = "/search/{term}", method = RequestMethod.GET)
     public ResponseEntity<Object> search(@PathVariable("term") String term) {
         return Response.ok(service.search(term));
     }
 
-        @RequestMapping(value="/page", method=RequestMethod.GET)
+    @RequestMapping(value = "/page", method = RequestMethod.GET)
     public ResponseEntity<Object> findByPage(
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size) {
-            return Response.ok(service.findByPage(page, size));
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return Response.ok(service.findByPage(page, size));
     }
-        @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Object> delete (@PathVariable("id") int id){
+
+    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
+    public ResponseEntity<Object> delete(@PathVariable("id") int id) {
         service.delete(id);
         return Response.ok("Centro De Atención borrado con éxito.", "Centro De Atención borrado con éxito.");
     }
 
+    // ==========================================
+    // MÉTODOS PRIVADOS (HELPER METHODS)
+    // ==========================================
+
+    private String validarCamposObligatorios(CentroAtencion c) {
+        if (c.getNombre() == null || c.getNombre().trim().isEmpty()) return "El nombre es requerido";
+        if (c.getDireccion() == null || c.getDireccion().trim().isEmpty()) return "La dirección es requerida";
+        if (c.getLocalidad() == null || c.getLocalidad().trim().isEmpty()) return "La localidad es requerida";
+        if (c.getProvincia() == null || c.getProvincia().trim().isEmpty()) return "La provincia es requerida";
+        if (c.getTelefono() == null || c.getTelefono().trim().isEmpty()) return "El teléfono es requerido";
+        if (c.getCoordenadas() == null) return "Las coordenadas son inválidas";
+        return null;
+    }
+
+    private ResponseEntity<Object> validarConflictosDeEdicion(CentroAtencion existente, CentroAtencion nuevo) {
+        boolean cambioNombre = !existente.getNombre().equalsIgnoreCase(nuevo.getNombre());
+        boolean cambioDireccion = !existente.getDireccion().equalsIgnoreCase(nuevo.getDireccion());
+        boolean cambioLocalidad = !existente.getLocalidad().equalsIgnoreCase(nuevo.getLocalidad());
+        boolean cambioProvincia = !existente.getProvincia().equalsIgnoreCase(nuevo.getProvincia());
+        boolean cambioTelefono = !existente.getTelefono().equalsIgnoreCase(nuevo.getTelefono());
+        boolean cambioLat = Double.compare(existente.getCoordenadas().getLatitud(), nuevo.getCoordenadas().getLatitud()) != 0;
+        boolean cambioLon = Double.compare(existente.getCoordenadas().getLongitud(), nuevo.getCoordenadas().getLongitud()) != 0;
+
+        boolean hayCambios = cambioNombre || cambioDireccion || cambioLocalidad || cambioProvincia || cambioTelefono || cambioLat || cambioLon;
+
+        if (!hayCambios) {
+            return Response.response(HttpStatus.CONFLICT, "Ya existe un centro de atención con ese nombre y dirección", null);
+        }
+
+        if ((cambioNombre || cambioDireccion) && service.existeConflictoNombreDireccion(nuevo.getNombre(), nuevo.getDireccion())) {
+            return Response.response(HttpStatus.CONFLICT, "Ya existe un centro de atención con ese nombre y dirección", null);
+        }
+        if (cambioDireccion && service.existeDireccion(nuevo.getDireccion())) {
+            return Response.response(HttpStatus.CONFLICT, "Ya existe un centro de atención con esa dirección", null);
+        }
+
+        return null; 
+    }
+
+    private void mapearDatos(CentroAtencion existente, CentroAtencion nuevo) {
+        existente.setNombre(nuevo.getNombre());
+        existente.setDireccion(nuevo.getDireccion());
+        existente.setLocalidad(nuevo.getLocalidad());
+        existente.setProvincia(nuevo.getProvincia());
+        existente.setTelefono(nuevo.getTelefono());
+        existente.getCoordenadas().setLatitud(nuevo.getCoordenadas().getLatitud());
+        existente.getCoordenadas().setLongitud(nuevo.getCoordenadas().getLongitud());
+    }
 }

@@ -2,26 +2,19 @@ const { Given, When, Then } = require('@cucumber/cucumber');
 const assert = require('assert');
 const request = require('sync-request');
 
-let lastResponse;
-let respuesta;
-
 Given('que existe un sistema de gestión de centros de atención', function () {
 });
 
 When('el administrador ingresa los datos del centro de atención: {string}, {string}, {string}, {string}, {string} y {string}', function (nombre, direccion, localidad, provincia, telefono, coordenadas) {
-    
-let coordenadasObj = null;
+    let coordenadasObj = null;
 
-if (coordenadas && coordenadas.includes(',') && coordenadas !== "abc, xyz") {
+    if (coordenadas && coordenadas.includes(',') && coordenadas !== "abc, xyz") {
         const partes = coordenadas.split(',');
         const lat = parseFloat(partes[0].trim());
         const lon = parseFloat(partes[1].trim());
         
         if (!isNaN(lat) && !isNaN(lon)) {
-            coordenadasObj = {
-                latitud: lat,
-                longitud: lon
-            };
+            coordenadasObj = { latitud: lat, longitud: lon };
         }
     }
     
@@ -34,14 +27,15 @@ if (coordenadas && coordenadas.includes(',') && coordenadas !== "abc, xyz") {
         coordenadas: coordenadasObj
     };
 
-    lastResponse = request('POST', 'http://backend:8080/centros', {
+    // ACÁ EL CAMBIO CLAVE
+    this.lastResponse = request('POST', 'http://backend:8080/centros', {
         json: centro
     });
-    
 });
 
 Then('el sistema responde con {int} y {string}', function (codigoEsperado, textoEsperado) {
-    assert.strictEqual(lastResponse.statusCode, codigoEsperado);
-    const respuestaJson = JSON.parse(lastResponse.body.toString('utf8'));
+    // ACÁ EL CAMBIO CLAVE
+    assert.strictEqual(this.lastResponse.statusCode, codigoEsperado);
+    const respuestaJson = JSON.parse(this.lastResponse.body.toString('utf8'));
     assert.strictEqual(respuestaJson.message, textoEsperado);
 });

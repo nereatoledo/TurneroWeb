@@ -52,19 +52,16 @@ Given('que existen {int} especialidades registradas en el sistema', function (n)
     assert.ok(true);
 });
 
-// VALIDACIONES (Ignora diferencias entre correctamente/exitosamente)
-const normalizar = (s) => s.toLowerCase().replace('correctamente', 'ok').replace('exitosamente', 'ok').trim();
-
 Then('el sistema responde con el {int} y el {string}', function (codigo, texto) {
     assert.strictEqual(this.lastResponse.statusCode, codigo);
     const body = JSON.parse(this.lastResponse.body.toString('utf8'));
-    assert.strictEqual(normalizar(body.message), normalizar(texto));
+    assert.strictEqual(body.message, texto);
 });
 
 Then('el sistema responde con el {string} {int} y el {string} {string}', function (s1, codigo, s2, texto) {
     assert.strictEqual(this.lastResponse.statusCode, codigo);
     const body = JSON.parse(this.lastResponse.body.toString('utf8'));
-    assert.strictEqual(normalizar(body.message), normalizar(texto));
+    assert.strictEqual(body.message, texto);
 });
 
 Then('el sistema responde con un JSON:', function (docString) {

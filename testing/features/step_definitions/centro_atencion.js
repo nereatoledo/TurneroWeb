@@ -27,14 +27,12 @@ When('el administrador ingresa los datos del centro de atención: {string}, {str
         coordenadas: coordenadasObj
     };
 
-    // ACÁ EL CAMBIO CLAVE
     this.lastResponse = request('POST', 'http://backend:8080/centros', {
         json: centro
     });
 });
 
 Then('el sistema responde con {int} y {string}', function (codigoEsperado, textoEsperado) {
-    // ACÁ EL CAMBIO CLAVE
     assert.strictEqual(this.lastResponse.statusCode, codigoEsperado);
     const respuestaJson = JSON.parse(this.lastResponse.body.toString('utf8'));
     assert.strictEqual(respuestaJson.message, textoEsperado);

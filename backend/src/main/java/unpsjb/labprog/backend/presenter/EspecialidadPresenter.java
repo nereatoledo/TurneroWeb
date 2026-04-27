@@ -29,8 +29,7 @@ public class EspecialidadPresenter {
         }
 
         Especialidad guardada = service.save(especialidad);
-        // ADECUACIÓN AL TEST: Usamos "correctamente" para el Escenario 1
-        return Response.response(HttpStatus.OK, "Especialidad creada correctamente", guardada);
+        return Response.response(HttpStatus.OK, "Especialidad creada exitosamente", guardada);
     }
 
     @RequestMapping(method = RequestMethod.GET)

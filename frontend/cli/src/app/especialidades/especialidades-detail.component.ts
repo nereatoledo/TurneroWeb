@@ -1,36 +1,36 @@
 import { Component, OnInit } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { CommonModule, Location } from "@angular/common";
-import { CentroAtencion } from "./centro-atencion";
-import { CentroAtencionService } from "./centro-atencion.service";
+import { Especialidad } from "./especialidades";
+import { EspecialidadService } from "./especialidad.service";
 import { ActivatedRoute } from "@angular/router";
 import { ModalService } from "../modal/modal.service";
 import { DataPackage } from "../data-package";
 
 @Component({
-  selector: "app-centro-atencion-detail",
-  standalone: true,
+  selector: "app-especialidad-detail",
+  standalone: true, 
   imports: [FormsModule, CommonModule],
   template: `
     <div class="container py-4 page-animation" style="max-width: 800px;">
-      <div *ngIf="centro_atencion">
+      <div *ngIf="especialidad">
         
         <h2 class="custom-title mb-4">
-          {{ centro_atencion.id ? 'Editar Centro: ' + centro_atencion.nombre : 'Nuevo Centro de Atención' }}
+          {{ especialidad.id ? 'Editar Especialidad: ' + especialidad.nombre : 'Nueva Especialidad' }}
         </h2>
 
         <div class="form-wrapper">
           <form #form="ngForm">
             
             <div class="form-group mb-4">
-              <label for="nombre" class="custom-label">Nombre del Centro</label>
+              <label for="nombre" class="custom-label">Nombre de la Especialidad</label>
               <input
-                [(ngModel)]="centro_atencion.nombre"
+                [(ngModel)]="especialidad.nombre"
                 name="nombre"
                 class="form-control custom-input"
                 required
                 #nombre="ngModel"
-                placeholder="Ej: Centro Médico Rawson"
+                placeholder="Ej: Odontología"
               />
               <div *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)" class="text-danger small mt-1">
                 El nombre es requerido.
@@ -38,100 +38,21 @@ import { DataPackage } from "../data-package";
             </div>
 
             <div class="row">
-              <div class="form-group mb-4 col-md-8">
-                <label for="direccion" class="custom-label">Dirección</label>
+              <div class="form-group mb-4 col-md-12">
+                <label for="detalle" class="custom-label">Detalle / Descripción</label>
                 <input
-                  [(ngModel)]="centro_atencion.direccion"
-                  name="direccion"
+                  [(ngModel)]="especialidad.detalle"
+                  name="detalle"
                   class="form-control custom-input"
                   required
-                  #direccion="ngModel"
-                  placeholder="Ej: Av. San Martín 1234"
+                  #detalle="ngModel"
+                  placeholder="Ej: Atención integral..."
                 />
-                <div *ngIf="direccion.invalid && (direccion.dirty || direccion.touched)" class="text-danger small mt-1">
-                  La dirección es requerida.
+                <div *ngIf="detalle.invalid && (detalle.dirty || detalle.touched)" class="text-danger small mt-1">
+                  El detalle es requerido.
                 </div>
               </div>
-
-              <div class="form-group mb-4 col-md-4">
-                <label for="telefono" class="custom-label">Teléfono</label>
-                <input
-                  [(ngModel)]="centro_atencion.telefono"
-                  name="telefono"
-                  class="form-control custom-input"
-                  required
-                  pattern="^[0-9 \\-\\+]+$"
-                  #telefono="ngModel"
-                  placeholder="Ej: 0280 445-XXXX"
-                />
-                <div *ngIf="telefono.invalid && (telefono.dirty || telefono.touched)" class="text-danger small mt-1">
-                  <span *ngIf="telefono.errors?.['required']">El teléfono es requerido.</span>
-                  <span *ngIf="telefono.errors?.['pattern']">Formato inválido.</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="form-group mb-4 col-md-6">
-                <label for="localidad" class="custom-label">Localidad</label>
-                <input
-                  [(ngModel)]="centro_atencion.localidad"
-                  name="localidad"
-                  class="form-control custom-input"
-                  required
-                  #localidad="ngModel"
-                  placeholder="Ej: Trelew"
-                />
-                <div *ngIf="localidad.invalid && (localidad.dirty || localidad.touched)" class="text-danger small mt-1">
-                  La localidad es requerida.
-                </div>
-              </div>
-
-              <div class="form-group mb-4 col-md-6">
-                <label for="provincia" class="custom-label">Provincia</label>
-                <input
-                  [(ngModel)]="centro_atencion.provincia"
-                  name="provincia"
-                  class="form-control custom-input"
-                  required
-                  #provincia="ngModel"
-                  placeholder="Ej: Chubut"
-                />
-                <div *ngIf="provincia.invalid && (provincia.dirty || provincia.touched)" class="text-danger small mt-1">
-                  La provincia es requerida.
-                </div>
-              </div>
-            </div>
-
-            <hr class="my-4" style="border-color: #e2e8f0;">
-
-            <h5 class="mb-3 text-muted" style="font-size: 1rem; font-weight: 600;">Geolocalización</h5>
-            <div class="row">
-              <div class="form-group mb-4 col-md-6">
-                <label for="latitud" class="custom-label">Latitud</label>
-                <input
-                  type="number"
-                  step="any"
-                  [(ngModel)]="centro_atencion.coordenadas.latitud"
-                  name="latitud"
-                  class="form-control custom-input"
-                  required
-                  #latitud="ngModel"
-                />
-              </div>
-              <div class="form-group mb-4 col-md-6">
-                <label for="longitud" class="custom-label">Longitud</label>
-                <input
-                  type="number"
-                  step="any"
-                  [(ngModel)]="centro_atencion.coordenadas.longitud"
-                  name="longitud"
-                  class="form-control custom-input"
-                  required
-                  #longitud="ngModel"
-                />
-              </div>
-            </div>
+            </div> 
 
             <div class="d-flex justify-content-end mt-2 pt-3 border-top" style="border-color: #e2e8f0 !important;">
               <button (click)="goBack()" class="btn-action btn-back mr-3" type="button">
@@ -139,7 +60,7 @@ import { DataPackage } from "../data-package";
               </button>
               
               <button (click)="save()" class="btn-purple-main" [disabled]="form.invalid" type="button">
-                <i class="fa fa-save"></i> {{ centro_atencion.id ? 'Actualizar' : 'Guardar' }}
+                <i class="fa fa-save"></i> {{ especialidad.id ? 'Actualizar' : 'Guardar' }}
               </button>
             </div>
             
@@ -205,7 +126,6 @@ import { DataPackage } from "../data-package";
       cursor: not-allowed;
     }
 
-  
     .btn-purple-main {
       background-color: #8923dc;
       color: #ffffff;
@@ -253,18 +173,14 @@ import { DataPackage } from "../data-package";
     }
   `],
 })
-export class CentroAtencionDetailComponent implements OnInit {
-  centro_atencion: CentroAtencion = {
+export class EspecialidadDetailComponent implements OnInit {
+  especialidad: Especialidad = {
     nombre: "",
-    direccion: "",
-    localidad: "",
-    provincia: "",
-    telefono: "",
-    coordenadas: { latitud: 0, longitud: 0 },
+    detalle: "",
   };
 
   constructor(
-    private centro_service: CentroAtencionService,
+    private especialidad_service: EspecialidadService,
     private route: ActivatedRoute,
     private location: Location,
     private modalService: ModalService,
@@ -277,8 +193,8 @@ export class CentroAtencionDetailComponent implements OnInit {
   get(): void {
     const id = this.route.snapshot.paramMap.get("id");
     if (id && id !== "new") {
-      this.centro_service.get(id).subscribe((dataPackage) => {
-        this.centro_atencion = <CentroAtencion>dataPackage.data;
+      this.especialidad_service.get(id).subscribe((dataPackage) => {
+        this.especialidad = <Especialidad>dataPackage.data;
       });
     }
   }
@@ -288,7 +204,7 @@ export class CentroAtencionDetailComponent implements OnInit {
   }
 
   save(): void {
-    this.centro_service.save(this.centro_atencion).subscribe({
+    this.especialidad_service.save(this.especialidad).subscribe({
       next: (dataPackage: DataPackage) => {
         this.modalService.info("¡Éxito!", dataPackage.message, "");
         this.goBack();

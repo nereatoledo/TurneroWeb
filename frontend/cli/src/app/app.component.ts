@@ -25,6 +25,11 @@ import { RouterModule, RouterOutlet } from '@angular/router';
             Centros de Atención
           </a>
         </nav>
+        <nav class="my-2 my-md-0">
+          <a class="p-2 nav-link-custom" routerLink="/especialidades">
+            Especialidades
+          </a>
+        </nav>
       </div>
     </header>
 
@@ -38,7 +43,6 @@ import { RouterModule, RouterOutlet } from '@angular/router';
       border-bottom: 2px solid #8923dc; 
     }
 
-    /* Botón solo con el ícono de casa, sin bordes */
     .home-icon-button {
       color: #8923dc;
       display: flex;
@@ -48,13 +52,11 @@ import { RouterModule, RouterOutlet } from '@angular/router';
       text-decoration: none;
     }
 
-    /* Al pasar el mouse, se oscurece un poco y crece levemente (efecto pop) */
     .home-icon-button:hover {
       color: #6c1ab3; /* Un morado un poco más oscuro */
       transform: scale(1.15); /* Aumenta su tamaño un 15% */
     }
 
-    /* Estilo para el nombre de la app */
     .brand-label {
       color: #000000;
       font-family: 'Hackensack', 'Roboto Slab', serif;

@@ -115,5 +115,5 @@ export class ModalComponent {
   title = '';
   message = '';
   description = '';
-  showCancelButton = true; // Por defecto asumimos que queremos confirmar una acción
+  showCancelButton = true;
 }

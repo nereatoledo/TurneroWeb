@@ -32,3 +32,5 @@ Ejemplos: Centros de atención con conflictos
   | Centro Médico          |                                               | Puerto Madryn | Chubut    | 2804452222 | -42.765, -65.034 | 400         | "La dirección es requerida"                                  |
   | Centro Sin Contacto    | San Martín 100                                | Trelew        | Chubut    |            | -43.248, -65.301 | 400         | "El teléfono es requerido"                                   |
   | Centro de la Costa     | Belgrano 753                                  | Trelew        | Chubut    | 2804433333 | abc, xyz         | 400         | "Las coordenadas son inválidas"                              |   
+  
+  #Agregue campos faltantes para que chequee que todos los datos se ingresaban.

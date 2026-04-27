@@ -34,6 +34,7 @@ public class CentroAtencion {
     @Column(nullable = false)    
     private String provincia;
     
+    //@NotNull
     @Column(nullable = false)    
     private String telefono;
 

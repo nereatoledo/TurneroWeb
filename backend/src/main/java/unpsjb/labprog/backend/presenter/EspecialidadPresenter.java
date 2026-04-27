@@ -77,4 +77,10 @@ public class EspecialidadPresenter {
         Especialidad e = service.findById(id);
         return (e != null) ? Response.ok(e) : Response.notFound("Especialidad no encontrada.");
     }
-}
+    @RequestMapping(value = "/page", method = RequestMethod.GET)
+    public ResponseEntity<Object> findByPage(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return Response.ok(service.findByPage(page, size));
+    }
+}   

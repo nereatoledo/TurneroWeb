@@ -13,7 +13,7 @@ export const routes: Routes = [
     {path: 'centros_atencion/new', component: CentroAtencionDetailComponent},
     {path: 'centros_atencion/:id', component: CentroAtencionDetailComponent}, 
 
-    // --- Rutas de Especialidades ---
+    //Rutas de Especialidades
     {path: 'especialidades', component: EspecialidadesComponent},
     {path: 'especialidades/new', component: EspecialidadDetailComponent},
     {path: 'especialidades/:id', component: EspecialidadDetailComponent} 

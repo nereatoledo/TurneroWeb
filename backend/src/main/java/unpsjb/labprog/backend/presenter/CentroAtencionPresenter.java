@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.CentroAtencionService;
 import unpsjb.labprog.backend.model.CentroAtencion;
-
+ 
 @RestController
 @RequestMapping("centros")
 public class CentroAtencionPresenter {
@@ -16,10 +16,7 @@ public class CentroAtencionPresenter {
     @Autowired
     CentroAtencionService service;
 
-    // ==========================================
-    // ENDPOINTS PÚBLICOS
-    // ==========================================
-
+//endoints púbicos
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<Object> crearCentro(@RequestBody CentroAtencion centro) {
 
@@ -97,10 +94,7 @@ public class CentroAtencionPresenter {
         return Response.ok("Centro De Atención borrado con éxito.", "Centro De Atención borrado con éxito.");
     }
 
-    // ==========================================
-    // MÉTODOS PRIVADOS (HELPER METHODS)
-    // ==========================================
-
+    // métodos privados
     private String validarCamposObligatorios(CentroAtencion c) {
         if (c.getNombre() == null || c.getNombre().trim().isEmpty()) return "El nombre es requerido";
         if (c.getDireccion() == null || c.getDireccion().trim().isEmpty()) return "La dirección es requerida";

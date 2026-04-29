@@ -53,8 +53,8 @@ import { RouterModule, RouterOutlet } from '@angular/router';
     }
 
     .home-icon-button:hover {
-      color: #6c1ab3; /* Un morado un poco más oscuro */
-      transform: scale(1.15); /* Aumenta su tamaño un 15% */
+      color: #6c1ab3; 
+      transform: scale(1.15); 
     }
 
     .brand-label {

@@ -83,4 +83,4 @@ public class EspecialidadPresenter {
             @RequestParam(defaultValue = "10") int size) {
         return Response.ok(service.findByPage(page, size));
     }
-}   
+}

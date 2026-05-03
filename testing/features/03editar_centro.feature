@@ -25,7 +25,4 @@ Característica: Modificar Centro de Atención
       | NombreOriginal         | NombreNuevo                    | DireccionNueva                          | LocalidadNueva | ProvinciaNueva | CoordenadasNueva | status_code | status_text                   |
       | Centro Médico Integral | Centro Médico Integral         | Calle 9 de Julio 150, Piso 3, Oficina B | Puerto Madryn  | Chubut         | -42.765, -65.034 | 200         | Centro de atención modificado |
       | Centro de Salud Rawson | Centro de Salud Dr. Juan Perez | Avenida Libertad 456                    | Rawson         | Chubut         | -43.305, -65.102 | 200         | Centro de atención modificado | 
-      | Trelew Salud           | Trelew Salud                   | Rivadavia 789, Barrio Centro            | Trelew         | Chubut         | -43.255, -65.310 | 200         | Centro de atención modificado | 
-
-      #Modificaciones: cambie el orden de los escenarios porque modificada un centro, y en el siguiente intentaba modificarlo con los datos viejos.
-      #Borre los antecedentes porque ya estaban cargados.
+      | Trelew Salud           | Trelew Salud                   | Rivadavia 789, Barrio Centro            | Trelew         | Chubut         | -43.255, -65.310 | 200         | Centro de atención modificado | s

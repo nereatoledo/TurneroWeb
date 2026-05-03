@@ -6,6 +6,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+
+import java.util.ArrayList;
+import java.util.Collection;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import lombok.Getter;
@@ -34,11 +39,22 @@ public class CentroAtencion {
     @Column(nullable = false)    
     private String provincia;
     
-    //@NotNull
     @Column(nullable = false)    
     private String telefono;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "coordenadas_id", nullable = false)
     private Point coordenadas;
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "centro_atencion_id") 
+    private Collection<Consultorio> consultorios = new ArrayList<>();
+
+    public void agregarConsultorio(Consultorio consultorio) {
+        this.consultorios.add(consultorio);
+    }
+
+    public void removerConsultorio(Consultorio consultorio) {
+        this.consultorios.remove(consultorio);
+    }
 }

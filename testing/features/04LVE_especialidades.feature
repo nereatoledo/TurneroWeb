@@ -1,7 +1,4 @@
 
-            #Elimine la palabra "Caracteristica" porque sólo se puede utilizar una vez por feature.
-            #También cambie una inconsistencia en el mensaje de "Especialidad creada exitosamente" y "Especialidad creada correctamentee y lo dejeé como "exitosamente"
-
             # language: es
             Característica: Gestión de Especialidades
 
@@ -60,7 +57,7 @@
             | Psiquiatría               | Diagnóstico y tratamiento de trastornos mentales y emocionales.                     | 200         | Especialidad creada exitosamente |
             | Radiología                | Diagnóstico y tratamiento mediante técnicas de imagen médica.                       | 200         | Especialidad creada exitosamente |
             | Reumatología              | Diagnóstico y tratamiento de enfermedades reumáticas y autoinmunes.                 | 200         | Especialidad creada exitosamente |
-            | Urología                  | Diagnóstico y tratamiento de enfermedades del aparato urinario y reproductor masc.  | 200         | Especialidad creada exitosamente |
+            | Urología                  | Diagnóstico y tratamiento de enfermedades del aparato urinario y reproductor masculino.  | 200         | Especialidad creada exitosamente |
 
             Esquema del escenario: Intentar crear una especialidad con nombre duplicado
             Cuando el administrador crea una especialidad con el nombre "<nombre>" y la descripción "<descripcion>"

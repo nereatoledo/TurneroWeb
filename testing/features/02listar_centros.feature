@@ -1,4 +1,3 @@
-            #Modifique las coordenadas porque en el backend me devuelve un Objeto JSON. Tmabien cambie el "status": 200, "message": "OK","data": para que coincidan con el response.java.
             # language: es
 
             Característica: Listar Centros de Atención

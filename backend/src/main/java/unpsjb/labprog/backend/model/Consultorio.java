@@ -24,4 +24,9 @@ public class Consultorio {
 
     @Column(nullable = false, unique = true)
     private Integer numero;
+
+    public boolean existeNumero(Integer numero2) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'existeNumero'");
+    }
 }

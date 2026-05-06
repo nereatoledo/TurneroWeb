@@ -21,4 +21,6 @@ public interface CentroAtencionRepository
     @Query("SELECT e FROM CentroAtencion e WHERE UPPER(e.nombre) LIKE ?1")
     List<CentroAtencion> search(String term);
 
+    @Query("SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END FROM CentroAtencion c WHERE (c.id) = (?1)")
+    boolean existeConsultorioCentro(Integer idCentro);
 }

@@ -14,4 +14,11 @@ When('se registra un consultorio con el número {string} y el nombre {string}', 
     this.lastResponse = request('POST', 'http://backend:8080/consultorios', {
         json: consultorio
     });
+
+});
+
+Then('el sistema responde con {int} y {string}', function (codigoEsperado, textoEsperado) {
+    assert.strictEqual(this.lastResponse.statusCode, codigoEsperado);
+    const respuestaJson = JSON.parse(this.lastResponse.body.toString('utf8'));
+    assert.strictEqual(respuestaJson.message, textoEsperado);
 });

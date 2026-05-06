@@ -1,4 +1,5 @@
 import { Point } from "./point";
+import { Consultorio } from "./consultorio";
 
 export interface CentroAtencion {
     id?: number;
@@ -8,4 +9,5 @@ export interface CentroAtencion {
     provincia: string;
     telefono: string;
     coordenadas: Point;
+    consultorios: Consultorio[];
 }

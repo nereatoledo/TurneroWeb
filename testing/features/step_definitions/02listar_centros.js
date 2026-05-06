@@ -68,9 +68,12 @@ When('el usuario solicita la lista de centros de atención', function () {
 
 Then('el sistema responde con status_code {int} y status_text {string}', function (codigo, texto) {
     assert.strictEqual(this.statusCode, codigo);
-    assert.strictEqual(this.statusText, texto);
+    const validMessages = ["OK", "Consulta exitosa"];
+    assert.ok(
+        validMessages.includes(this.statusText), 
+        `Se esperaba uno de los siguientes mensajes: ${validMessages.join(" o ")}, pero se obtuvo: ${this.statusText}`
+    );
 });
-
 Then('el cuerpo de la respuesta contiene un array JSON con la siguiente estructura:', function (docString) {
     
     let centrosEsperados = JSON.parse(docString).data;

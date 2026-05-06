@@ -7,7 +7,9 @@ import org.springframework.web.bind.annotation.*;
 
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.ConsultorioService;
+import unpsjb.labprog.backend.business.CentroAtencionService;
 import unpsjb.labprog.backend.model.Consultorio;
+import unpsjb.labprog.backend.model.CentroAtencion;
 
 @RestController
 @RequestMapping("consultorios")
@@ -16,46 +18,76 @@ public class ConsultorioPresenter {
     @Autowired
     ConsultorioService service;
 
-    // endoints púbicos
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<Object> crearConsultorio(@RequestBody Consultorio consultorio) {
+    @Autowired
+    CentroAtencionService centroService;
 
-        String errorCampos = validarCampos(consultorio);
-        if (errorCampos != null) {
-            return Response.response(HttpStatus.BAD_REQUEST, errorCampos, null);
+    @RequestMapping(value = "/centro/{idCentro}", method = RequestMethod.POST)
+    public ResponseEntity<Object> crearConsultorio(
+            @PathVariable("idCentro") Integer idCentro,
+            @RequestBody Consultorio consultorio) {
+
+        CentroAtencion centro = centroService.findById(idCentro);
+        if (centro == null) {
+            return Response.response(HttpStatus.NOT_FOUND, "Error: El centro de atención especificado no existe", null);
         }
 
-        if (service.existeNumero(consultorio.getNumero())) {
+        if (consultorio.getNumero() == null) {
+            return Response.response(HttpStatus.CONFLICT, "Error: Debe especificar un número de consultorio válido",
+                    null);
+        }
+        if (consultorio.getNombre() == null || consultorio.getNombre().trim().isEmpty()) {
+            return Response.response(HttpStatus.CONFLICT, "Error: El nombre del consultorio es obligatorio", null);
+        }
+        if (!consultorio.getNombre().matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9 ]+$")) {
+            return Response.response(HttpStatus.CONFLICT,
+                    "Error: El nombre del consultorio contiene caracteres no permitidos", null);
+        }
+
+        if (service.existeConsultorioEnCentro(idCentro, consultorio.getNumero())) {
             return Response.response(HttpStatus.CONFLICT, "Error: El número de consultorio ya está registrado", null);
+        }
+        if (service.existeNombreEnCentro(idCentro, consultorio.getNombre())) {
+            return Response.response(HttpStatus.CONFLICT, "Error: El nombre del consultorio ya está registrado", null);
         }
 
         Consultorio consultorioGuardado = service.save(consultorio);
-        return Response.response(HttpStatus.OK, "Consultorio creado", consultorioGuardado);
+
+        centro.agregarConsultorio(consultorioGuardado);
+        centroService.save(centro);
+
+        return Response.response(HttpStatus.OK, "Consultorio creado exitosamente", consultorioGuardado);
     }
 
     @RequestMapping(method = RequestMethod.PUT)
-    public ResponseEntity<Object> update(@RequestBody Consultorio centroActualizado) {
-
-        if (centroActualizado.getId() <= 0) {
-            return Response.error(centroActualizado,
-                    "Debe especificar un id válido para poder modificar un Centro de Atención.");
+    public ResponseEntity<Object> update(@RequestBody Consultorio consultorioActualizado) {
+        if (consultorioActualizado.getId() <= 0) {
+            return Response.error(consultorioActualizado,
+                    "Debe especificar un id válido para poder modificar un consultorio.");
         }
 
-        String errorCampos = validarCampos(centroActualizado);
+        String errorCampos = validarCamposParaEdicion(consultorioActualizado);
         if (errorCampos != null) {
             return Response.response(HttpStatus.BAD_REQUEST, errorCampos, null);
         }
 
-        Consultorio centroExistente = service.findById(centroActualizado.getId());
-        if (centroExistente == null) {
-            return Response.error(centroActualizado,
-                    "Debe especificar un id válido para poder modificar un Centro de Atención.");
+        Consultorio existente = service.findById(consultorioActualizado.getId());
+        if (existente == null) {
+            return Response.notFound("Consultorio id " + consultorioActualizado.getId() + " no encontrado.");
         }
 
-        mapearDatos(centroExistente, centroActualizado);
-        service.save(centroExistente);
+        if (!existente.getNumero().equals(consultorioActualizado.getNumero())) {
+            CentroAtencion centro = centroService.findCentroByConsultorioId(existente.getId());
+            if (centro != null
+                    && service.existeConsultorioEnCentro(centro.getId(), consultorioActualizado.getNumero())) {
+                return Response.response(HttpStatus.CONFLICT,
+                        "Error: El número de consultorio ya está registrado en este centro", null);
+            }
+        }
 
-        return Response.response(HttpStatus.OK, "Centro de atención modificado", centroExistente);
+        mapearDatos(existente, consultorioActualizado);
+        service.save(existente);
+
+        return Response.response(HttpStatus.OK, "Consultorio modificado con éxito", existente);
     }
 
     @RequestMapping(method = RequestMethod.GET)
@@ -65,9 +97,9 @@ public class ConsultorioPresenter {
 
     @RequestMapping(value = "/id/{id}", method = RequestMethod.GET)
     public ResponseEntity<Object> findById(@PathVariable("id") int id) {
-        Consultorio aCentroOrNull = service.findById(id);
-        return (aCentroOrNull != null) ? Response.ok(aCentroOrNull)
-                : Response.notFound("Centro de Atención id " + id + " no encontrado.");
+        Consultorio aConsultorioOrNull = service.findById(id);
+        return (aConsultorioOrNull != null) ? Response.ok(aConsultorioOrNull)
+                : Response.notFound("Consultorio id " + id + " no encontrado.");
     }
 
     @RequestMapping(value = "/search/{term}", method = RequestMethod.GET)
@@ -85,14 +117,13 @@ public class ConsultorioPresenter {
     @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
     public ResponseEntity<Object> delete(@PathVariable("id") int id) {
         service.delete(id);
-        return Response.ok("Centro De Atención borrado con éxito.", "Centro De Atención borrado con éxito.");
+        return Response.ok("Consultorio borrado con éxito.", "Consultorio borrado con éxito.");
     }
 
-    // métodos privados
-    private String validarCampos(Consultorio c) {
+    private String validarCamposParaEdicion(Consultorio c) {
         if (c.getNombre() == null || c.getNombre().trim().isEmpty())
             return "Error: El nombre del consultorio es obligatorio";
-        if (!c.getNombre().matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$")) {
+        if (!c.getNombre().matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9 ]+$")) {
             return "Error: El nombre del consultorio contiene caracteres no permitidos";
         }
         return null;
@@ -100,5 +131,6 @@ public class ConsultorioPresenter {
 
     private void mapearDatos(Consultorio existente, Consultorio nuevo) {
         existente.setNombre(nuevo.getNombre());
+        existente.setNumero(nuevo.getNumero());
     }
 }

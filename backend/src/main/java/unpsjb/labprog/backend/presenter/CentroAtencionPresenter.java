@@ -66,13 +66,13 @@ public class CentroAtencionPresenter {
 
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<Object> findAll() {
-        return Response.ok(service.findAll());
+        return Response.ok(service.findAll(), "Consulta exitosa");
     }
 
     @RequestMapping(value = "/id/{id}", method = RequestMethod.GET)
     public ResponseEntity<Object> findById(@PathVariable("id") int id) {
         CentroAtencion aCentroOrNull = service.findById(id);
-        return (aCentroOrNull != null) ? Response.ok(aCentroOrNull)
+        return (aCentroOrNull != null) ? Response.ok(aCentroOrNull, "Consulta exitosa")
                 : Response.notFound("Centro de Atención id " + id + " no encontrado.");
     }
 

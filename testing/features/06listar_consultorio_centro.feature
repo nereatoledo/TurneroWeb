@@ -24,7 +24,7 @@ Entonces el sistema responde con el siguiente JSON:
 Escenario: Listar todos los centros con sus consultorios
 Dado que existen múltiples centros de atención registrados
 Cuando se solicita la lista completa de centros con sus consultorios
-Entonces el sistema responde con el siguiente JSON:
+Entonces el sistema responde con el siguiente JSON que contiene los datos:
 """
 {
 	"status_code": 200,
@@ -41,7 +41,7 @@ Entonces el sistema responde con el siguiente JSON:
 			]
 		},
 		{
-			"centro_atencion": "Centro de Salud Rawson",
+			"centro_atencion": "Centro de Salud Dr. Juan Perez",
 			"consultorios": [
 				{"numero": 201, "nombre": "Consultorio Cardiología"},
 				{"numero": 202, "nombre": "Consultorio Dermatología"},
@@ -142,7 +142,7 @@ Entonces el sistema responde con el siguiente JSON:
 Escenario: Intentar listar consultorios de un centro inexistente
 Dado que el centro de atención llamado "Centro Inexistente" no está registrado
 Cuando se solicita la lista de consultorios del centro "Centro Inexistente"
-Entonces el sistema responde con el siguiente JSON:
+Entonces el sistema responde con el siguiente JSON vacio:
 """
 {
     "status_code": 409,

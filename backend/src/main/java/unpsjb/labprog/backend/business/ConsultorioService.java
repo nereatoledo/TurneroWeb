@@ -21,32 +21,36 @@ public class ConsultorioService {
         return repository.save(consultorio);
     }
 
-    public List<Consultorio> search(String term){
+    public boolean existeConsultorioEnCentro(Integer idCentro, Integer numero) {
+        return repository.existeConsultorioEnCentro(idCentro, numero);
+    }
+
+    public boolean existeNombreEnCentro(Integer idCentro, String nombre) {
+        return repository.existeNombreEnCentro(idCentro, nombre);
+    }
+
+    public List<Consultorio> search(String term) {
         return repository.search("%" + term.toUpperCase() + "%");
     }
 
-    public boolean existeNumero(Integer numero) {
-        return repository.existeNumero(numero);
-    }
-
-
-    public List<Consultorio> findAll(){
+    public List<Consultorio> findAll() {
         List<Consultorio> result = new ArrayList<>();
         repository.findAll().forEach(e -> result.add(e));
-    return result;
+        return result;
     }
 
-    public Page<Consultorio> findByPage(int page, int size){
+    public Page<Consultorio> findByPage(int page, int size) {
         return repository.findAll(
-            PageRequest.of(page, size));
+                PageRequest.of(page, size));
     }
 
-    public Consultorio findById(int id){
+    public Consultorio findById(int id) {
         return repository.findById(id).orElse(null);
     }
+
     @Transactional
-    public void delete(int id){
+    public void delete(int id) {
         repository.deleteById(id);
     }
-    
+
 }

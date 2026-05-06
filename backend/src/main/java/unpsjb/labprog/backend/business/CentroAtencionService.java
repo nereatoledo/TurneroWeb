@@ -52,4 +52,7 @@ public class CentroAtencionService {
         repository.deleteById(id);
     }
     
+    public CentroAtencion findCentroByConsultorioId(Integer idConsultorio) {
+    return repository.findCentroByConsultorioId(idConsultorio);
+}
 }

@@ -23,4 +23,4 @@ public interface CentroAtencionRepository
 
     @Query("SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END FROM CentroAtencion c WHERE (c.id) = (?1)")
     boolean existeConsultorioCentro(Integer idCentro);
-}
+} 

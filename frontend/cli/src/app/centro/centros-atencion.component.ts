@@ -34,6 +34,14 @@ import { DataPackage } from "../data-package";
               <td>{{ centro_atencion.id }}</td>
               <td>{{ centro_atencion.nombre }}</td>
               <td class="text-right">
+                
+                <a
+                  [routerLink]="['/centros_atencion', centro_atencion.id, 'consultorios']"
+                  class="btn btn-sm btn-info mr-2"
+                >
+                  <i class="fa fa-list"></i> Consultorios
+                </a>
+
                 <a
                   [routerLink]="['/centros_atencion', centro_atencion.id]"
                   class="btn btn-sm btn-primary mr-2"
@@ -59,7 +67,7 @@ import { DataPackage } from "../data-package";
                     [currentPage]="currentPage"
                     (pageChangeRequested)="onPageChangeRequested($event)"
                     [number]="resultsPage.number"
-                    [hidden]="resultsPage.numberOfElements < 1"
+                    [hidden]="resultsPage.numberOfElements < 0"
                   >
                   </app-pagination>
                 </div>

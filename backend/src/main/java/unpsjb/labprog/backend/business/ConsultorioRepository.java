@@ -2,6 +2,8 @@ package unpsjb.labprog.backend.business;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
@@ -25,4 +27,9 @@ public interface ConsultorioRepository
 
     @Query("SELECT e FROM Consultorio e WHERE UPPER(e.nombre) LIKE ?1")
     List<Consultorio> search(String term);
+
+    @Query("SELECT c " +
+            "FROM CentroAtencion ca JOIN ca.consultorios c " +
+            "WHERE ca.id = ?1")
+    Page<Consultorio> findByCentroId(Integer idCentro, PageRequest pageable);
 }

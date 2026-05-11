@@ -48,6 +48,10 @@ public class ConsultorioService {
         return repository.findById(id).orElse(null);
     }
 
+    public Page<Consultorio> findByCentroId(int centroId, int page, int size) {
+        return repository.findByCentroId(centroId, PageRequest.of(page, size));
+    }
+
     @Transactional
     public void delete(int id) {
         repository.deleteById(id);

@@ -120,6 +120,15 @@ public class ConsultorioPresenter {
         return Response.ok("Consultorio borrado con éxito.", "Consultorio borrado con éxito.");
     }
 
+@RequestMapping(value = "/centro/{centroId}/consultorio", method = RequestMethod.GET)
+    public ResponseEntity<Object> findByCentroId(
+            @PathVariable("centroId") int centroId,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+            
+        return Response.ok(service.findByCentroId(centroId, page, size));
+    }
+    
     private String validarCamposParaEdicion(Consultorio c) {
         if (c.getNombre() == null || c.getNombre().trim().isEmpty())
             return "Error: El nombre del consultorio es obligatorio";

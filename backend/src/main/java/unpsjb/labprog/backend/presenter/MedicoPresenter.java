@@ -71,9 +71,7 @@ public class MedicoPresenter {
             }
 
         } catch (Exception e) {
-            System.out.println("====== ERROR REAL AL GUARDAR MEDICO ======");
-            e.printStackTrace();
-            return Response.response(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno, mira la consola del backend",
+            return Response.response(HttpStatus.INTERNAL_SERVER_ERROR, "Error de integridad de datos.",
                     null);
         }
     }
@@ -85,24 +83,67 @@ public class MedicoPresenter {
 
         for (Medico m : medicosDB) {
             Map<String, Object> map = new HashMap<>();
+            map.put("id", m.getId());
             map.put("nombre", m.getNombre());
             map.put("apellido", m.getApellido());
-
-            try {
-                map.put("dni", Long.parseLong(m.getDni()));
-            } catch (NumberFormatException e) {
-                map.put("dni", m.getDni());
-            }
-
+            map.put("dni", m.getDni());
             map.put("matricula", m.getMatricula());
-            if (m.getEspecialidad() != null) {
-                map.put("especialidad", m.getEspecialidad().getNombre());
-            }
+            map.put("especialidad", m.getEspecialidad().getNombre());
 
             medicosMapeados.add(map);
         }
-
         return Response.response(HttpStatus.OK, "médicos recuperados correctamente", medicosMapeados);
+    }
+
+    @RequestMapping(method = RequestMethod.PUT)
+    public ResponseEntity<Object> update(@RequestBody Medico medicoActualizado) {
+        if (medicoActualizado.getId() <= 0) {
+            return Response.error(medicoActualizado, "Debe especificar un id válido para poder modificar un médico.");
+        }
+
+        String errorCampos = validarCamposObligatorios(medicoActualizado);
+        if (errorCampos != null) {
+            return Response.response(HttpStatus.CONFLICT, errorCampos, null);
+        }
+
+        Medico existente = service.findById(medicoActualizado.getId());
+        if (existente == null) {
+            return Response.notFound("Médico id " + medicoActualizado.getId() + " no encontrado.");
+        }
+
+        Medico medicoConDni = service.findByDni(medicoActualizado.getDni());
+        if (medicoConDni != null && medicoConDni.getId() != existente.getId()) {
+            return Response.response(HttpStatus.CONFLICT, "El dni ya existe en el sistema", null);
+        }
+
+        Medico medicoConMatricula = service.findByMatricula(medicoActualizado.getMatricula());
+        if (medicoConMatricula != null && medicoConMatricula.getId() != existente.getId()) {
+            return Response.response(HttpStatus.CONFLICT, "La Matrícula ya existe en el sistema", null);
+        }
+
+        if (medicoActualizado.getEspecialidad() == null || medicoActualizado.getEspecialidad().getNombre() == null) {
+            return Response.response(HttpStatus.CONFLICT, "La especialidad NO existe", null);
+        }
+
+        Especialidad especialidadReal = especialidadService
+                .findByNombre(medicoActualizado.getEspecialidad().getNombre());
+
+        if (especialidadReal == null) {
+            return Response.response(HttpStatus.CONFLICT, "La especialidad NO existe", null);
+        }
+
+        mapearDatos(existente, medicoActualizado);
+        existente.setEspecialidad(especialidadReal);
+
+        service.save(existente);
+        return Response.response(HttpStatus.OK, "Médico modificado con éxito", existente);
+    }
+
+    private void mapearDatos(Medico existente, Medico nuevo) {
+        existente.setNombre(nuevo.getNombre());
+        existente.setApellido(nuevo.getApellido());
+        existente.setDni(nuevo.getDni());
+        existente.setMatricula(nuevo.getMatricula());
     }
 
     private String validarCamposObligatorios(Medico m) {

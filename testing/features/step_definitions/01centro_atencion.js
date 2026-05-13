@@ -35,7 +35,5 @@ When('el administrador ingresa los datos del centro de atención: {string}, {str
 Then('el sistema responde con {int} y {string}', function (codigoEsperado, textoEsperado) {
     assert.strictEqual(this.lastResponse.statusCode, codigoEsperado);
     const respuestaJson = JSON.parse(this.lastResponse.body.toString('utf8'));
-    console.log("RESPUESTA DEL BACKEND: ", respuestaJson);
-    
     assert.strictEqual(respuestaJson.message, textoEsperado);
 });

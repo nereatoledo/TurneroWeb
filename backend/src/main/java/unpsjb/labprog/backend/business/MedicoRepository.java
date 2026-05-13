@@ -16,4 +16,10 @@ public interface MedicoRepository
         @Query("SELECT e FROM Medico e WHERE UPPER(e.nombre) LIKE ?1")
         List<Medico> search(String term);
 
+        @Query("SELECT e FROM Medico e WHERE e.dni = ?1")
+        Medico findByDni(String dni);
+
+        @Query("SELECT e FROM Medico e WHERE e.matricula = ?1")
+        Medico findByMatricula(String matricula);
+
 }

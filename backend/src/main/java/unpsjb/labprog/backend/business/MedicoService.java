@@ -44,4 +44,12 @@ public class MedicoService {
     public void delete(int id) {
         repository.deleteById(id);
     }
+
+    public Medico findByDni(String dni) {
+        return repository.findByDni(dni);
+    }
+
+    public Medico findByMatricula(String matricula) {
+        return repository.findByMatricula(matricula);
+    }
 }

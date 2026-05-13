@@ -20,9 +20,9 @@ export class EspecialidadService {
         return this.http.delete<DataPackage>(`${this.especialidadesUrl}/${id}`);
     }
 
-    save(centro: Especialidad): Observable<DataPackage> {
-        return centro.id ? this.http.put<DataPackage>(this.especialidadesUrl, centro) :
-            this.http.post<DataPackage>(this.especialidadesUrl, centro);
+    save(especialidad: Especialidad): Observable<DataPackage> {
+        return especialidad.id ? this.http.put<DataPackage>(this.especialidadesUrl, especialidad) :
+            this.http.post<DataPackage>(this.especialidadesUrl, especialidad);
     }
 
     get(id: string): Observable<DataPackage> {

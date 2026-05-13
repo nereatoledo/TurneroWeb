@@ -9,7 +9,7 @@ import { DataPackage } from "../data-package";
 
 @Component({
   selector: "app-especialidad-detail",
-  standalone: true, 
+  standalone: true,
   imports: [FormsModule, CommonModule],
   template: `
     <div class="container py-4 page-animation" style="max-width: 800px;">
@@ -39,17 +39,17 @@ import { DataPackage } from "../data-package";
 
             <div class="row">
               <div class="form-group mb-4 col-md-12">
-                <label for="detalle" class="custom-label">Detalle / Descripción</label>
+                <label for="descripcion" class="custom-label">Descripción</label>
                 <input
-                  [(ngModel)]="especialidad.detalle"
-                  name="detalle"
+                  [(ngModel)]="especialidad.descripcion"
+                  name="descripcion"
                   class="form-control custom-input"
                   required
-                  #detalle="ngModel"
-                  placeholder="Ej: Atención integral..."
+                  #descripcion="ngModel"
+                  placeholder="Ej: Atención integral de la salud bucal"
                 />
-                <div *ngIf="detalle.invalid && (detalle.dirty || detalle.touched)" class="text-danger small mt-1">
-                  El detalle es requerido.
+                <div *ngIf="descripcion.invalid && (descripcion.dirty || descripcion.touched)" class="text-danger small mt-1">
+                  La descripción es requerida.
                 </div>
               </div>
             </div> 
@@ -121,11 +121,6 @@ import { DataPackage } from "../data-package";
       outline: none;
     }
 
-    .custom-input:disabled {
-      background-color: #f8f9fa;
-      cursor: not-allowed;
-    }
-
     .btn-purple-main {
       background-color: #8923dc;
       color: #ffffff;
@@ -174,9 +169,10 @@ import { DataPackage } from "../data-package";
   `],
 })
 export class EspecialidadDetailComponent implements OnInit {
-  especialidad: Especialidad = {
+  // Inicializamos sin la propiedad 'id' para asegurar que el primer save sea un POST
+  especialidad: Especialidad = <Especialidad>{
     nombre: "",
-    detalle: "",
+    descripcion: "",
   };
 
   constructor(

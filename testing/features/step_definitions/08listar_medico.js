@@ -23,7 +23,7 @@ Then('el sistema responde con un JSON de medicos:', function (docString) {
         apellido: m.apellido,
         dni: m.dni,
         matricula: m.matricula,
-        especialidad: m.especialidad
+        especialidad: (m.especialidad && m.especialidad.nombre) ? m.especialidad.nombre : m.especialidad
     }));
 
     dataObtenida.sort((a, b) => a.dni - b.dni);
@@ -32,4 +32,4 @@ Then('el sistema responde con un JSON de medicos:', function (docString) {
     }
 
     assert.deepStrictEqual(dataObtenida, esperado.data);
-});
+}); 

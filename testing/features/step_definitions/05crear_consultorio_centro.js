@@ -2,7 +2,6 @@ const { Given, When } = require('@cucumber/cucumber');
 const request = require('sync-request');
 
 Given('que existe un centro de atención llamado {string}', function (nombreCentro) {
-    // Hacemos un GET a la API para obtener todos los centros
     const resGet = request('GET', 'http://backend:8080/centros');
     const json = JSON.parse(resGet.body.toString('utf8'));
     const centros = json.data || [];

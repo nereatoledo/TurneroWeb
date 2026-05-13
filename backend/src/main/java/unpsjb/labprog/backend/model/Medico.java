@@ -18,12 +18,11 @@ import lombok.Setter;
 public class Medico {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
     @Column(nullable = false)
     private String nombre;
-
 
     @Column(nullable = false)
     private String apellido;
@@ -34,12 +33,10 @@ public class Medico {
     @Column(nullable = false, unique = true)
     private String matricula;
 
-
     @ManyToOne
     @JoinColumn(name = "especialidad_id")
     private Especialidad especialidad;
 
-    
     public Especialidad getEspecialidad() {
         return especialidad;
     }
@@ -47,5 +44,4 @@ public class Medico {
     public void setEspecialidad(Especialidad especialidad) {
         this.especialidad = especialidad;
     }
-
 }

@@ -17,6 +17,7 @@ public class ConsultorioService {
     @Autowired
     ConsultorioRepository repository;
 
+    @Transactional
     public Consultorio save(Consultorio consultorio) {
         return repository.save(consultorio);
     }

@@ -23,7 +23,7 @@ Then('el sistema responde con un JSON de medicos:', function (docString) {
         apellido: m.apellido,
         dni: m.dni,
         matricula: m.matricula,
-        especialidad: m.especialidad ? m.especialidad.nombre : null
+        especialidad: m.especialidad
     }));
 
     dataObtenida.sort((a, b) => a.dni - b.dni);

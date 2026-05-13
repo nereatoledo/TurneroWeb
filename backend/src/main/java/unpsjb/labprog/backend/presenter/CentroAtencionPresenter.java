@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.CentroAtencionService;
 import unpsjb.labprog.backend.model.CentroAtencion;
- 
+
 @RestController
 @RequestMapping("centros")
 public class CentroAtencionPresenter {

@@ -24,7 +24,7 @@ public class EspecialidadPresenter {
         if (especialidad.getDescripcion() == null || especialidad.getDescripcion().trim().isEmpty()) {
             return Response.response(HttpStatus.CONFLICT, "La descripción de la especialidad es obligatoria", null);
         }
-        if (service.existeNombre(especialidad.getNombre())) {
+        if (service.findByNombre(especialidad.getNombre()) != null) {
             return Response.response(HttpStatus.CONFLICT, "Ya existe una especialidad con ese nombre", null);
         }
 
@@ -43,10 +43,11 @@ public class EspecialidadPresenter {
             return Response.error(especialidadActualizada, "Debe especificar un id válido.");
         }
         Especialidad existente = service.findById(especialidadActualizada.getId());
-        if (existente == null) return Response.notFound("Especialidad no encontrada.");
+        if (existente == null)
+            return Response.notFound("Especialidad no encontrada.");
 
         if (!existente.getNombre().equalsIgnoreCase(especialidadActualizada.getNombre())) {
-            if (service.existeNombre(especialidadActualizada.getNombre())) {
+            if (service.findByNombre(especialidadActualizada.getNombre()) != null) {
                 return Response.response(HttpStatus.CONFLICT, "El nombre de la especialidad ya está en uso", null);
             }
         }
@@ -77,6 +78,7 @@ public class EspecialidadPresenter {
         Especialidad e = service.findById(id);
         return (e != null) ? Response.ok(e) : Response.notFound("Especialidad no encontrada.");
     }
+
     @RequestMapping(value = "/page", method = RequestMethod.GET)
     public ResponseEntity<Object> findByPage(
             @RequestParam(defaultValue = "0") int page,

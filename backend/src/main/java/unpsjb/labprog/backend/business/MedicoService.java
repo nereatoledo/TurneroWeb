@@ -9,39 +9,34 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import jakarta.transaction.Transactional;
-import unpsjb.labprog.backend.model.Especialidad;
+import unpsjb.labprog.backend.model.Medico;
 
 @Service
-public class EspecialidadService {
+public class MedicoService {
 
     @Autowired
-    EspecialidadRepository repository;
+    MedicoRepository repository;
 
     @Transactional
-    public Especialidad save(Especialidad especialidad) {
-        return repository.save(especialidad);
+    public Medico save(Medico medico) {
+        return repository.save(medico);
     }
 
-    public List<Especialidad> search(String term) {
+    public List<Medico> search(String term) {
         return repository.search("%" + term.toUpperCase() + "%");
     }
 
-    public List<Especialidad> findAll() {
-        List<Especialidad> result = new ArrayList<>();
+    public List<Medico> findAll() {
+        List<Medico> result = new ArrayList<>();
         repository.findAll().forEach(e -> result.add(e));
         return result;
     }
 
-    public Page<Especialidad> findByPage(int page, int size) {
-        return repository.findAll(
-                PageRequest.of(page, size));
+    public Page<Medico> findByPage(int page, int size) {
+        return repository.findAll(PageRequest.of(page, size));
     }
 
-public Especialidad findByNombre(String nombre) {
-        return repository.findByNombre(nombre);
-    }
-
-    public Especialidad findById(int id) {
+    public Medico findById(int id) {
         return repository.findById(id).orElse(null);
     }
 
@@ -49,5 +44,4 @@ public Especialidad findByNombre(String nombre) {
     public void delete(int id) {
         repository.deleteById(id);
     }
-
 }

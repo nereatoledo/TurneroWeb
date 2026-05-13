@@ -1,4 +1,3 @@
-import { CommonModule } from "@angular/common";
 import { Component } from "@angular/core";
 import { RouterModule } from "@angular/router";
 import { CentroAtencion } from "./centro-atencion";
@@ -7,6 +6,7 @@ import { ModalService } from "../modal/modal.service";
 import { PaginationComponent } from "../pagination/pagination.component";
 import { ResultsPage } from "../results-page";
 import { DataPackage } from "../data-package";
+import { CommonModule, Location } from "@angular/common";
 
 @Component({
   selector: "app-customer",

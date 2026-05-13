@@ -13,8 +13,8 @@ import unpsjb.labprog.backend.model.Especialidad;
 public interface EspecialidadRepository
         extends CrudRepository<Especialidad, Integer>, PagingAndSortingRepository<Especialidad, Integer> {
 
-    @Query("SELECT CASE WHEN COUNT(e) > 0 THEN true ELSE false END FROM Especialidad e WHERE UPPER(e.nombre) = UPPER(?1)")
-    boolean existeNombre(String nombre);
+    @Query("SELECT e FROM Especialidad e WHERE UPPER(e.nombre) = UPPER(?1)")
+    Especialidad findByNombre(String nombre);
 
     @Query("SELECT e FROM Especialidad e WHERE UPPER(e.nombre) LIKE ?1")
     List<Especialidad> search(String term);

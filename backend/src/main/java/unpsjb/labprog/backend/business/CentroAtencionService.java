@@ -17,6 +17,7 @@ public class CentroAtencionService {
     @Autowired
     CentroAtencionRepository repository;
 
+    @Transactional
     public CentroAtencion save(CentroAtencion centro) {
         return repository.save(centro);
     }

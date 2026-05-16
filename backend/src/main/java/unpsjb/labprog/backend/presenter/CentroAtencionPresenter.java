@@ -16,7 +16,7 @@ public class CentroAtencionPresenter {
     @Autowired
     CentroAtencionService service;
 
-//endoints púbicos
+    // endoints púbicos
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<Object> crearCentro(@RequestBody CentroAtencion centro) {
 
@@ -26,7 +26,8 @@ public class CentroAtencionPresenter {
         }
 
         if (service.existeConflictoNombreDireccion(centro.getNombre(), centro.getDireccion())) {
-            return Response.response(HttpStatus.CONFLICT, "Ya existe un centro de atención con ese nombre y dirección", null);
+            return Response.response(HttpStatus.CONFLICT, "Ya existe un centro de atención con ese nombre y dirección",
+                    null);
         }
         if (service.existeDireccion(centro.getDireccion())) {
             return Response.response(HttpStatus.CONFLICT, "Ya existe un centro de atención con esa dirección", null);
@@ -36,11 +37,12 @@ public class CentroAtencionPresenter {
         return Response.response(HttpStatus.OK, "Centro de atención creado", centroGuardado);
     }
 
-    @RequestMapping(method=RequestMethod.PUT)
+    @RequestMapping(method = RequestMethod.PUT)
     public ResponseEntity<Object> update(@RequestBody CentroAtencion centroActualizado) {
-        
-        if(centroActualizado.getId() <= 0){
-            return Response.error(centroActualizado, "Debe especificar un id válido para poder modificar un Centro de Atención.");
+
+        if (centroActualizado.getId() <= 0) {
+            return Response.error(centroActualizado,
+                    "Debe especificar un id válido para poder modificar un Centro de Atención.");
         }
 
         String errorCampos = validarCamposObligatorios(centroActualizado);
@@ -50,7 +52,8 @@ public class CentroAtencionPresenter {
 
         CentroAtencion centroExistente = service.findById(centroActualizado.getId());
         if (centroExistente == null) {
-            return Response.error(centroActualizado, "Debe especificar un id válido para poder modificar un Centro de Atención.");
+            return Response.error(centroActualizado,
+                    "Debe especificar un id válido para poder modificar un Centro de Atención.");
         }
 
         ResponseEntity<Object> errorConflicto = validarConflictosDeEdicion(centroExistente, centroActualizado);
@@ -60,7 +63,7 @@ public class CentroAtencionPresenter {
 
         mapearDatos(centroExistente, centroActualizado);
         service.save(centroExistente);
-        
+
         return Response.response(HttpStatus.OK, "Centro de atención modificado", centroExistente);
     }
 
@@ -94,14 +97,57 @@ public class CentroAtencionPresenter {
         return Response.ok("Centro De Atención borrado con éxito.", "Centro De Atención borrado con éxito.");
     }
 
+    @RequestMapping(value = "/{idCentro}/especialidades/{idEspecialidad}", method = RequestMethod.POST)
+    public ResponseEntity<Object> asociarEspecialidad(@PathVariable("idCentro") int idCentro,
+            @PathVariable("idEspecialidad") int idEspecialidad) {
+        try {
+            CentroAtencion centroActualizado = service.asociarEspecialidad(idCentro, idEspecialidad);
+            return Response.response(HttpStatus.OK, "Asociación de especialidad en centro realizada correctamente",
+                    centroActualizado);
+
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return Response.response(HttpStatus.CONFLICT, e.getMessage(), null);
+        }
+    }
+
+    @RequestMapping(value = "/{idCentro}/especialidades/{idEspecialidad}", method = RequestMethod.DELETE)
+    public ResponseEntity<Object> desasociarEspecialidad(@PathVariable("idCentro") int idCentro,
+            @PathVariable("idEspecialidad") int idEspecialidad) {
+        try {
+            CentroAtencion centroActualizado = service.desasociarEspecialidad(idCentro, idEspecialidad);
+
+            if (centroActualizado == null) {
+                return Response.response(HttpStatus.NOT_FOUND, "El Centro de Atención o la Especialidad no existen.",
+                        null);
+            }
+
+            return Response.response(HttpStatus.OK, "Especialidad desasociada exitosamente del centro de atención.",
+                    centroActualizado);
+
+        } catch (IllegalStateException e) {
+            return Response.response(HttpStatus.CONFLICT, e.getMessage(), null);
+        }
+    }
+
+    @RequestMapping(value = "/especialidad/{idEspecialidad}", method = RequestMethod.GET)
+    public ResponseEntity<Object> findCentrosByEspecialidad(@PathVariable("idEspecialidad") int idEspecialidad) {
+        return Response.ok(service.findCentrosByEspecialidadId(idEspecialidad), "Consulta exitosa");
+    }
+
     // métodos privados
     private String validarCamposObligatorios(CentroAtencion c) {
-        if (c.getNombre() == null || c.getNombre().trim().isEmpty()) return "El nombre es requerido";
-        if (c.getDireccion() == null || c.getDireccion().trim().isEmpty()) return "La dirección es requerida";
-        if (c.getLocalidad() == null || c.getLocalidad().trim().isEmpty()) return "La localidad es requerida";
-        if (c.getProvincia() == null || c.getProvincia().trim().isEmpty()) return "La provincia es requerida";
-        if (c.getTelefono() == null || c.getTelefono().trim().isEmpty()) return "El teléfono es requerido";
-        if (c.getCoordenadas() == null) return "Las coordenadas son inválidas";
+        if (c.getNombre() == null || c.getNombre().trim().isEmpty())
+            return "El nombre es requerido";
+        if (c.getDireccion() == null || c.getDireccion().trim().isEmpty())
+            return "La dirección es requerida";
+        if (c.getLocalidad() == null || c.getLocalidad().trim().isEmpty())
+            return "La localidad es requerida";
+        if (c.getProvincia() == null || c.getProvincia().trim().isEmpty())
+            return "La provincia es requerida";
+        if (c.getTelefono() == null || c.getTelefono().trim().isEmpty())
+            return "El teléfono es requerido";
+        if (c.getCoordenadas() == null)
+            return "Las coordenadas son inválidas";
 
         if (!c.getTelefono().matches("^[0-9 \\-\\+]+$")) {
             return "El formato del teléfono es inválido. Solo se aceptan números.";
@@ -115,23 +161,29 @@ public class CentroAtencionPresenter {
         boolean cambioLocalidad = !existente.getLocalidad().equalsIgnoreCase(nuevo.getLocalidad());
         boolean cambioProvincia = !existente.getProvincia().equalsIgnoreCase(nuevo.getProvincia());
         boolean cambioTelefono = !existente.getTelefono().equalsIgnoreCase(nuevo.getTelefono());
-        boolean cambioLat = Double.compare(existente.getCoordenadas().getLatitud(), nuevo.getCoordenadas().getLatitud()) != 0;
-        boolean cambioLon = Double.compare(existente.getCoordenadas().getLongitud(), nuevo.getCoordenadas().getLongitud()) != 0;
+        boolean cambioLat = Double.compare(existente.getCoordenadas().getLatitud(),
+                nuevo.getCoordenadas().getLatitud()) != 0;
+        boolean cambioLon = Double.compare(existente.getCoordenadas().getLongitud(),
+                nuevo.getCoordenadas().getLongitud()) != 0;
 
-        boolean hayCambios = cambioNombre || cambioDireccion || cambioLocalidad || cambioProvincia || cambioTelefono || cambioLat || cambioLon;
+        boolean hayCambios = cambioNombre || cambioDireccion || cambioLocalidad || cambioProvincia || cambioTelefono
+                || cambioLat || cambioLon;
 
         if (!hayCambios) {
-            return Response.response(HttpStatus.CONFLICT, "Ya existe un centro de atención con ese nombre y dirección", null);
+            return Response.response(HttpStatus.CONFLICT, "Ya existe un centro de atención con ese nombre y dirección",
+                    null);
         }
 
-        if ((cambioNombre || cambioDireccion) && service.existeConflictoNombreDireccion(nuevo.getNombre(), nuevo.getDireccion())) {
-            return Response.response(HttpStatus.CONFLICT, "Ya existe un centro de atención con ese nombre y dirección", null);
+        if ((cambioNombre || cambioDireccion)
+                && service.existeConflictoNombreDireccion(nuevo.getNombre(), nuevo.getDireccion())) {
+            return Response.response(HttpStatus.CONFLICT, "Ya existe un centro de atención con ese nombre y dirección",
+                    null);
         }
         if (cambioDireccion && service.existeDireccion(nuevo.getDireccion())) {
             return Response.response(HttpStatus.CONFLICT, "Ya existe un centro de atención con esa dirección", null);
         }
 
-        return null; 
+        return null;
     }
 
     private void mapearDatos(CentroAtencion existente, CentroAtencion nuevo) {

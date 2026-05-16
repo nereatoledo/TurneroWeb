@@ -8,6 +8,7 @@ function limpiarCentro(centro) {
     delete limpio.id;
     delete limpio.telefono;
     delete limpio.consultorios;
+    delete limpio.especialidades;
     
     if (limpio.coordenadas) {
         delete limpio.coordenadas.id;

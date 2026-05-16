@@ -23,4 +23,7 @@ public interface CentroAtencionRepository
 
     @Query("SELECT ca FROM CentroAtencion ca JOIN ca.consultorios c WHERE c.id = ?1")
     CentroAtencion findCentroByConsultorioId(Integer idConsultorio);
+
+    @Query("SELECT c FROM CentroAtencion c JOIN c.especialidades e WHERE e.id = ?1")
+    List<CentroAtencion> findCentrosByEspecialidadId(int idEspecialidad);
 }

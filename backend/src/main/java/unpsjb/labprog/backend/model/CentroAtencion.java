@@ -72,13 +72,9 @@ public class CentroAtencion {
 
     public void agregarEspecialidad(Especialidad especialidad) {
         this.especialidades.add(especialidad);
-        especialidad.getCentrosAtencion().add(this);
     }
 
     public void removerEspecialidad(Especialidad especialidad) {
         this.especialidades.removeIf(e -> e.getId() == especialidad.getId());
-        if (especialidad.getCentrosAtencion() != null) {
-            especialidad.getCentrosAtencion().removeIf(c -> c.getId() == this.id);
-        }
     }
 }

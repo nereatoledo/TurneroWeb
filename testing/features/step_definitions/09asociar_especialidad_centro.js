@@ -4,7 +4,7 @@ const request = require('sync-request');
 
 Given('existen {int} centros de atención registrados en el sistema:', function (cantidad, dataTable) {
     const centros = dataTable.hashes();
-    assert.ok(centros.length > 0, "La tabla de centros de atención está vacía");
+    assert.ok(centros.length > 0);
 });
 
 When('el administrador asocia la especialidad {string} al centro de atención {string}', function (nombreEspecialidad, nombreCentro) {
@@ -20,7 +20,7 @@ When('el administrador asocia la especialidad {string} al centro de atención {s
             }
         }
     } catch (error) {
-        console.error("No se pudieron pre-cargar los centros:", error.message);
+        console.error(error.message);
     }
 
     try {
@@ -32,7 +32,7 @@ When('el administrador asocia la especialidad {string} al centro de atención {s
             }
         }
     } catch (error) {
-        console.error("No se pudieron pre-cargar las especialidades:", error.message);
+        console.error(error.message);
     }
 
     const idCentro = this.centrosMap[nombreCentro] || 0;

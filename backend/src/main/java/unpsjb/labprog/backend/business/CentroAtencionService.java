@@ -62,11 +62,7 @@ public class CentroAtencionService {
         return repository.findCentroByConsultorioId(idConsultorio);
     }
 
-    public List<CentroAtencion> findCentrosByEspecialidadId(int idEspecialidad) {
-        return repository.findCentrosByEspecialidadId(idEspecialidad);
-    }
-
-@Transactional
+    @Transactional
     public CentroAtencion asociarEspecialidad(int idCentro, int idEspecialidad) {
         CentroAtencion centro = repository.findById(idCentro).orElse(null);
         if (centro == null) {
@@ -77,10 +73,10 @@ public class CentroAtencionService {
         if (especialidad == null) {
             throw new IllegalArgumentException("No existe la especialidad");
         }
-        
+
         boolean yaEstaAsociada = centro.getEspecialidades().stream()
                 .anyMatch(e -> e.getId() == idEspecialidad);
-        
+
         if (yaEstaAsociada) {
             throw new IllegalStateException("Especialidad ya se encuentra asociada");
         }
@@ -94,16 +90,52 @@ public class CentroAtencionService {
         CentroAtencion centro = repository.findById(idCentro).orElse(null);
         Especialidad especialidad = especialidadRepository.findById(idEspecialidad).orElse(null);
 
-        if (centro == null || especialidad == null) {
-            return null;
-        }
+        if (centro != null && especialidad != null) {
+            if (especialidad.getMedicos() != null && !especialidad.getMedicos().isEmpty()) {
+                throw new IllegalStateException(
+                        "No se puede desasociar la especialidad porque hay médicos activos o turnos programados.");
+            }
 
-        if (especialidad.getMedicos() != null && !especialidad.getMedicos().isEmpty()) {
-            throw new IllegalStateException(
-                    "No se puede desasociar la especialidad porque hay médicos activos o turnos programados.");
+            centro.removerEspecialidad(especialidad);
+            return repository.save(centro);
         }
+        return null;
+    }
 
-        centro.removerEspecialidad(especialidad);
-        return repository.save(centro);
+    public List<CentroAtencion> findCentrosByEspecialidadId(int idEspecialidad) {
+        return repository.findCentrosByEspecialidadId(idEspecialidad);
+    }
+
+    public java.util.List<java.util.Map<String, Object>> obtenerEspecialidadesPorCentro() {
+        java.util.List<CentroAtencion> centros = new java.util.ArrayList<>();
+        repository.findAll().forEach(centros::add);
+
+        java.util.List<java.util.Map<String, Object>> resultado = new java.util.ArrayList<>();
+        
+        for (CentroAtencion c : centros) {
+            if (c.getEspecialidades() != null && !c.getEspecialidades().isEmpty()) {
+                java.util.Map<String, Object> map = new java.util.LinkedHashMap<>();
+                map.put("centro_de_atencion", c.getNombre());
+                
+                java.util.List<String> especialidades = c.getEspecialidades().stream()
+                        .map(Especialidad::getNombre)
+                        .collect(java.util.stream.Collectors.toList());
+                        
+                map.put("especialidades", especialidades);
+                resultado.add(map);
+            }
+        }
+        return resultado;
+    }
+
+    public java.util.List<String> obtenerEspecialidadesDeCentro(int idCentro) {
+        CentroAtencion centro = repository.findById(idCentro).orElse(null);
+        if (centro == null) {
+            throw new IllegalArgumentException("No existe el Centro Médico");
+        }
+        
+        return centro.getEspecialidades().stream()
+                .map(Especialidad::getNombre)
+                .collect(java.util.stream.Collectors.toList());
     }
 }

@@ -134,6 +134,20 @@ public class CentroAtencionPresenter {
         return Response.ok(service.findCentrosByEspecialidadId(idEspecialidad), "Consulta exitosa");
     }
 
+    @RequestMapping(value = "/especialidades", method = RequestMethod.GET)
+    public ResponseEntity<Object> obtenerEspecialidadesCentros() {
+        return Response.response(HttpStatus.OK, "especialidades asociadas a centros recuperadas correctamente", service.obtenerEspecialidadesPorCentro());
+    }
+
+    @RequestMapping(value = "/{idCentro}/especialidades", method = RequestMethod.GET)
+    public ResponseEntity<Object> obtenerEspecialidadesDeCentro(@PathVariable("idCentro") int idCentro) {
+        try {
+            return Response.response(HttpStatus.OK, "especialidades asociadas a centros recuperadas correctamente", service.obtenerEspecialidadesDeCentro(idCentro));
+        } catch (IllegalArgumentException e) {
+            return Response.response(HttpStatus.NOT_FOUND, e.getMessage(), null);
+        }
+    }
+
     // métodos privados
     private String validarCamposObligatorios(CentroAtencion c) {
         if (c.getNombre() == null || c.getNombre().trim().isEmpty())

@@ -36,4 +36,8 @@ export class CentroAtencionService {
   byId(id: number): Observable<DataPackage> {
     return this.http.get<DataPackage>(`${this.centrosUrl}/id/${id}`);
   }
+
+  obtenerEspecialidadesDeCentro(idCentro: number): Observable<DataPackage> {
+    return this.http.get<DataPackage>(`${this.centrosUrl}/${idCentro}/especialidades`);
+  }
 }

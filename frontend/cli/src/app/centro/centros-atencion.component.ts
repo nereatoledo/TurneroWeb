@@ -1,4 +1,4 @@
-import { Component } from "@angular/core";
+import { Component, OnInit } from "@angular/core";
 import { RouterModule } from "@angular/router";
 import { CentroAtencion } from "./centro-atencion";
 import { CentroAtencionService } from "./centro-atencion.service";
@@ -26,7 +26,7 @@ import { CommonModule, Location } from "@angular/common";
             <tr>
               <th>#</th>
               <th>Nombre</th>
-              <th>Operaciones</th>
+              <th class="text-right">Operaciones</th>
             </tr>
           </thead>
           <tbody>
@@ -40,6 +40,13 @@ import { CommonModule, Location } from "@angular/common";
                   class="btn btn-sm btn-info mr-2"
                 >
                   <i class="fa fa-list"></i> Consultorios
+                </a>
+
+                <a
+                  [routerLink]="['/centros_atencion', centro_atencion.id, 'especialidades']"
+                  class="btn btn-sm btn-secondary mr-2"
+                >
+                  <i class="fa fa-tags"></i> Especialidades
                 </a>
 
                 <a
@@ -80,7 +87,7 @@ import { CommonModule, Location } from "@angular/common";
   `,
   styles: ``,
 })
-export class CentrosAtencionComponent {
+export class CentrosAtencionComponent implements OnInit {
   centros_atencion: CentroAtencion[] = [];
   resultsPage: ResultsPage = <ResultsPage>{};
   currentPage: number = 1;

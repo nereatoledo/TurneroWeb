@@ -6,7 +6,7 @@ Escenario: Recuperar todas los médicos asociadas a todos los centros
 Dado que existen médicos asociados a centros médicos en el sistema
 Cuando un usuario del sistema solicita la lista de médicos asociados 
 Entonces el sistema responde con un JSON de los centros y sus médicos:
-
+   
 """
 {
     "status_code": 200,

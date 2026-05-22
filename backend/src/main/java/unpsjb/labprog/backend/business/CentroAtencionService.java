@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import jakarta.transaction.Transactional;
 import unpsjb.labprog.backend.model.CentroAtencion;
 import unpsjb.labprog.backend.model.Especialidad;
+import unpsjb.labprog.backend.model.Medico;
 
 @Service
 public class CentroAtencionService {
@@ -20,6 +21,9 @@ public class CentroAtencionService {
 
     @Autowired
     EspecialidadRepository especialidadRepository;
+
+    @Autowired
+    MedicoRepository medicoRepository;
 
     @Transactional
     public CentroAtencion save(CentroAtencion centro) {
@@ -137,5 +141,101 @@ public class CentroAtencionService {
         return centro.getEspecialidades().stream()
                 .map(Especialidad::getNombre)
                 .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Transactional
+    public void asociarMedico(String nombreCentro, String dni, String matricula) {
+        CentroAtencion centro = repository.findByNombre(nombreCentro);
+        if (centro == null) {
+            throw new IllegalArgumentException("No existe el Centro Médico");
+        }
+
+        Medico medico = medicoRepository.findByDni(dni);
+        if (medico == null) {
+            throw new IllegalStateException("Médico no existe con el dni indicado");
+        }
+
+        if (!medico.getMatricula().equals(matricula)) {
+            throw new IllegalStateException("Médico no existe con la matrícula indicada");
+        }
+
+        boolean especialidadDisponible = centro.getEspecialidades().stream()
+                .anyMatch(e -> e.getNombre().equalsIgnoreCase(medico.getEspecialidad().getNombre()));
+        if (!especialidadDisponible) {
+            throw new IllegalStateException("La especialidad del médico no se encuentra disponible para el centro de salud");
+        }
+
+        boolean yaEstaAsociado = centro.getMedicos().stream()
+                .anyMatch(m -> m.getId() == medico.getId());
+        if (yaEstaAsociado) {
+            throw new IllegalStateException("Médico en centro ya está asociado al centro de atención");
+        }
+
+        centro.agregarMedico(medico);
+        repository.save(centro);
+    }
+
+    @Transactional
+    public void desasociarMedico(String nombreCentro, int idMedico) {
+        CentroAtencion centro = repository.findByNombre(nombreCentro);
+        if (centro == null) {
+            throw new IllegalArgumentException("No existe el Centro Médico");
+        }
+
+        Medico medico = centro.getMedicos().stream()
+                .filter(m -> m.getId() == idMedico)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("El médico no pertenece al staff de este centro"));
+        
+        centro.removerMedico(medico);
+        repository.save(centro);
+    }
+
+    public java.util.List<java.util.Map<String, Object>> obtenerMedicosDeCentro(String nombreCentro) {
+        CentroAtencion centro = repository.findByNombre(nombreCentro);
+        if (centro == null) {
+            throw new IllegalArgumentException("No existe el Centro Médico");
+        }
+
+        java.util.List<java.util.Map<String, Object>> medicosJson = new java.util.ArrayList<>();
+        for (Medico m : centro.getMedicos()) {
+            java.util.Map<String, Object> medicoMap = new java.util.LinkedHashMap<>();
+            medicoMap.put("nombre", m.getNombre());
+            medicoMap.put("apellido", m.getApellido());
+            medicoMap.put("dni", Integer.parseInt(m.getDni()));
+            medicoMap.put("matricula", m.getMatricula());
+            medicoMap.put("especialidad", m.getEspecialidad().getNombre());
+            medicosJson.add(medicoMap);
+        }
+        return medicosJson;
+    }
+
+    public java.util.List<java.util.Map<String, Object>> obtenerMedicosPorCentro() {
+        java.util.List<CentroAtencion> centros = new java.util.ArrayList<>();
+        repository.findAll().forEach(centros::add);
+
+        java.util.List<java.util.Map<String, Object>> resultado = new java.util.ArrayList<>();
+
+        for (CentroAtencion c : centros) {
+            if (c.getMedicos() != null && !c.getMedicos().isEmpty()) {
+                java.util.Map<String, Object> map = new java.util.LinkedHashMap<>();
+                map.put("centro_de_atencion", c.getNombre());
+                
+                java.util.List<java.util.Map<String, Object>> medicosList = new java.util.ArrayList<>();
+                for (Medico m : c.getMedicos()) {
+                    java.util.Map<String, Object> medicoMap = new java.util.LinkedHashMap<>();
+                    medicoMap.put("nombre", m.getNombre());
+                    medicoMap.put("apellido", m.getApellido());
+                    medicoMap.put("dni", Integer.parseInt(m.getDni()));
+                    medicoMap.put("matricula", m.getMatricula());
+                    medicoMap.put("especialidad", m.getEspecialidad().getNombre());
+                    medicosList.add(medicoMap);
+                }
+                
+                map.put("medicos", medicosList);
+                resultado.add(map);
+            }
+        }
+        return resultado;
     }
 }

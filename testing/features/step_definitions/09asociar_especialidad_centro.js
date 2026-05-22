@@ -51,7 +51,7 @@ When('el administrador asocia la especialidad {string} al centro de atención {s
             this.statusCode = err.statusCode;
             if (err.body) {
                 try {
-                    const jsonParseado = JSON.parse(err.body.toString('utf8'));
+                    const jsonParseado = JSON.parse(err.body.toString('utf8')); 
                     this.statusCode = jsonParseado.status || this.statusCode;
                     this.statusText = jsonParseado.message;
                 } catch (e) {

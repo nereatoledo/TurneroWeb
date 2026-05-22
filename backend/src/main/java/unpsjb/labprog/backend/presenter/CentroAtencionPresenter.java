@@ -9,6 +9,8 @@ import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.CentroAtencionService;
 import unpsjb.labprog.backend.model.CentroAtencion;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("centros")
 public class CentroAtencionPresenter {
@@ -16,7 +18,6 @@ public class CentroAtencionPresenter {
     @Autowired
     CentroAtencionService service;
 
-    // endoints púbicos
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<Object> crearCentro(@RequestBody CentroAtencion centro) {
 
@@ -146,6 +147,55 @@ public class CentroAtencionPresenter {
         } catch (IllegalArgumentException e) {
             return Response.response(HttpStatus.NOT_FOUND, e.getMessage(), null);
         }
+    }
+
+    @RequestMapping(value = "/asociar-medico", method = RequestMethod.POST)
+    public ResponseEntity<Object> asociarMedicoAlStaff(@RequestBody Map<String, String> payload) {
+        try {
+            String centroDeAtencion = payload.get("centro_de_atencion");
+            String dni = payload.get("dni");
+            String matricula = payload.get("matrícula"); 
+
+            service.asociarMedico(centroDeAtencion, dni, matricula);
+
+            return Response.response(HttpStatus.OK, "Asociación de médico en centro realizada correctamente", null);
+
+        } catch (IllegalStateException e) {
+            return Response.response(HttpStatus.CONFLICT, e.getMessage(), null);
+        } catch (IllegalArgumentException e) {
+            return Response.response(HttpStatus.NOT_FOUND, e.getMessage(), null);
+        }
+    }
+
+    @RequestMapping(value = "/desasociar-medico", method = RequestMethod.DELETE)
+    public ResponseEntity<Object> desasociarMedicoDelStaff(@RequestBody Map<String, String> payload) {
+        try {
+            String centroDeAtencion = payload.get("centro_de_atencion");
+            int idMedico = Integer.parseInt(payload.get("id_medico"));
+
+            service.desasociarMedico(centroDeAtencion, idMedico);
+
+            return Response.response(HttpStatus.OK, "Desasociación de médico en centro realizada correctamente", null);
+
+        } catch (IllegalStateException e) {
+            return Response.response(HttpStatus.CONFLICT, e.getMessage(), null);
+        } catch (IllegalArgumentException e) {
+            return Response.response(HttpStatus.NOT_FOUND, e.getMessage(), null);
+        }
+    }
+
+    @RequestMapping(value = "/{nombreCentro}/medicos", method = RequestMethod.GET)
+    public ResponseEntity<Object> obtenerMedicosDeCentro(@PathVariable("nombreCentro") String nombreCentro) {
+        try {
+            return Response.response(HttpStatus.OK, "médicos asociados recuperados correctamente", service.obtenerMedicosDeCentro(nombreCentro));
+        } catch (IllegalArgumentException e) {
+            return Response.response(HttpStatus.NOT_FOUND, e.getMessage(), null);
+        }
+    }
+
+    @RequestMapping(value = "/medicos", method = RequestMethod.GET)
+    public ResponseEntity<Object> obtenerTodosLosMedicosDeCentros() {
+        return Response.response(HttpStatus.OK, "médicos asociados a centros recuperados correctamente", service.obtenerMedicosPorCentro());
     }
 
     // métodos privados

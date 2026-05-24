@@ -9,6 +9,7 @@ import { ConsultorioDetailComponent } from './consultorio/consultorio-detail.com
 import { MedicosComponent } from './medico/medicos.component';
 import { MedicoDetailComponent } from './medico/medico-detail.component';
 import { CentroEspecialidadesComponent } from './centro-especialidades/centro-especialidades.component';
+import { CentroMedicosComponent } from './centro-medicos/centro-medicos.component';
 
 export const routes: Routes = [
     {path: '', component: HomeComponent},
@@ -26,6 +27,7 @@ export const routes: Routes = [
     {path: 'centros_atencion/:id/consultorios/:idConsultorio', component: ConsultorioDetailComponent},
     
     {path: 'centros_atencion/:id/especialidades', component: CentroEspecialidadesComponent},
+    {path: 'centros_atencion/:id/medicos', component: CentroMedicosComponent},
     
     {path: 'medicos', component: MedicosComponent},
     {path: 'medicos/new', component: MedicoDetailComponent},

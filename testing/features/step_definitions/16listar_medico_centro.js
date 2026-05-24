@@ -1,7 +1,7 @@
 const { Given, When, Then } = require('@cucumber/cucumber');
 const request = require('sync-request');
 const assert = require('assert');
-const jsonDiff = require('json-diff'); // Ahora sí la va a encontrar
+const jsonDiff = require('json-diff');
 
 Given('que existen médicos asociados a centros médicos en el sistema', function () {
     return 'pasado';
@@ -30,7 +30,10 @@ Then('el sistema responde con un JSON de los centros y sus médicos:', function 
         return data.sort((a, b) => a.centro_de_atencion.localeCompare(b.centro_de_atencion))
             .map(centro => ({
                 ...centro,
-                medicos: centro.medicos.sort((m1, m2) => m1.dni - m2.dni)
+                medicos: centro.medicos.sort((m1, m2) => m1.dni - m2.dni).map(m => {
+                    const { id, ...medicoSinId } = m;
+                    return medicoSinId;
+                })
             }));
     };
 

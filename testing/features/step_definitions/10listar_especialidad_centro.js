@@ -44,7 +44,9 @@ Then('el sistema responde con un JSON de los centros y sus especialidades:', fun
         assert.ok(centroActual);
 
         const espEsperadasSorted = [...espCentroEsperado.especialidades].sort(sortAlfabetico);
-        const espActualesSorted = [...centroActual.especialidades].sort(sortAlfabetico);
+        
+        const actualesMapeadas = centroActual.especialidades.map(e => typeof e === 'object' ? e.nombre : e);
+        const espActualesSorted = [...actualesMapeadas].sort(sortAlfabetico);
 
         assert.deepStrictEqual(espActualesSorted, espEsperadasSorted);
     });
@@ -62,7 +64,9 @@ Then('el sistema responde con un JSON de las especialidades de ese centro:', fun
 
     const sortAlfabetico = (a, b) => a.localeCompare(b);
     const espEsperadasSorted = [...esperado.data].sort(sortAlfabetico);
-    const espActualesSorted = [...actual.data].sort(sortAlfabetico);
+    
+    const actualesMapeadas = actual.data.map(e => typeof e === 'object' ? e.nombre : e);
+    const espActualesSorted = [...actualesMapeadas].sort(sortAlfabetico);
 
     assert.deepStrictEqual(espActualesSorted, espEsperadasSorted);
 });

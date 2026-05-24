@@ -24,12 +24,12 @@ import { CommonModule } from "@angular/common";
         <table class="table table-striped table-sm">
           <thead>
             <tr>
-              <th>ID</th>
+              <th>#</th>
               <th>Nombre Completo</th>
               <th>DNI</th>
               <th>Matrícula</th>
               <th>Especialidad</th>
-              <th>Operaciones</th>
+              <th class="text-right">Operaciones</th>
             </tr>
           </thead>
           <tbody>
@@ -38,7 +38,7 @@ import { CommonModule } from "@angular/common";
               <td>{{ medico.apellido }}, {{ medico.nombre }}</td>
               <td>{{ medico.dni }}</td>
               <td>{{ medico.matricula }}</td>
-              <td>{{ medico.especialidad?.nombre || medico.especialidad }}</td>
+              <td>{{ medico.especialidad?.nombre }}</td>
               <td class="text-right">
                 
                 <a
@@ -77,7 +77,7 @@ import { CommonModule } from "@angular/common";
       </div>
     </div>
   `,
-    styles: ``,
+    styles: [``],
 })
 export class MedicosComponent implements OnInit {
     resultsPage: ResultsPage = <ResultsPage>{};

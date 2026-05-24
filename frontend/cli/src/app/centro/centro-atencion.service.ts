@@ -40,4 +40,24 @@ export class CentroAtencionService {
   obtenerEspecialidadesDeCentro(idCentro: number): Observable<DataPackage> {
     return this.http.get<DataPackage>(`${this.centrosUrl}/${idCentro}/especialidades`);
   }
+
+  asociarEspecialidad(idCentro: number, idEspecialidad: number): Observable<DataPackage> {
+    return this.http.post<DataPackage>(`${this.centrosUrl}/${idCentro}/especialidades/${idEspecialidad}`, {});
+  }
+  desasociarEspecialidad(idCentro: number, idEspecialidad: number): Observable<DataPackage> {
+    return this.http.delete<DataPackage>(`${this.centrosUrl}/${idCentro}/especialidades/${idEspecialidad}`);
+  }
+
+  obtenerMedicosDeCentro(nombreCentro: string): Observable<DataPackage> {
+    return this.http.get<DataPackage>(`${this.centrosUrl}/${nombreCentro}/medicos`);
+  }
+
+  desasociarMedico(nombreCentro: string, idMedico: number): Observable<DataPackage> {
+    return this.http.delete<DataPackage>(`${this.centrosUrl}/desasociar-medico`, {
+      body: {
+        centro_de_atencion: nombreCentro,
+        id_medico: idMedico.toString()
+      }
+    });
+  }
 }

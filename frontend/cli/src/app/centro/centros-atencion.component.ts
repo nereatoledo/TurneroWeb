@@ -50,6 +50,13 @@ import { CommonModule, Location } from "@angular/common";
                 </a>
 
                 <a
+                  [routerLink]="['/centros_atencion', centro_atencion.id, 'medicos']"
+                  class="btn btn-sm btn-warning mr-2"
+                >
+                  <i class="fa fa-user-md"></i> Médicos
+                </a>
+
+                <a
                   [routerLink]="['/centros_atencion', centro_atencion.id]"
                   class="btn btn-sm btn-primary mr-2"
                 >

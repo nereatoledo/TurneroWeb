@@ -8,13 +8,13 @@ import { ActivatedRoute } from "@angular/router";
 import { ModalService } from "../modal/modal.service";
 import { DataPackage } from "../data-package";
 import { NgbTypeaheadModule } from "@ng-bootstrap/ng-bootstrap";
-import { catchError, debounceTime, distinctUntilChanged, map, Observable, of, switchMap, tap } from "rxjs";
+import { catchError, debounceTime, distinctUntilChanged, map, Observable, of, switchMap } from "rxjs";
 
 @Component({
-  selector: "app-medico-detail",
-  standalone: true,
-  imports: [FormsModule, CommonModule, NgbTypeaheadModule],
-  template: `
+    selector: "app-medico-detail",
+    standalone: true,
+    imports: [FormsModule, CommonModule, NgbTypeaheadModule],
+    template: `
     <div class="container py-4 page-animation" style="max-width: 800px;">
       <div *ngIf="medico">
         
@@ -34,7 +34,11 @@ import { catchError, debounceTime, distinctUntilChanged, map, Observable, of, sw
                   class="form-control custom-input"
                   required
                   #nombre="ngModel"
+                  placeholder="Ej: Juan"
                 />
+                <div *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)" class="text-danger small mt-1">
+                  El nombre es requerido.
+                </div>
               </div>
 
               <div class="form-group mb-4 col-md-6">
@@ -45,7 +49,11 @@ import { catchError, debounceTime, distinctUntilChanged, map, Observable, of, sw
                   class="form-control custom-input"
                   required
                   #apellido="ngModel"
+                  placeholder="Ej: Pérez"
                 />
+                <div *ngIf="apellido.invalid && (apellido.dirty || apellido.touched)" class="text-danger small mt-1">
+                  El apellido es requerido.
+                </div>
               </div>
             </div>
 
@@ -59,7 +67,12 @@ import { catchError, debounceTime, distinctUntilChanged, map, Observable, of, sw
                   required
                   pattern="^[0-9]+$"
                   #dni="ngModel"
+                  placeholder="Ej: 30123456"
                 />
+                <div *ngIf="dni.invalid && (dni.dirty || dni.touched)" class="text-danger small mt-1">
+                  <span *ngIf="dni.errors?.['required']">El DNI es requerido.</span>
+                  <span *ngIf="dni.errors?.['pattern']">Debe contener solo números.</span>
+                </div>
               </div>
 
               <div class="form-group mb-4 col-md-6">
@@ -70,7 +83,11 @@ import { catchError, debounceTime, distinctUntilChanged, map, Observable, of, sw
                   class="form-control custom-input"
                   required
                   #matricula="ngModel"
+                  placeholder="Ej: MP-1234"
                 />
+                <div *ngIf="matricula.invalid && (matricula.dirty || matricula.touched)" class="text-danger small mt-1">
+                  La matrícula es requerida.
+                </div>
               </div>
             </div>
 
@@ -86,11 +103,14 @@ import { catchError, debounceTime, distinctUntilChanged, map, Observable, of, sw
                 [editable]="false"
                 [resultFormatter]="resultFormat"
                 [inputFormatter]="inputFormat"
-                placeholder="Escribí para buscar..."
+                placeholder="Escribí para buscar especialidad..."
                 required
                 autocomplete="off"
                 #especialidad="ngModel"
               />
+              <div *ngIf="especialidad.invalid && (especialidad.dirty || especialidad.touched)" class="text-danger small mt-1">
+                  La especialidad es requerida.
+              </div>
             </div>
 
             <div class="d-flex justify-content-end mt-2 pt-3 border-top" style="border-color: #e2e8f0 !important;">
@@ -108,7 +128,7 @@ import { catchError, debounceTime, distinctUntilChanged, map, Observable, of, sw
       </div>
     </div>
   `,
-  styles: [`
+    styles: [`
     .page-animation { animation: slideUpFade 0.6s ease-out forwards; }
     @keyframes slideUpFade { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
     .custom-title { color: #000000; font-family: 'Hackensack', 'Roboto Slab', serif; font-weight: bold; }
@@ -124,69 +144,69 @@ import { catchError, debounceTime, distinctUntilChanged, map, Observable, of, sw
   `],
 })
 export class MedicoDetailComponent implements OnInit {
-  medico: Medico = {
-    nombre: "",
-    apellido: "",
-    dni: "",
-    matricula: "",
-    especialidad: <any>null
-  };
+    medico: Medico = {
+        nombre: "",
+        apellido: "",
+        dni: "",
+        matricula: "",
+        especialidad: <any>null
+    };
 
-  constructor(
-    private medicoService: MedicoService,
-    private espService: EspecialidadService,
-    private route: ActivatedRoute,
-    private location: Location,
-    private modalService: ModalService
-  ) { }
+    constructor(
+        private medicoService: MedicoService,
+        private espService: EspecialidadService,
+        private route: ActivatedRoute,
+        private location: Location,
+        private modalService: ModalService
+    ) { }
 
-  ngOnInit() {
-    this.get();
-  }
-
-  get(): void {
-    const id = this.route.snapshot.paramMap.get("id");
-    if (id && id !== "new") {
-      this.medicoService.get(id).subscribe(dp => {
-        this.medico = <Medico>dp.data;
-      });
+    ngOnInit() {
+        this.get();
     }
-  }
 
-  searchEspecialidad = (text$: Observable<string>): Observable<any[]> =>
-    text$.pipe(
-      debounceTime(300),
-      distinctUntilChanged(),
-      switchMap((term) =>
-        this.espService.search(term).pipe(
-          map((response) => <any[]>response.data),
-          catchError(() => of([]))
-        )
-      )
-    );
-
-  resultFormat(value: any) {
-    return value.nombre;
-  }
-
-  inputFormat(value: any) {
-    return value ? value.nombre : null;
-  }
-
-  save(): void {
-    this.medicoService.save(this.medico).subscribe({
-      next: (dataPackage: DataPackage) => {
-        this.modalService.info("¡Éxito!", dataPackage.message, "");
-        this.goBack();
-      },
-      error: (err) => {
-        const errorResponse: DataPackage = err.error;
-        if (err.status == 409 || err.status == 400) {
-          this.modalService.confirm("Error:", errorResponse.message, "");
+    get(): void {
+        const id = this.route.snapshot.paramMap.get("id");
+        if (id && id !== "new") {
+            this.medicoService.get(id).subscribe(dp => {
+                this.medico = <Medico>dp.data;
+            });
         }
-      },
-    });
-  }
+    }
 
-  goBack() { this.location.back(); }
+    searchEspecialidad = (text$: Observable<string>): Observable<any[]> =>
+        text$.pipe(
+            debounceTime(300),
+            distinctUntilChanged(),
+            switchMap((term) =>
+                this.espService.search(term).pipe(
+                    map((response) => <any[]>response.data),
+                    catchError(() => of([]))
+                )
+            )
+        );
+
+    resultFormat(value: any) {
+        return value.nombre;
+    }
+
+    inputFormat(value: any) {
+        return value ? value.nombre : null;
+    }
+
+    save(): void {
+        this.medicoService.save(this.medico).subscribe({
+            next: (dataPackage: DataPackage) => {
+                this.modalService.info("¡Éxito!", dataPackage.message, "");
+                this.goBack();
+            },
+            error: (err) => {
+                const errorResponse: DataPackage = err.error;
+                if (err.status == 409 || err.status == 400) {
+                    this.modalService.confirm("Error:", errorResponse.message, "");
+                }
+            },
+        });
+    }
+
+    goBack() { this.location.back(); }
 }

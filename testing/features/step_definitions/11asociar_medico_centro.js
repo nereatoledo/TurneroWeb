@@ -31,7 +31,6 @@ When('el administrador asocia el médico con {string}, {string}, {int}, {string}
             });
         }
     } catch (error) {
-        console.log("Aviso en preparación:", error.message);
     }
 
     const payload = {

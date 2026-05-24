@@ -132,15 +132,20 @@ public class CentroAtencionService {
         return resultado;
     }
 
-    public java.util.List<String> obtenerEspecialidadesDeCentro(int idCentro) {
+public java.util.List<java.util.Map<String, Object>> obtenerEspecialidadesDeCentro(int idCentro) {
         CentroAtencion centro = repository.findById(idCentro).orElse(null);
         if (centro == null) {
             throw new IllegalArgumentException("No existe el Centro Médico");
         }
         
-        return centro.getEspecialidades().stream()
-                .map(Especialidad::getNombre)
-                .collect(java.util.stream.Collectors.toList());
+        java.util.List<java.util.Map<String, Object>> resultado = new java.util.ArrayList<>();
+        for (Especialidad e : centro.getEspecialidades()) {
+            java.util.Map<String, Object> map = new java.util.LinkedHashMap<>();
+            map.put("id", e.getId());
+            map.put("nombre", e.getNombre());
+            resultado.add(map);
+        }
+        return resultado;
     }
 
     @Transactional
@@ -200,6 +205,7 @@ public class CentroAtencionService {
         java.util.List<java.util.Map<String, Object>> medicosJson = new java.util.ArrayList<>();
         for (Medico m : centro.getMedicos()) {
             java.util.Map<String, Object> medicoMap = new java.util.LinkedHashMap<>();
+            medicoMap.put("id", m.getId()); // ID agregado para poder desasociar
             medicoMap.put("nombre", m.getNombre());
             medicoMap.put("apellido", m.getApellido());
             medicoMap.put("dni", Integer.parseInt(m.getDni()));
@@ -224,6 +230,7 @@ public class CentroAtencionService {
                 java.util.List<java.util.Map<String, Object>> medicosList = new java.util.ArrayList<>();
                 for (Medico m : c.getMedicos()) {
                     java.util.Map<String, Object> medicoMap = new java.util.LinkedHashMap<>();
+                    medicoMap.put("id", m.getId());
                     medicoMap.put("nombre", m.getNombre());
                     medicoMap.put("apellido", m.getApellido());
                     medicoMap.put("dni", Integer.parseInt(m.getDni()));

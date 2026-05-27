@@ -21,12 +21,15 @@ public class Especialidad {
     private String nombre;
     private String descripcion;
 
+    private Integer intervalo;
+
     @JsonIgnore
     @OneToMany(mappedBy = "especialidad", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Medico> medicos = new ArrayList<>();
 
-    public Especialidad(String nombre, String descripcion) {
+    public Especialidad(String nombre, String descripcion, Integer intervalo) {
         this.nombre = nombre;
         this.descripcion = descripcion;
+        this.intervalo = intervalo;
     }
 }

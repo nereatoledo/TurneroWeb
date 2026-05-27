@@ -1,0 +1,63 @@
+<div class="container py-4 page-animation">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <h2 class="custom-title m-0">Especialidades de {{ centroNombre }}</h2>
+        <button *ngIf="!mostrandoFormulario" class="btn-purple-main" (click)="mostrandoFormulario = true">
+            <i class="fa fa-plus"></i> Asociar Especialidad
+        </button>
+    </div>
+    <div *ngIf="mostrandoFormulario" class="content-wrapper d-flex flex-wrap align-items-center mb-4 gap-3"
+        style="max-width: 800px; padding: 20px;">
+        <label for="especialidad" class="mb-0 font-weight-bold"
+            style="color: #6c757d; font-size: 0.85rem; text-transform: uppercase;">
+            Buscar Especialidad:
+        </label>
+
+        <div class="flex-grow-1">
+            <input id="especialidad" type="text" class="form-control"
+                style="border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 10px 15px;"
+                [(ngModel)]="especialidadSeleccionada" [ngbTypeahead]="searchEspecialidad" [editable]="false"
+                [resultFormatter]="resultFormat" [inputFormatter]="inputFormat" placeholder="Escribí para buscar..."
+                autocomplete="off" />
+        </div>
+        <button class="btn-purple-main" (click)="asociar()" [disabled]="!especialidadSeleccionada?.id">
+            <i class="fa fa-check"></i> Guardar
+        </button>
+
+        <button class="btn-outline-purple" (click)="cancelar()">
+            Cancelar
+        </button>
+    </div>
+    <div class="content-wrapper">
+        <div class="table-responsive">
+            <table class="table-custom">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre de la Especialidad</th>
+                        <th class="text-right">Operaciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let especialidad of especialidades">
+                        <td class="text-muted font-weight-bold">#{{ especialidad.id }}</td>
+                        <td style="font-weight: 500;">{{ especialidad.nombre }}</td>
+                        <td class="text-right">
+                            <button class="btn-danger-custom btn-sm" (click)="desasociar(especialidad)">
+                                <i class="fa fa-unlink"></i> Desasociar
+                            </button>
+                        </td>
+                    </tr>
+                    <tr *ngIf="especialidades.length === 0">
+                        <td colspan="3" class="text-center py-4 text-muted">No hay especialidades asociadas a este
+                            centro.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="mt-4">
+        <button routerLink="/centros_atencion" class="btn-outline-purple">
+            <i class="fa fa-arrow-left"></i> Volver a Centros
+        </button>
+    </div>
+</div>

@@ -4,28 +4,8 @@ import { Component, EventEmitter, Input, Output, SimpleChanges } from '@angular/
 @Component({
   selector: 'app-pagination',
   imports: [CommonModule],
-  template: `
-    <nav aria-label="Page navigation">
-      <ul class="pagination pagination-centered">
-        <li class="page-item">
-          <a class="page-link" (click)="onPageChange(-2)">&laquo;</a>
-        </li>
-        <li class="page-item">
-          <a class="page-link" (click)="onPageChange(-1)">&lsaquo;</a>
-        </li>
-        <li *ngFor="let t of pages" [ngClass]="t === number ? 'active' : ''">
-          <a class="page-link" (click)="onPageChange(t + 1)">{{t+1}}</a>
-        </li>
-        <li class="page-item">
-          <a class="page-link" (click)="onPageChange(-3)">&rsaquo;</a>
-        </li>
-        <li class="page-item">
-          <a class="page-link" (click)="onPageChange(-4)">&raquo;</a>
-        </li>
-      </ul>
-    </nav>
-  `,
-  styles: ``
+  templateUrl: './pagination.component.html',
+  styleUrl: './pagination.component.css'
 })
 export class PaginationComponent {
   @Input() totalPages: number = 0;
@@ -33,10 +13,11 @@ export class PaginationComponent {
   @Input() currentPage: number = 1;
   @Input() number: number = 1;
   @Output() pageChangeRequested = new EventEmitter<number>();
+  
   pages: number[] = [];
-
+  
   constructor(){}
-
+  
   ngOnChanges(changes: SimpleChanges){
     if(changes['totalPages']){
       this.pages = Array.from(Array(this.totalPages).keys());

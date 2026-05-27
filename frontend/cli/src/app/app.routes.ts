@@ -12,24 +12,24 @@ import { CentroEspecialidadesComponent } from './centro-especialidades/centro-es
 import { CentroMedicosComponent } from './centro-medicos/centro-medicos.component';
 
 export const routes: Routes = [
-    {path: '', component: HomeComponent},
+    {path: '', component: HomeComponent, title: 'Turnero Web'},
     
-    {path: 'centros_atencion', component: CentrosAtencionComponent},
-    {path: 'centros_atencion/new', component: CentroAtencionDetailComponent},
-    {path: 'centros_atencion/:id', component: CentroAtencionDetailComponent}, 
+    {path: 'centros_atencion', component: CentrosAtencionComponent, title: 'Centros de Atención'},
+    {path: 'centros_atencion/new', component: CentroAtencionDetailComponent, title: 'Nuevo Centro de Atención'},
+    {path: 'centros_atencion/:id', component: CentroAtencionDetailComponent, title: 'Centro de Atención'}, 
 
-    {path: 'especialidades', component: EspecialidadesComponent},
-    {path: 'especialidades/new', component: EspecialidadDetailComponent},
-    {path: 'especialidades/:id', component: EspecialidadDetailComponent} ,
+    {path: 'especialidades', component: EspecialidadesComponent, title: 'Especialidades'},
+    {path: 'especialidades/new', component: EspecialidadDetailComponent, title: 'Nueva Especialidad'},
+    {path: 'especialidades/:id', component: EspecialidadDetailComponent, title: 'Especialidad'} ,
 
-    {path: 'centros_atencion/:id/consultorios', component: ConsultorioComponent},
-    {path: 'centros_atencion/:id/consultorios/new', component: ConsultorioDetailComponent},
-    {path: 'centros_atencion/:id/consultorios/:idConsultorio', component: ConsultorioDetailComponent},
+    {path: 'centros_atencion/:id/consultorios', component: ConsultorioComponent, title: 'Consultorios'},
+    {path: 'centros_atencion/:id/consultorios/new', component: ConsultorioDetailComponent, title: 'Nuevo Consultorio'},
+    {path: 'centros_atencion/:id/consultorios/:idConsultorio', component: ConsultorioDetailComponent, title: 'Consultorio'},
     
-    {path: 'centros_atencion/:id/especialidades', component: CentroEspecialidadesComponent},
-    {path: 'centros_atencion/:id/medicos', component: CentroMedicosComponent},
+    {path: 'centros_atencion/:id/especialidades', component: CentroEspecialidadesComponent, title: 'Especialidades del Centro de Atención'},
+    {path: 'centros_atencion/:id/medicos', component: CentroMedicosComponent, title: 'Médicos del Centro de Atención'},
     
-    {path: 'medicos', component: MedicosComponent},
-    {path: 'medicos/new', component: MedicoDetailComponent},
-    {path: 'medicos/:id', component: MedicoDetailComponent},
+    {path: 'medicos', component: MedicosComponent, title: 'Médicos'},
+    {path: 'medicos/new', component: MedicoDetailComponent, title: 'Nuevo Médico'},
+    {path: 'medicos/:id', component: MedicoDetailComponent, title: 'Médico'},
 ];

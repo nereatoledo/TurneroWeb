@@ -12,87 +12,8 @@ import { CommonModule, Location } from "@angular/common";
   selector: "app-customer",
   standalone: true,
   imports: [CommonModule, RouterModule, PaginationComponent],
-  template: `
-    <div class="container">
-      <h2>Centros de Atención</h2>
-      
-      <a routerLink="/centros_atencion/new" class="btn btn-success mb-3">
-        Nuevo Centro de Atención
-      </a>
-      
-      <div class="table-responsive">
-        <table class="table table-striped table-sm">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Nombre</th>
-              <th class="text-right">Operaciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let centro_atencion of resultsPage.content">
-              <td>{{ centro_atencion.id }}</td>
-              <td>{{ centro_atencion.nombre }}</td>
-              <td class="text-right">
-                
-                <a
-                  [routerLink]="['/centros_atencion', centro_atencion.id, 'consultorios']"
-                  class="btn btn-sm btn-info mr-2"
-                >
-                  <i class="fa fa-list"></i> Consultorios
-                </a>
-
-                <a
-                  [routerLink]="['/centros_atencion', centro_atencion.id, 'especialidades']"
-                  class="btn btn-sm btn-secondary mr-2"
-                >
-                  <i class="fa fa-tags"></i> Especialidades
-                </a>
-
-                <a
-                  [routerLink]="['/centros_atencion', centro_atencion.id, 'medicos']"
-                  class="btn btn-sm btn-warning mr-2"
-                >
-                  <i class="fa fa-user-md"></i> Médicos
-                </a>
-
-                <a
-                  [routerLink]="['/centros_atencion', centro_atencion.id]"
-                  class="btn btn-sm btn-primary mr-2"
-                >
-                  <i class="fa fa-pencil"></i> Editar
-                </a>
-                
-                <button
-                  (click)="remove(centro_atencion)"
-                  class="btn btn-sm btn-danger"
-                >
-                  <i class="fa fa-remove"></i> Borrar
-                </button>
-              </td>
-            </tr>
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colspan="3">
-                <div class="d-flex justify-content-center mt-3">
-                  <app-pagination
-                    [totalPages]="resultsPage.totalPages"
-                    [currentPage]="currentPage"
-                    (pageChangeRequested)="onPageChangeRequested($event)"
-                    [number]="resultsPage.number"
-                    [hidden]="resultsPage.numberOfElements < 0"
-                  >
-                  </app-pagination>
-                </div>
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
-  `,
-  styles: ``,
+  templateUrl: './centros-atencion.component.html',
+  styleUrl: './centros-atencion.component.css'
 })
 export class CentrosAtencionComponent implements OnInit {
   centros_atencion: CentroAtencion[] = [];
@@ -107,7 +28,7 @@ export class CentrosAtencionComponent implements OnInit {
   getCentros(): void {
     this.centro_atencionService
       .byPage(this.currentPage, 10)
-      .subscribe((dataPackage) => {
+      .subscribe((dataPackage: DataPackage) => {
         this.resultsPage = <ResultsPage>dataPackage.data;
       });
   }

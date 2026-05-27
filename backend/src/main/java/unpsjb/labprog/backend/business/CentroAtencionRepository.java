@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import unpsjb.labprog.backend.model.CentroAtencion;
 
@@ -30,4 +29,7 @@ public interface CentroAtencionRepository
 
     @Query("SELECT c FROM CentroAtencion c LEFT JOIN FETCH c.especialidades WHERE c.nombre = ?1")
     CentroAtencion findByNombre(String nombre);
+
+    @Query("SELECT DISTINCT c FROM CentroAtencion c JOIN FETCH c.especialidades")
+    List<CentroAtencion> findAllConEspecialidades();
 }

@@ -25,20 +25,18 @@ public class EsquemaTurno {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
 
+    private String nombre;
+    private String descripcion;
+
     @Enumerated(EnumType.STRING)
     private DiaSemana diaSemana;
 
     private LocalTime horaInicio;
-
     private LocalTime horaFin;
-
-    private Integer intervalo;
 
     @ManyToOne
     private Consultorio consultorio;
 
     @ManyToOne
     private StaffMedico staffMedico;
-
-    private int sobreturno;
 }

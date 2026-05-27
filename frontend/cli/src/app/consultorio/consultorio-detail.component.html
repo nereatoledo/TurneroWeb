@@ -1,0 +1,39 @@
+<div class="container py-4 page-animation" style="max-width: 800px;">
+    <div *ngIf="consultorio">
+
+        <h2 class="custom-title mb-4">
+            {{ consultorio.id ? 'Editar Consultorio: ' + consultorio.nombre : 'Nuevo Consultorio' }}
+        </h2>
+        <div class="form-wrapper">
+            <form #form="ngForm">
+
+                <div class="form-group mb-4">
+                    <label for="nombre" class="custom-label">Nombre del Consultorio</label>
+                    <input [(ngModel)]="consultorio.nombre" name="nombre" class="form-control custom-input" required
+                        #nombre="ngModel" placeholder="Ej: Consultorio Pediátrico" />
+                    <div *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)" class="text-danger small mt-1">
+                        El nombre es requerido.
+                    </div>
+                </div>
+                <div class="form-group mb-4">
+                    <label for="numero" class="custom-label">Número de Consultorio</label>
+                    <input type="number" [(ngModel)]="consultorio.numero" name="numero"
+                        class="form-control custom-input" required #numero="ngModel" placeholder="Ej: 5" />
+                    <div *ngIf="numero.invalid && (numero.dirty || numero.touched)" class="text-danger small mt-1">
+                        El número de consultorio es requerido.
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end mt-4 pt-3 border-top" style="border-color: #e2e8f0 !important;">
+                    <button (click)="goBack()" class="btn-action btn-back mr-3" type="button">
+                        <i class="fa fa-arrow-left"></i> Atrás
+                    </button>
+
+                    <button (click)="save()" class="btn-purple-main" [disabled]="form.invalid" type="button">
+                        <i class="fa fa-save"></i> {{ consultorio.id ? 'Actualizar' : 'Guardar' }}
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>

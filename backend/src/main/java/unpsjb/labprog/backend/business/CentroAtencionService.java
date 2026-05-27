@@ -1,7 +1,10 @@
 package unpsjb.labprog.backend.business;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -12,6 +15,7 @@ import jakarta.transaction.Transactional;
 import unpsjb.labprog.backend.model.CentroAtencion;
 import unpsjb.labprog.backend.model.Especialidad;
 import unpsjb.labprog.backend.model.Medico;
+import unpsjb.labprog.backend.model.StaffMedico;
 
 @Service
 public class CentroAtencionService {
@@ -24,6 +28,9 @@ public class CentroAtencionService {
 
     @Autowired
     MedicoRepository medicoRepository;
+
+    @Autowired
+    StaffMedicoRepository staffMedicoRepository;
 
     @Transactional
     public CentroAtencion save(CentroAtencion centro) {
@@ -49,8 +56,7 @@ public class CentroAtencionService {
     }
 
     public Page<CentroAtencion> findByPage(int page, int size) {
-        return repository.findAll(
-                PageRequest.of(page, size));
+        return repository.findAll(PageRequest.of(page, size));
     }
 
     public CentroAtencion findById(int id) {
@@ -79,7 +85,7 @@ public class CentroAtencionService {
         }
 
         boolean yaEstaAsociada = centro.getEspecialidades().stream()
-                .anyMatch(e -> e.getId() == idEspecialidad);
+                .anyMatch(e -> e.getId() == idEspecialidad);    
 
         if (yaEstaAsociada) {
             throw new IllegalStateException("Especialidad ya se encuentra asociada");
@@ -110,44 +116,6 @@ public class CentroAtencionService {
         return repository.findCentrosByEspecialidadId(idEspecialidad);
     }
 
-    public java.util.List<java.util.Map<String, Object>> obtenerEspecialidadesPorCentro() {
-        java.util.List<CentroAtencion> centros = new java.util.ArrayList<>();
-        repository.findAll().forEach(centros::add);
-
-        java.util.List<java.util.Map<String, Object>> resultado = new java.util.ArrayList<>();
-        
-        for (CentroAtencion c : centros) {
-            if (c.getEspecialidades() != null && !c.getEspecialidades().isEmpty()) {
-                java.util.Map<String, Object> map = new java.util.LinkedHashMap<>();
-                map.put("centro_de_atencion", c.getNombre());
-                
-                java.util.List<String> especialidades = c.getEspecialidades().stream()
-                        .map(Especialidad::getNombre)
-                        .collect(java.util.stream.Collectors.toList());
-                        
-                map.put("especialidades", especialidades);
-                resultado.add(map);
-            }
-        }
-        return resultado;
-    }
-
-public java.util.List<java.util.Map<String, Object>> obtenerEspecialidadesDeCentro(int idCentro) {
-        CentroAtencion centro = repository.findById(idCentro).orElse(null);
-        if (centro == null) {
-            throw new IllegalArgumentException("No existe el Centro Médico");
-        }
-        
-        java.util.List<java.util.Map<String, Object>> resultado = new java.util.ArrayList<>();
-        for (Especialidad e : centro.getEspecialidades()) {
-            java.util.Map<String, Object> map = new java.util.LinkedHashMap<>();
-            map.put("id", e.getId());
-            map.put("nombre", e.getNombre());
-            resultado.add(map);
-        }
-        return resultado;
-    }
-
     @Transactional
     public void asociarMedico(String nombreCentro, String dni, String matricula) {
         CentroAtencion centro = repository.findByNombre(nombreCentro);
@@ -170,79 +138,95 @@ public java.util.List<java.util.Map<String, Object>> obtenerEspecialidadesDeCent
             throw new IllegalStateException("La especialidad del médico no se encuentra disponible para el centro de salud");
         }
 
-        boolean yaEstaAsociado = centro.getMedicos().stream()
-                .anyMatch(m -> m.getId() == medico.getId());
+        boolean yaEstaAsociado = staffMedicoRepository.existeMedicoEnCentro(nombreCentro, medico.getId());
         if (yaEstaAsociado) {
-            throw new IllegalStateException("Médico en centro ya está asociado al centro de atención");
+            throw new IllegalStateException("Médico ya está asociado al centro de atención");
         }
 
-        centro.agregarMedico(medico);
-        repository.save(centro);
+        StaffMedico nuevoStaff = new StaffMedico();
+        nuevoStaff.setCentro(centro);
+        nuevoStaff.setMedico(medico);
+        staffMedicoRepository.save(nuevoStaff);
     }
 
     @Transactional
     public void desasociarMedico(String nombreCentro, int idMedico) {
-        CentroAtencion centro = repository.findByNombre(nombreCentro);
-        if (centro == null) {
-            throw new IllegalArgumentException("No existe el Centro Médico");
+        StaffMedico staff = staffMedicoRepository.findByCentroNombreYMedicoId(nombreCentro, idMedico);
+        if (staff == null) {
+            throw new IllegalStateException("El médico no pertenece al staff de este centro");
         }
-
-        Medico medico = centro.getMedicos().stream()
-                .filter(m -> m.getId() == idMedico)
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("El médico no pertenece al staff de este centro"));
-        
-        centro.removerMedico(medico);
-        repository.save(centro);
+        staffMedicoRepository.delete(staff);
     }
 
-    public java.util.List<java.util.Map<String, Object>> obtenerMedicosDeCentro(String nombreCentro) {
-        CentroAtencion centro = repository.findByNombre(nombreCentro);
-        if (centro == null) {
-            throw new IllegalArgumentException("No existe el Centro Médico");
-        }
+    public List<Map<String, Object>> obtenerEspecialidadesPorCentro() {
+        List<CentroAtencion> centros = repository.findAllConEspecialidades();
 
-        java.util.List<java.util.Map<String, Object>> medicosJson = new java.util.ArrayList<>();
-        for (Medico m : centro.getMedicos()) {
-            java.util.Map<String, Object> medicoMap = new java.util.LinkedHashMap<>();
-            medicoMap.put("id", m.getId()); // ID agregado para poder desasociar
-            medicoMap.put("nombre", m.getNombre());
-            medicoMap.put("apellido", m.getApellido());
-            medicoMap.put("dni", Integer.parseInt(m.getDni()));
-            medicoMap.put("matricula", m.getMatricula());
-            medicoMap.put("especialidad", m.getEspecialidad().getNombre());
-            medicosJson.add(medicoMap);
-        }
-        return medicosJson;
-    }
-
-    public java.util.List<java.util.Map<String, Object>> obtenerMedicosPorCentro() {
-        java.util.List<CentroAtencion> centros = new java.util.ArrayList<>();
-        repository.findAll().forEach(centros::add);
-
-        java.util.List<java.util.Map<String, Object>> resultado = new java.util.ArrayList<>();
-
-        for (CentroAtencion c : centros) {
-            if (c.getMedicos() != null && !c.getMedicos().isEmpty()) {
-                java.util.Map<String, Object> map = new java.util.LinkedHashMap<>();
+        return centros.stream()
+            .map(c -> {
+                Map<String, Object> map = new LinkedHashMap<>();
                 map.put("centro_de_atencion", c.getNombre());
                 
-                java.util.List<java.util.Map<String, Object>> medicosList = new java.util.ArrayList<>();
-                for (Medico m : c.getMedicos()) {
-                    java.util.Map<String, Object> medicoMap = new java.util.LinkedHashMap<>();
-                    medicoMap.put("id", m.getId());
-                    medicoMap.put("nombre", m.getNombre());
-                    medicoMap.put("apellido", m.getApellido());
-                    medicoMap.put("dni", Integer.parseInt(m.getDni()));
-                    medicoMap.put("matricula", m.getMatricula());
-                    medicoMap.put("especialidad", m.getEspecialidad().getNombre());
-                    medicosList.add(medicoMap);
-                }
+                List<String> especialidadesNombres = c.getEspecialidades().stream()
+                        .map(Especialidad::getNombre)
+                        .collect(Collectors.toList());
+                        
+                map.put("especialidades", especialidadesNombres);
+                return map;
+            })
+            .collect(Collectors.toList());
+    }
+
+    public List<Map<String, Object>> obtenerEspecialidadesDeCentro(int idCentro) {
+        CentroAtencion centro = repository.findById(idCentro)
+                .orElseThrow(() -> new IllegalArgumentException("No existe el Centro Médico"));
+        
+        return centro.getEspecialidades().stream()
+            .map(e -> {
+                Map<String, Object> map = new LinkedHashMap<>();
+                map.put("id", e.getId());
+                map.put("nombre", e.getNombre());
+                return map;
+            })
+            .collect(Collectors.toList());
+    }
+
+    public List<Map<String, Object>> obtenerMedicosDeCentro(String nombreCentro) {
+        List<Medico> medicos = staffMedicoRepository.findMedicosByNombreCentro(nombreCentro);
+        
+        return medicos.stream()
+            .map(this::mapearMedicoAJson)
+            .collect(Collectors.toList());
+    }
+
+    public List<Map<String, Object>> obtenerMedicosPorCentro() {
+        List<StaffMedico> todoElStaff = staffMedicoRepository.findAllStaffConDetalles();
+        
+        Map<String, List<StaffMedico>> staffPorCentro = todoElStaff.stream()
+            .collect(Collectors.groupingBy(staff -> staff.getCentro().getNombre()));
+
+        return staffPorCentro.entrySet().stream()
+            .map(entry -> {
+                Map<String, Object> map = new LinkedHashMap<>();
+                map.put("centro_de_atencion", entry.getKey());
                 
+                List<Map<String, Object>> medicosList = entry.getValue().stream()
+                        .map(staff -> mapearMedicoAJson(staff.getMedico()))
+                        .collect(Collectors.toList());
+                        
                 map.put("medicos", medicosList);
-                resultado.add(map);
-            }
-        }
-        return resultado;
+                return map;
+            })
+            .collect(Collectors.toList());
+    }
+
+    private Map<String, Object> mapearMedicoAJson(Medico m) {
+        Map<String, Object> medicoMap = new LinkedHashMap<>();
+        medicoMap.put("id", m.getId()); 
+        medicoMap.put("nombre", m.getNombre());
+        medicoMap.put("apellido", m.getApellido());
+        medicoMap.put("dni", Integer.parseInt(m.getDni()));
+        medicoMap.put("matricula", m.getMatricula());
+        medicoMap.put("especialidad", m.getEspecialidad().getNombre());
+        return medicoMap;
     }
 }

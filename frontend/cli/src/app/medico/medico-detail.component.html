@@ -1,0 +1,74 @@
+<div class="container py-4 page-animation" style="max-width: 800px;">
+    <div *ngIf="medico">
+
+        <h2 class="custom-title mb-4">
+            {{ medico.id ? 'Editar Médico: ' + medico.apellido : 'Registrar Nuevo Médico' }}
+        </h2>
+        <div class="form-wrapper">
+            <form #form="ngForm">
+
+                <div class="row">
+                    <div class="form-group mb-4 col-md-6">
+                        <label for="nombre" class="custom-label">Nombre</label>
+                        <input [(ngModel)]="medico.nombre" name="nombre" class="form-control custom-input" required
+                            #nombre="ngModel" placeholder="Ej: Juan" />
+                        <div *ngIf="nombre.invalid && (nombre.dirty || nombre.touched)" class="text-danger small mt-1">
+                            El nombre es requerido.
+                        </div>
+                    </div>
+                    <div class="form-group mb-4 col-md-6">
+                        <label for="apellido" class="custom-label">Apellido</label>
+                        <input [(ngModel)]="medico.apellido" name="apellido" class="form-control custom-input" required
+                            #apellido="ngModel" placeholder="Ej: Pérez" />
+                        <div *ngIf="apellido.invalid && (apellido.dirty || apellido.touched)"
+                            class="text-danger small mt-1">
+                            El apellido es requerido.
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group mb-4 col-md-6">
+                        <label for="dni" class="custom-label">DNI</label>
+                        <input [(ngModel)]="medico.dni" name="dni" class="form-control custom-input" required
+                            pattern="^[0-9]+$" #dni="ngModel" placeholder="Ej: 30123456" />
+                        <div *ngIf="dni.invalid && (dni.dirty || dni.touched)" class="text-danger small mt-1">
+                            <span *ngIf="dni.errors?.['required']">El DNI es requerido.</span>
+                            <span *ngIf="dni.errors?.['pattern']">Debe contener solo números.</span>
+                        </div>
+                    </div>
+                    <div class="form-group mb-4 col-md-6">
+                        <label for="matricula" class="custom-label">Matrícula</label>
+                        <input [(ngModel)]="medico.matricula" name="matricula" class="form-control custom-input"
+                            required #matricula="ngModel" placeholder="Ej: MP-1234" />
+                        <div *ngIf="matricula.invalid && (matricula.dirty || matricula.touched)"
+                            class="text-danger small mt-1">
+                            La matrícula es requerida.
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group mb-4">
+                    <label for="especialidad" class="custom-label">Especialidad</label>
+                    <input id="especialidad" type="text" class="form-control custom-input"
+                        [(ngModel)]="medico.especialidad" name="especialidad" [ngbTypeahead]="searchEspecialidad"
+                        [editable]="false" [resultFormatter]="resultFormat" [inputFormatter]="inputFormat"
+                        placeholder="Escribí para buscar especialidad..." required autocomplete="off"
+                        #especialidad="ngModel" />
+                    <div *ngIf="especialidad.invalid && (especialidad.dirty || especialidad.touched)"
+                        class="text-danger small mt-1">
+                        La especialidad es requerida.
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end mt-2 pt-3 border-top" style="border-color: #e2e8f0 !important;">
+                    <button (click)="goBack()" class="btn-action btn-back mr-3" type="button">
+                        <i class="fa fa-arrow-left"></i> Atrás
+                    </button>
+
+                    <button (click)="save()" class="btn-purple-main" [disabled]="form.invalid" type="button">
+                        <i class="fa fa-save"></i> {{ medico.id ? 'Actualizar' : 'Guardar' }}
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>

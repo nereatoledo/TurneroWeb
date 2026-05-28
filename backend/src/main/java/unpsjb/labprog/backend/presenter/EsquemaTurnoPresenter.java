@@ -6,50 +6,100 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.EsquemaTurnoService;
-import unpsjb.labprog.backend.business.StaffMedicoService;
+import unpsjb.labprog.backend.business.ConsultorioRepository;
+import unpsjb.labprog.backend.business.StaffMedicoRepository;
+import unpsjb.labprog.backend.business.CentroAtencionService;
 import unpsjb.labprog.backend.model.EsquemaTurno;
+import unpsjb.labprog.backend.model.Consultorio;
+import unpsjb.labprog.backend.model.CentroAtencion;
 import unpsjb.labprog.backend.model.StaffMedico;
+import unpsjb.labprog.backend.model.DiaSemana;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 @RestController
-@RequestMapping("esquemas")
+@RequestMapping("/esquemas-turnos")
 public class EsquemaTurnoPresenter {
 
     @Autowired
-    EsquemaTurnoService service;
+    private EsquemaTurnoService esquemaTurnoService;
 
     @Autowired
-    StaffMedicoService staffService; 
+    private ConsultorioRepository consultorioRepository;
 
-    @RequestMapping(value = "/generar", method = RequestMethod.POST)
-    public ResponseEntity<Object> generarAgenda(@RequestBody Map<String, Object> payload) {
+    @Autowired
+    private StaffMedicoRepository staffMedicoRepository;
+
+    @Autowired
+    private CentroAtencionService centroAtencionService;
+
+    @PostMapping
+    public ResponseEntity<Object> crearAgenda(@RequestBody AgendaDTO dto) {
         try {
-            if (!payload.containsKey("id_staff") || payload.get("id_staff") == null) {
-                return Response.response(HttpStatus.BAD_REQUEST, "Debe especificar el id_staff del médico.", null);
-            }
-            
-            int idStaff = (Integer) payload.get("id_staff");
-
-            // 1. Recuperar el objeto persistido real de la base de datos
-            StaffMedico staff = staffService.findById(idStaff);
-            
-            // 2. Validar que exista la relación del médico con el centro
-            if (staff == null) {
-                return Response.notFound("El Staff Médico con ID " + idStaff + " no existe en el sistema.");
+            Consultorio consultorio = consultorioRepository.findById(dto.getIdConsultorio()).orElse(null);
+            if (consultorio == null) {
+                return Response.response(HttpStatus.BAD_REQUEST, "Consultorio no encontrado.", null);
             }
 
-            // 3. Ejecutamos el servicio pasándole solo el staff
-            List<EsquemaTurno> esquemasCreados = service.generarAgendaDinamica(staff);
-            
-            return Response.response(HttpStatus.OK, "Agenda de esquemas generada con éxito", esquemasCreados);
+            CentroAtencion centro = centroAtencionService.findCentroByConsultorioId(consultorio.getId());
+            if (centro == null) {
+                return Response.response(HttpStatus.BAD_REQUEST, "El consultorio no pertenece a ningún centro de atención.", null);
+            }
 
-        } catch (IllegalStateException e) {
-            // Captura la excepción de negocio si se agotan los consultorios o hay algún conflicto
-            return Response.response(HttpStatus.CONFLICT, e.getMessage(), null);
+            StaffMedico staffMedico = staffMedicoRepository.findByCentroNombreYMedicoId(centro.getNombre(), dto.getIdMedico());
+            if (staffMedico == null) {
+                return Response.response(HttpStatus.BAD_REQUEST, "El médico no está asociado al centro de atención de este consultorio.", null);
+            }
+
+            List<EsquemaTurno> esquemasCreados = new ArrayList<>();
+            Set<DiaSemana> diasProcesados = new HashSet<>();
+            
+            LocalDate diaActual = dto.getFechaInicio();
+
+            while (!diaActual.isAfter(dto.getFechaFin())) {
+                DiaSemana diaJava = mapearDia(diaActual.getDayOfWeek());
+                
+                if (diaJava != null && !diasProcesados.contains(diaJava)) {
+                    EsquemaTurno esquema = new EsquemaTurno();
+                    esquema.setNombre(dto.getNombre() != null ? dto.getNombre() : "Agenda Semanal");
+                    esquema.setDescripcion(dto.getDescripcion());
+                    esquema.setDiaSemana(diaJava); 
+                    esquema.setHoraInicio(dto.getHoraInicio());
+                    esquema.setHoraFin(dto.getHoraFin());
+                    esquema.setConsultorio(consultorio);
+                    esquema.setStaffMedico(staffMedico);
+                    
+                    esquemaTurnoService.guardar(esquema);
+                    esquemasCreados.add(esquema);
+                    diasProcesados.add(diaJava);
+                }
+                
+                diaActual = diaActual.plusDays(1);
+            }
+
+            return Response.response(HttpStatus.OK, "Agenda configurada exitosamente.", null);
+            
         } catch (Exception e) {
-            return Response.response(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno al procesar la agenda", null);
+            e.printStackTrace();
+            return Response.response(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno: " + e.getMessage(), null);
+        }
+    }
+
+    private DiaSemana mapearDia(DayOfWeek dayOfWeek) {
+        switch(dayOfWeek) {
+            case MONDAY: return DiaSemana.LUNES;
+            case TUESDAY: return DiaSemana.MARTES;
+            case WEDNESDAY: return DiaSemana.MIERCOLES;
+            case THURSDAY: return DiaSemana.JUEVES;
+            case FRIDAY: return DiaSemana.VIERNES;
+            case SATURDAY: return DiaSemana.SABADO;
+            case SUNDAY: return DiaSemana.DOMINGO;
+            default: return null;
         }
     }
 }

@@ -85,7 +85,7 @@ public class CentroAtencionService {
         }
 
         boolean yaEstaAsociada = centro.getEspecialidades().stream()
-                .anyMatch(e -> e.getId() == idEspecialidad);    
+                .anyMatch(e -> e.getId() == idEspecialidad);
 
         if (yaEstaAsociada) {
             throw new IllegalStateException("Especialidad ya se encuentra asociada");
@@ -135,12 +135,13 @@ public class CentroAtencionService {
         boolean especialidadDisponible = centro.getEspecialidades().stream()
                 .anyMatch(e -> e.getNombre().equalsIgnoreCase(medico.getEspecialidad().getNombre()));
         if (!especialidadDisponible) {
-            throw new IllegalStateException("La especialidad del médico no se encuentra disponible para el centro de salud");
+            throw new IllegalStateException(
+                    "La especialidad del médico no se encuentra disponible para el centro de salud");
         }
 
         boolean yaEstaAsociado = staffMedicoRepository.existeMedicoEnCentro(nombreCentro, medico.getId());
         if (yaEstaAsociado) {
-            throw new IllegalStateException("Médico ya está asociado al centro de atención");
+            throw new IllegalStateException("Médico en centro ya está asociado al centro de atención");
         }
 
         StaffMedico nuevoStaff = new StaffMedico();
@@ -162,66 +163,66 @@ public class CentroAtencionService {
         List<CentroAtencion> centros = repository.findAllConEspecialidades();
 
         return centros.stream()
-            .map(c -> {
-                Map<String, Object> map = new LinkedHashMap<>();
-                map.put("centro_de_atencion", c.getNombre());
-                
-                List<String> especialidadesNombres = c.getEspecialidades().stream()
-                        .map(Especialidad::getNombre)
-                        .collect(Collectors.toList());
-                        
-                map.put("especialidades", especialidadesNombres);
-                return map;
-            })
-            .collect(Collectors.toList());
+                .map(c -> {
+                    Map<String, Object> map = new LinkedHashMap<>();
+                    map.put("centro_de_atencion", c.getNombre());
+
+                    List<String> especialidadesNombres = c.getEspecialidades().stream()
+                            .map(Especialidad::getNombre)
+                            .collect(Collectors.toList());
+
+                    map.put("especialidades", especialidadesNombres);
+                    return map;
+                })
+                .collect(Collectors.toList());
     }
 
     public List<Map<String, Object>> obtenerEspecialidadesDeCentro(int idCentro) {
         CentroAtencion centro = repository.findById(idCentro)
                 .orElseThrow(() -> new IllegalArgumentException("No existe el Centro Médico"));
-        
+
         return centro.getEspecialidades().stream()
-            .map(e -> {
-                Map<String, Object> map = new LinkedHashMap<>();
-                map.put("id", e.getId());
-                map.put("nombre", e.getNombre());
-                return map;
-            })
-            .collect(Collectors.toList());
+                .map(e -> {
+                    Map<String, Object> map = new LinkedHashMap<>();
+                    map.put("id", e.getId());
+                    map.put("nombre", e.getNombre());
+                    return map;
+                })
+                .collect(Collectors.toList());
     }
 
     public List<Map<String, Object>> obtenerMedicosDeCentro(String nombreCentro) {
         List<Medico> medicos = staffMedicoRepository.findMedicosByNombreCentro(nombreCentro);
-        
+
         return medicos.stream()
-            .map(this::mapearMedicoAJson)
-            .collect(Collectors.toList());
+                .map(this::mapearMedicoAJson)
+                .collect(Collectors.toList());
     }
 
     public List<Map<String, Object>> obtenerMedicosPorCentro() {
         List<StaffMedico> todoElStaff = staffMedicoRepository.findAllStaffConDetalles();
-        
+
         Map<String, List<StaffMedico>> staffPorCentro = todoElStaff.stream()
-            .collect(Collectors.groupingBy(staff -> staff.getCentro().getNombre()));
+                .collect(Collectors.groupingBy(staff -> staff.getCentro().getNombre()));
 
         return staffPorCentro.entrySet().stream()
-            .map(entry -> {
-                Map<String, Object> map = new LinkedHashMap<>();
-                map.put("centro_de_atencion", entry.getKey());
-                
-                List<Map<String, Object>> medicosList = entry.getValue().stream()
-                        .map(staff -> mapearMedicoAJson(staff.getMedico()))
-                        .collect(Collectors.toList());
-                        
-                map.put("medicos", medicosList);
-                return map;
-            })
-            .collect(Collectors.toList());
+                .map(entry -> {
+                    Map<String, Object> map = new LinkedHashMap<>();
+                    map.put("centro_de_atencion", entry.getKey());
+
+                    List<Map<String, Object>> medicosList = entry.getValue().stream()
+                            .map(staff -> mapearMedicoAJson(staff.getMedico()))
+                            .collect(Collectors.toList());
+
+                    map.put("medicos", medicosList);
+                    return map;
+                })
+                .collect(Collectors.toList());
     }
 
     private Map<String, Object> mapearMedicoAJson(Medico m) {
         Map<String, Object> medicoMap = new LinkedHashMap<>();
-        medicoMap.put("id", m.getId()); 
+        medicoMap.put("id", m.getId());
         medicoMap.put("nombre", m.getNombre());
         medicoMap.put("apellido", m.getApellido());
         medicoMap.put("dni", Integer.parseInt(m.getDni()));

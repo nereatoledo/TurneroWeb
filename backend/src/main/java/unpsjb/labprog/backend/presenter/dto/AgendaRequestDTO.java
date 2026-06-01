@@ -1,7 +1,8 @@
-package unpsjb.labprog.backend.presenter;
+package unpsjb.labprog.backend.presenter.dto;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,7 +11,8 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class AgendaDTO {
+public class AgendaRequestDTO {
+    
     private String nombre;
     private String descripcion;
     
@@ -28,4 +30,6 @@ public class AgendaDTO {
     
     private Integer idConsultorio; 
     private Integer idMedico; 
+
+    private List<String> feriados;
 }

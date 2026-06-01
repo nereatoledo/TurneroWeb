@@ -8,11 +8,13 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
 @Entity
 @Setter
 @Getter
@@ -22,7 +24,7 @@ public class EsquemaTurno {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    private Integer id; 
 
     private String nombre;
     private String descripcion;
@@ -33,9 +35,11 @@ public class EsquemaTurno {
     private LocalTime horaInicio;
     private LocalTime horaFin;
 
-    @ManyToOne
+    @ManyToOne(optional = false) 
+    @JoinColumn(nullable = false)
     private Consultorio consultorio;
 
-    @ManyToOne
+    @ManyToOne(optional = true) 
+    @JoinColumn(nullable = true)
     private StaffMedico staffMedico;
 }

@@ -12,31 +12,32 @@ function buscarId(nombre) {
 }
 
 When('el administrador crea una especialidad con el nombre {string} y la descripción {string}', function (nombre, descripcion) {
-    this.lastResponse = request('POST', URL_BASE, { json: { nombre, descripcion } });
+    // Agregamos intervalo: 30 para cumplir con la validación del backend
+    this.lastResponse = request('POST', URL_BASE, { json: { nombre, descripcion, intervalo: 30 } });
 });
 
 When('el administrador crea una nueva especialidad con el nombre {string} y la descripción {string}', function (nombre, descripcion) {
-    this.lastResponse = request('POST', URL_BASE, { json: { nombre, descripcion } });
+    this.lastResponse = request('POST', URL_BASE, { json: { nombre, descripcion, intervalo: 30 } });
 });
 
 Given('que la especialidad {string} existe en el sistema con la descripción {string}', function (nombre, descripcion) {
-    request('POST', URL_BASE, { json: { nombre, descripcion } });
+    request('POST', URL_BASE, { json: { nombre, descripcion, intervalo: 30 } });
 });
 
 Given('que la especialidad {string} existe en el sistema', function (nombre) {
-    request('POST', URL_BASE, { json: { nombre, descripcion: "Temp" } });
+    request('POST', URL_BASE, { json: { nombre, descripcion: "Temp", intervalo: 30 } });
 });
 
 Given('otra especialidad con el nombre {string} ya está registrada', function (nombre) {
-    request('POST', URL_BASE, { json: { nombre, descripcion: "Conflicto" } });
+    request('POST', URL_BASE, { json: { nombre, descripcion: "Conflicto", intervalo: 30 } });
 });
 
 When('el administrador edita la especialidad {string} cambiando su nombre a {string} y su descripción a {string}', function (ori, nue, desc) {
-    this.lastResponse = request('PUT', URL_BASE, { json: { id: buscarId(ori), nombre: nue, descripcion: desc } });
+    this.lastResponse = request('PUT', URL_BASE, { json: { id: buscarId(ori), nombre: nue, descripcion: desc, intervalo: 30 } });
 });
 
 When('el administrador intenta cambiar el nombre de {string} a {string}', function (ori, ext) {
-    this.lastResponse = request('PUT', URL_BASE, { json: { id: buscarId(ori), nombre: ext, descripcion: "Desc" } });
+    this.lastResponse = request('PUT', URL_BASE, { json: { id: buscarId(ori), nombre: ext, descripcion: "Desc", intervalo: 30 } });
 });
 
 When('el administrador elimina la especialidad {string}', function (nombre) {

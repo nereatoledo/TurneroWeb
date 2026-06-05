@@ -22,6 +22,7 @@ public class AgendaResponseDTO {
     private LocalDate fecha;
     private DiaSemana diaSemana;
     private List<EsquemaTurnoAgenda> agendaDetalles;
+    private boolean esFeriado; 
 
 
     @Getter

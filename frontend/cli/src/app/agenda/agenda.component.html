@@ -1,7 +1,12 @@
 <div class="container py-4 page-animation">
 
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
-        <h2 class="custom-title m-0">Agendas Disponibles</h2>
+        <div class="d-flex align-items-center gap-3">
+            <button (click)="goBack()" class="btn btn-outline-secondary btn-icon-only" title="Volver atrás">
+                <i class="fa fa-arrow-left"></i>
+            </button>
+            <h2 class="custom-title m-0">Agendas Disponibles</h2>
+        </div>
     </div>
 
     <div class="card shadow-sm mb-4" style="border: none; border-radius: 10px;">
@@ -13,18 +18,10 @@
                         style="color: #6c757d; font-size: 0.85rem; text-transform: uppercase;">
                         Especialidad
                     </label>
-                    <div class="d-flex">
-                        <input type="text" class="form-control"
-                            style="border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 10px 15px;"
-                            [(ngModel)]="especialidadSeleccionada" [ngbTypeahead]="searchEspecialidad"
-                            [editable]="false" [resultFormatter]="resultFormatEspecialidad"
-                            [inputFormatter]="inputFormatEspecialidad" placeholder="Buscar especialidad..."
-                            autocomplete="off" />
-                        <button *ngIf="especialidadSeleccionada" class="btn btn-light border ms-1"
-                            style="border-radius: 8px;" (click)="especialidadSeleccionada = null" title="Limpiar">
-                            <i class="fa fa-times text-muted"></i>
-                        </button>
-                    </div>
+                    <input type="text" class="form-control" [(ngModel)]="especialidadSeleccionada"
+                        [ngbTypeahead]="searchEspecialidad" [resultFormatter]="resultFormatEsp" [inputFormatter]="inputFormatEsp"
+                        placeholder="Todas" [editable]="false"
+                        style="border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 10px 15px;" />
                 </div>
 
                 <div class="col-md-3">
@@ -32,17 +29,10 @@
                         style="color: #6c757d; font-size: 0.85rem; text-transform: uppercase;">
                         Médico
                     </label>
-                    <div class="d-flex">
-                        <input type="text" class="form-control"
-                            style="border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 10px 15px;"
-                            [(ngModel)]="medicoSeleccionado" [ngbTypeahead]="searchMedico" [editable]="false"
-                            [resultFormatter]="resultFormatMedico" [inputFormatter]="inputFormatMedico"
-                            placeholder="Buscar médico..." autocomplete="off" />
-                        <button *ngIf="medicoSeleccionado" class="btn btn-light border ms-1" style="border-radius: 8px;"
-                            (click)="medicoSeleccionado = null" title="Limpiar">
-                            <i class="fa fa-times text-muted"></i>
-                        </button>
-                    </div>
+                    <input type="text" class="form-control" [(ngModel)]="medicoSeleccionado"
+                        [ngbTypeahead]="searchMedico" [resultFormatter]="resultFormatMed" [inputFormatter]="inputFormatMed"
+                        placeholder="Todos" [editable]="false"
+                        style="border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 10px 15px;" />
                 </div>
 
                 <div class="col-md-2">
@@ -90,7 +80,13 @@
                 </h5>
             </div>
 
-            <ul class="list-group list-group-flush">
+            <div *ngIf="dia.esFeriado" class="card-body text-center py-5" style="background-color: #f8f9fa;">
+                <i class="fa fa-calendar-times text-danger mb-3" style="font-size: 3.5rem;"></i>
+                <h4 class="text-danger font-weight-bold">Día Feriado</h4>
+                <p class="text-muted mb-0" style="font-size: 1.1rem;">No se pueden asignar turnos en ningún centro de atención durante este día.</p>
+            </div>
+
+            <ul *ngIf="!dia.esFeriado" class="list-group list-group-flush">
                 <li class="list-group-item p-4" *ngFor="let esquema of dia.agendaDetalles">
                     <div class="row align-items-center">
 
@@ -98,7 +94,7 @@
                             <h5 class="mb-0 text-secondary font-weight-bold">
                                 {{ formatearHora(esquema.horaInicio) }} <br> a <br> {{ formatearHora(esquema.horaFin) }}
                             </h5>
-                            <span class="badge badge-light border mt-2 px-2 py-1">Horario</span>
+                            <span class="badge badge-light text-dark border mt-2 px-2 py-1">Horario</span>
                         </div>
 
                         <div class="col-md-4 border-end px-4">
@@ -112,7 +108,7 @@
                                 <h6 class="mb-1 font-weight-bold"><i class="fa fa-building mr-2"></i>{{
                                     esquema.centroAtencion.nombre }}</h6>
                                 <div class="text-muted small ml-4"><i class="fa fa-map-marker mr-1"></i>{{
-                                    esquema.consultorio.nombre }}</div>
+                                    esquema.centroAtencion.direccion }} - {{ esquema.consultorio.nombre }}</div>
                             </div>
                         </div>
 

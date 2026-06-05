@@ -24,6 +24,9 @@ public class EspecialidadPresenter {
         if (especialidad.getDescripcion() == null || especialidad.getDescripcion().trim().isEmpty()) {
             return Response.response(HttpStatus.CONFLICT, "La descripción de la especialidad es obligatoria", null);
         }
+        if (especialidad.getIntervalo() == null || especialidad.getIntervalo() <= 0) {
+            return Response.response(HttpStatus.BAD_REQUEST, "Debe especificar un intervalo mayor a 0 minutos.", null);
+        }
         if (service.findByNombre(especialidad.getNombre()) != null) {
             return Response.response(HttpStatus.CONFLICT, "Ya existe una especialidad con ese nombre", null);
         }
@@ -51,9 +54,16 @@ public class EspecialidadPresenter {
                 return Response.response(HttpStatus.CONFLICT, "El nombre de la especialidad ya está en uso", null);
             }
         }
+        
+        if (especialidadActualizada.getIntervalo() == null || especialidadActualizada.getIntervalo() <= 0) {
+            return Response.response(HttpStatus.BAD_REQUEST, "Debe especificar un intervalo mayor a 0 minutos.", null);
+        }
 
+        // --- SOLUCIÓN APLICADA AQUÍ ---
         existente.setNombre(especialidadActualizada.getNombre());
         existente.setDescripcion(especialidadActualizada.getDescripcion());
+        existente.setIntervalo(especialidadActualizada.getIntervalo()); // <--- ¡AQUÍ ESTÁ LA MAGIA!
+        
         service.save(existente);
         return Response.response(HttpStatus.OK, "Especialidad editada exitosamente", existente);
     }

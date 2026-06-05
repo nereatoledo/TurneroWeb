@@ -15,6 +15,7 @@
                         El nombre es requerido.
                     </div>
                 </div>
+                
                 <div class="row">
                     <div class="form-group mb-4 col-md-12">
                         <label for="descripcion" class="custom-label">Descripción</label>
@@ -25,6 +26,22 @@
                             class="text-danger small mt-1">
                             La descripción es requerida.
                         </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group mb-4 col-md-12">
+                        <label for="intervalo" class="custom-label">Intervalo de Turnos (en minutos)</label>
+                        <input type="number" [(ngModel)]="especialidad.intervalo" name="intervalo"
+                            class="form-control custom-input" required #intervalo="ngModel"
+                            placeholder="Ej: 15, 20, 30, 45" min="1" />
+                        <div *ngIf="intervalo.invalid && (intervalo.dirty || intervalo.touched)"
+                            class="text-danger small mt-1">
+                            El intervalo es requerido y debe ser un número mayor a 0.
+                        </div>
+                        <small class="text-muted mt-2 d-block" style="font-size: 0.85rem;">
+                            Define la duración por defecto de cada turno para los médicos de esta especialidad.
+                        </small>
                     </div>
                 </div>
 

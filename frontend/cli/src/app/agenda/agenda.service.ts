@@ -11,15 +11,15 @@ export class AgendaService {
 
     constructor(private http: HttpClient) { }
 
-    buscarAgenda(fechaInicio: string, fechaFin: string, idEspecialidad?: number, idMedico?: number): Observable<DataPackage> {
-        let params = new HttpParams()
-            .set('fechaInicio', fechaInicio)
-            .set('fechaFin', fechaFin);
+    buscarAgenda(fechaInicio: string, fechaFin?: string, idEspecialidad?: number, idMedico?: number): Observable<DataPackage> {
+        let params = new HttpParams().set('fechaInicio', fechaInicio);
 
+        if (fechaFin) {
+            params = params.set('fechaFin', fechaFin);
+        }
         if (idEspecialidad) {
             params = params.set('idEspecialidad', idEspecialidad.toString());
         }
-
         if (idMedico) {
             params = params.set('idMedico', idMedico.toString());
         }

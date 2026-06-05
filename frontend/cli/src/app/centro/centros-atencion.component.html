@@ -34,14 +34,19 @@
                 <i class="fa fa-list m-0"></i>
               </a>
 
+              <a [routerLink]="[prefix + '/centros_atencion/agenda']"
+                class="btn-outline-purple" title="Turnos">
+                <i class="fa fa-calendar"></i> Turnos
+              </a>
+
               <a [routerLink]="[prefix + '/centros_atencion', centro_atencion.id, 'especialidades']"
-                class="btn-outline-purple btn-icon-only" title="Especialidades">
-                <i class="fa fa-tags m-0"></i>
+                class="btn-outline-purple" title="Especialidades">
+                <i class="fa fa-tags"></i> Especialidades
               </a>
               
               <a [routerLink]="[prefix + '/centros_atencion', centro_atencion.id, 'medicos']"
-                class="btn-outline-purple btn-icon-only" title="Médicos">
-                <i class="fa fa-user-md m-0"></i>
+                class="btn-outline-purple" title="Médicos">
+                <i class="fa fa-user-md"></i> Médicos
               </a>
 
               <a *ngIf="isAdmin" [routerLink]="['/centros_atencion', centro_atencion.id]" class="btn-purple-main btn-icon-only"

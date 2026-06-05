@@ -3,7 +3,8 @@ import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { catchError, debounceTime, distinctUntilChanged, map, Observable, of, switchMap } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 
 import { AgendaService } from './agenda.service';
 import { EspecialidadService } from '../especialidades/especialidad.service';
@@ -53,56 +54,44 @@ export class AgendaComponent implements OnInit {
         this.fechaFin = enUnaSemana.toISOString().split('T')[0];
     }
 
-    goBack(): void {
-        this.location.back();
-    }
-
-
     searchEspecialidad = (text$: Observable<string>): Observable<any[]> =>
         text$.pipe(
             debounceTime(300),
             distinctUntilChanged(),
-            switchMap((term) => {
-                if (term.length < 2) return of([]); 
-                return this.espService.search(term).pipe(
-                    map((response: DataPackage) => <any[]>response.data),
+            switchMap((term) =>
+                term.length < 1 ? of([]) :
+                this.espService.search(term).pipe(
+                    map((response) => <any[]>response.data),
                     catchError(() => of([]))
-                );
-            })
+                )
+            )
         );
 
-    resultFormatEspecialidad(value: any): string {
-        return value.nombre;
-    }
-
-    inputFormatEspecialidad(value: any): string {
-        return value ? value.nombre : '';
-    }
+    resultFormatEsp(value: any): string { return value.nombre; }
+    inputFormatEsp(value: any): string { return value ? value.nombre : ''; }
 
     searchMedico = (text$: Observable<string>): Observable<any[]> =>
         text$.pipe(
             debounceTime(300),
             distinctUntilChanged(),
-            switchMap((term) => {
-                if (term.length < 2) return of([]);
-                return this.medicoService.search(term).pipe(
-                    map((response: DataPackage) => <any[]>response.data),
+            switchMap((term) =>
+                term.length < 1 ? of([]) :
+                this.medicoService.search(term).pipe(
+                    map((response) => <any[]>response.data),
                     catchError(() => of([]))
-                );
-            })
+                )
+            )
         );
 
-    resultFormatMedico(value: any): string {
-        return `${value.apellido}, ${value.nombre}`;
-    }
+    resultFormatMed(value: any): string { return value.apellido + ', ' + value.nombre; }
+    inputFormatMed(value: any): string { return value ? value.apellido + ', ' + value.nombre : ''; }
 
-    inputFormatMedico(value: any): string {
-        return value ? `${value.apellido}, ${value.nombre}` : '';
+    goBack(): void {
+        this.location.back();
     }
-
 
     buscarAgenda(): void {
-        if (!this.fechaInicio || !this.fechaFin) {
+        if (!this.fechaInicio) {
             this.mensajeError = 'Por favor, seleccione un rango de fechas válido.';
             return;
         }
@@ -115,7 +104,7 @@ export class AgendaComponent implements OnInit {
 
         this.agendaService.buscarAgenda(
             this.fechaInicio,
-            this.fechaFin,
+            this.fechaFin ? this.fechaFin : undefined,
             idEspecialidad,
             idMedico
         ).subscribe({

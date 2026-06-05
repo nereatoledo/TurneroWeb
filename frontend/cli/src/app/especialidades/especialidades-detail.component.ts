@@ -18,6 +18,7 @@ export class EspecialidadDetailComponent implements OnInit {
   especialidad: Especialidad = <Especialidad>{
     nombre: "",
     descripcion: "",
+    intervalo: undefined // Propiedad agregada para inicializar el formulario correctamente
   };
 
   constructor(

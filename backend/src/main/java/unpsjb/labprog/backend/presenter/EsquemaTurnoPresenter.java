@@ -14,6 +14,7 @@ import unpsjb.labprog.backend.presenter.dto.AgendaRequestDTO;
 import java.time.LocalDate;
 
 @RestController
+@CrossOrigin
 @RequestMapping("/esquemas-turnos")
 public class EsquemaTurnoPresenter {
 
@@ -38,11 +39,12 @@ public class EsquemaTurnoPresenter {
     @GetMapping("/buscar")
     public ResponseEntity<Object> buscarAgenda(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
             @RequestParam(required = false) Integer idEspecialidad,
             @RequestParam(required = false) Integer idMedico){
         try {
-            Object agenda = esquemaTurnoService.obtenerAgendaFrontend(fechaInicio, fechaFin, idEspecialidad, idMedico);
+            LocalDate fin = (fechaFin != null) ? fechaFin : fechaInicio;
+            Object agenda = esquemaTurnoService.obtenerAgendaFrontend(fechaInicio, fin, idEspecialidad, idMedico);
             return Response.response(HttpStatus.OK, "Agenda encontrada", agenda);
         } catch (Exception e) {
             e.printStackTrace();

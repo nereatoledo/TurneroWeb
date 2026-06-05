@@ -28,4 +28,5 @@ export interface AgendaDia {
     fecha: string;
     diaSemana: string;
     agendaDetalles: EsquemaTurnoAgenda[];
+    esFeriado: boolean;
 }

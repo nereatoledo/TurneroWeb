@@ -118,13 +118,15 @@ public class EsquemaTurnoService {
 
         while (!fechaActual.isAfter(fechaFin)) {
             
-            // VERIFICACIÓN DE FERIADOS: Si es feriado, se ignora el día por completo
+            DiaSemana diaJava = DiaSemana.desdeJava(fechaActual.getDayOfWeek());
+
             if (feriadoRepository.existeFeriadoPorFecha(fechaActual)) {
+                AgendaResponseDTO agendaDiaFeriado = new AgendaResponseDTO(fechaActual, diaJava, new ArrayList<>(), true);
+                agendasDiarias.add(agendaDiaFeriado);
                 fechaActual = fechaActual.plusDays(1);
                 continue; 
             }
 
-            DiaSemana diaJava = DiaSemana.desdeJava(fechaActual.getDayOfWeek());
             List<EsquemaTurno> esquemasDb = esquemaTurnoRepository.buscarParaAgenda(diaJava, idEspecialidad, idMedico);
 
             if (!esquemasDb.isEmpty()) {
@@ -133,7 +135,6 @@ public class EsquemaTurnoService {
                 for (EsquemaTurno esquema : esquemasDb) {
                     CentroAtencion centroEntity = esquema.getStaffMedico().getCentro();
                     
-                    // Usando la clase interna
                     CentroAtencionInfo centroInfo = new CentroAtencionInfo(
                             centroEntity.getNombre(),
                             centroEntity.getDireccion(),
@@ -143,10 +144,12 @@ public class EsquemaTurnoService {
                             centroEntity.getCoordenadas()
                     );
 
-                    int intervaloMinutos = 30; // Ajustar según tu lógica de especialidad
+                    Integer intervaloEsp = esquema.getStaffMedico().getMedico().getEspecialidad().getIntervalo();
+                    
+                    int intervaloMinutos = (intervaloEsp != null && intervaloEsp > 0) ? intervaloEsp : 30;
+
                     List<SlotTurnoAgenda> slots = generarSlots(esquema.getHoraInicio(), esquema.getHoraFin(), intervaloMinutos);
 
-                    // Usando la clase interna
                     EsquemaTurnoAgenda tarjeta = new EsquemaTurnoAgenda(
                             esquema.getHoraInicio(),
                             esquema.getHoraFin(),
@@ -159,8 +162,7 @@ public class EsquemaTurnoService {
                     detallesDelDia.add(tarjeta);
                 }
 
-                // Usando el DTO principal
-                AgendaResponseDTO agendaDia = new AgendaResponseDTO(fechaActual, diaJava, detallesDelDia);
+                AgendaResponseDTO agendaDia = new AgendaResponseDTO(fechaActual, diaJava, detallesDelDia, false);
                 agendasDiarias.add(agendaDia);
             }
             fechaActual = fechaActual.plusDays(1);

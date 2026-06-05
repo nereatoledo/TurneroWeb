@@ -19,9 +19,9 @@ export const routes: Routes = [
     // --- ENTORNO ADMINISTRADOR ---
     { path: 'admin', component: PanelHomeComponent, title: 'Turnero Web - Panel Admin' },
     { path: 'admin/centros_atencion', component: CentrosAtencionComponent, title: 'Centros de Atención - Admin' },
+    { path: 'admin/centros_atencion/agenda', component: AgendaComponent, title: 'Agendas - Admin' },
     { path: 'admin/medicos', component: MedicosComponent, title: 'Médicos - Admin' },
     { path: 'admin/especialidades', component: EspecialidadesComponent, title: 'Especialidades - Admin' },
-    { path: 'admin/agenda', component: AgendaComponent, title: 'Agendas - Admin' }, // <-- NUEVA RUTA ADMIN
     
     // Sub-rutas de Centros (ADMINISTRADOR)
     { path: 'admin/centros_atencion/:id/especialidades', component: CentroEspecialidadesComponent, title: 'Especialidades del Centro - Admin' },
@@ -33,9 +33,9 @@ export const routes: Routes = [
     // --- ENTORNO USUARIO ---
     { path: 'usuario', component: PanelHomeComponent, title: 'Turnero Web - Portal Usuario' },
     { path: 'usuario/centros_atencion', component: CentrosAtencionComponent, title: 'Centros de Atención' },
+    { path: 'usuario/centros_atencion/agenda', component: AgendaComponent, title: 'Agendas' },
     { path: 'usuario/medicos', component: MedicosComponent, title: 'Médicos' },
     { path: 'usuario/especialidades', component: EspecialidadesComponent, title: 'Especialidades' },
-    { path: 'usuario/agenda', component: AgendaComponent, title: 'Agendas' }, // <-- NUEVA RUTA USUARIO
 
     // Sub-rutas de Centros (USUARIO)
     { path: 'usuario/centros_atencion/:id/especialidades', component: CentroEspecialidadesComponent, title: 'Especialidades del Centro' },

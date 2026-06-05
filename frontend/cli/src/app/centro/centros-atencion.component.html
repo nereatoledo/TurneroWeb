@@ -1,11 +1,18 @@
 <div class="container py-4 page-animation">
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
-    <h2 class="custom-title m-0">Centros de Atención</h2>
-    <a routerLink="/centros_atencion/new" class="btn-purple-main">
+    
+    <div class="d-flex align-items-center gap-3">
+      <button (click)="goBack()" class="btn btn-outline-secondary btn-icon-only" title="Volver al Panel">
+        <i class="fa fa-arrow-left m-0"></i>
+      </button>
+      <h2 class="custom-title m-0">Centros de Atención</h2>
+    </div>
+
+    <a *ngIf="isAdmin" routerLink="/centros_atencion/new" class="btn-purple-main">
       <i class="fa fa-plus"></i> Nuevo Centro
     </a>
   </div>
-         
+
   <div class="content-wrapper">
     <div class="table-responsive">
       <table class="table-custom">
@@ -20,40 +27,45 @@
           <tr *ngFor="let centro_atencion of resultsPage.content">
             <td class="text-muted font-weight-bold">#{{ centro_atencion.id }}</td>
             <td style="font-weight: 500;">{{ centro_atencion.nombre }}</td>
-            <td class="text-right">
-                                 
-              <a [routerLink]="['/centros_atencion', centro_atencion.id, 'consultorios']" class="btn-outline-purple btn-sm mr-2" title="Consultorios">
-                <i class="fa fa-list"></i>
+            <td class="text-right d-flex gap-2 justify-content-end">
+
+              <a *ngIf="isAdmin" [routerLink]="[prefix + '/centros_atencion', centro_atencion.id, 'consultorios']"
+                class="btn-outline-purple btn-icon-only" title="Consultorios">
+                <i class="fa fa-list m-0"></i>
               </a>
-              <a [routerLink]="['/centros_atencion', centro_atencion.id, 'especialidades']" class="btn-outline-purple btn-sm mr-2" title="Especialidades">
-                <i class="fa fa-tags"></i>
+
+              <a [routerLink]="[prefix + '/centros_atencion', centro_atencion.id, 'especialidades']"
+                class="btn-outline-purple btn-icon-only" title="Especialidades">
+                <i class="fa fa-tags m-0"></i>
               </a>
-              <a [routerLink]="['/centros_atencion', centro_atencion.id, 'medicos']" class="btn-outline-purple btn-sm mr-2" title="Médicos">
-                <i class="fa fa-user-md"></i>
+              
+              <a [routerLink]="[prefix + '/centros_atencion', centro_atencion.id, 'medicos']"
+                class="btn-outline-purple btn-icon-only" title="Médicos">
+                <i class="fa fa-user-md m-0"></i>
               </a>
-              <a [routerLink]="['/centros_atencion', centro_atencion.id]" class="btn-purple-main btn-sm mr-2" title="Editar">
-                <i class="fa fa-pencil"></i>
+
+              <a *ngIf="isAdmin" [routerLink]="['/centros_atencion', centro_atencion.id]" class="btn-purple-main btn-icon-only"
+                title="Editar">
+                <i class="fa fa-pencil m-0"></i>
               </a>
-                                 
-              <button (click)="remove(centro_atencion)" class="btn-danger-custom btn-sm" title="Borrar">
-                <i class="fa fa-trash"></i>
+
+              <button *ngIf="isAdmin" (click)="remove(centro_atencion)" class="btn-danger-custom btn-icon-only" title="Borrar">
+                <i class="fa fa-trash m-0"></i>
               </button>
+
             </td>
           </tr>
           <tr *ngIf="resultsPage.content?.length === 0">
-             <td colspan="3" class="text-center py-4 text-muted">No hay centros registrados.</td>
+            <td colspan="3" class="text-center py-4 text-muted">No hay centros registrados.</td>
           </tr>
         </tbody>
       </table>
     </div>
   </div>
-         
+
   <div class="d-flex justify-content-center mt-4">
-    <app-pagination
-      [totalPages]="resultsPage.totalPages"
-      [currentPage]="currentPage"
-      (pageChangeRequested)="onPageChangeRequested($event)"
-      [number]="resultsPage.number"
+    <app-pagination [totalPages]="resultsPage.totalPages" [currentPage]="currentPage"
+      (pageChangeRequested)="onPageChangeRequested($event)" [number]="resultsPage.number"
       [hidden]="resultsPage.numberOfElements < 0">
     </app-pagination>
   </div>

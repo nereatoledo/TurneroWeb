@@ -19,13 +19,13 @@
                     <tr *ngFor="let consultorio of resultsPage.content">
                         <td class="text-muted font-weight-bold">#{{ consultorio.id }}</td>
                         <td style="font-weight: 500;">{{ consultorio.nombre }}</td>
-                        <td class="text-right">
+                        <td class="text-right d-flex gap-2 justify-content-end">
                             <a [routerLink]="['/centros_atencion', centroId, 'consultorios', consultorio.id]"
-                                class="btn-purple-main btn-sm mr-2" title="Editar">
-                                <i class="fa fa-pencil"></i>
+                                class="btn-purple-main btn-icon-only" title="Editar">
+                                <i class="fa fa-pencil m-0"></i>
                             </a>
-                            <button (click)="remove(consultorio)" class="btn-danger-custom btn-sm" title="Borrar">
-                                <i class="fa fa-trash"></i>
+                            <button (click)="remove(consultorio)" class="btn-danger-custom btn-icon-only" title="Borrar">
+                                <i class="fa fa-trash m-0"></i>
                             </button>
                         </td>
                     </tr>

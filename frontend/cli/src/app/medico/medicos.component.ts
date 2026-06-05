@@ -1,12 +1,12 @@
 import { Component, OnInit } from "@angular/core";
-import { RouterModule } from "@angular/router";
+import { Router, RouterModule } from "@angular/router";
+import { Location, CommonModule } from "@angular/common";
 import { Medico } from "./medico";
 import { MedicoService } from "./medico.service";
 import { ModalService } from "../modal/modal.service";
 import { PaginationComponent } from "../pagination/pagination.component";
 import { ResultsPage } from "../results-page";
 import { DataPackage } from "../data-package";
-import { CommonModule } from "@angular/common";
 
 @Component({
   selector: "app-medicos",
@@ -18,13 +18,17 @@ import { CommonModule } from "@angular/common";
 export class MedicosComponent implements OnInit {
   resultsPage: ResultsPage = <ResultsPage>{};
   currentPage: number = 1;
+  isAdmin: boolean = false;
 
   constructor(
     private medicoService: MedicoService,
     private modalService: ModalService,
+    private router: Router,
+    private location: Location
   ) { }
 
   ngOnInit(): void {
+    this.isAdmin = this.router.url.includes('/admin');
     this.getMedicos();
   }
 
@@ -58,5 +62,9 @@ export class MedicosComponent implements OnInit {
   onPageChangeRequested(page: number): void {
     this.currentPage = page;
     this.getMedicos();
+  }
+
+  goBack(): void {
+    this.location.back();
   }
 }

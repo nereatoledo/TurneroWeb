@@ -1,12 +1,12 @@
 import { Component, OnInit } from "@angular/core";
-import { RouterModule } from "@angular/router";
+import { Router, RouterModule } from "@angular/router";
+import { Location, CommonModule } from "@angular/common"; // 1. Importamos Location
 import { CentroAtencion } from "./centro-atencion";
 import { CentroAtencionService } from "./centro-atencion.service";
 import { ModalService } from "../modal/modal.service";
 import { PaginationComponent } from "../pagination/pagination.component";
 import { ResultsPage } from "../results-page";
 import { DataPackage } from "../data-package";
-import { CommonModule, Location } from "@angular/common";
 
 @Component({
   selector: "app-customer",
@@ -19,10 +19,14 @@ export class CentrosAtencionComponent implements OnInit {
   centros_atencion: CentroAtencion[] = [];
   resultsPage: ResultsPage = <ResultsPage>{};
   currentPage: number = 1;
+  isAdmin: boolean = false;
+  prefix: string = '/usuario';
 
   constructor(
     private centro_atencionService: CentroAtencionService,
     private modalService: ModalService,
+    private router: Router,
+    private location: Location
   ) { }
 
   getCentros(): void {
@@ -57,7 +61,13 @@ export class CentrosAtencionComponent implements OnInit {
     this.getCentros();
   }
 
-  ngOnInit(): void {
+ngOnInit(): void {
+    this.isAdmin = this.router.url.includes('/admin');
+    this.prefix = this.isAdmin ? '/admin' : '/usuario'; 
     this.getCentros();
+  }
+
+  goBack(): void {
+    this.location.back();
   }
 }

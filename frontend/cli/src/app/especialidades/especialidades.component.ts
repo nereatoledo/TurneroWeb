@@ -1,6 +1,6 @@
-import { CommonModule } from "@angular/common";
 import { Component, OnInit } from "@angular/core";
-import { RouterModule } from "@angular/router";
+import { Router, RouterModule } from "@angular/router";
+import { CommonModule, Location } from "@angular/common";
 import { Especialidad } from "./especialidades";
 import { EspecialidadService } from "./especialidad.service";
 import { ModalService } from "../modal/modal.service";
@@ -19,13 +19,17 @@ export class EspecialidadesComponent implements OnInit {
   especialidades: Especialidad[] = [];
   resultsPage: ResultsPage = <ResultsPage>{};
   currentPage: number = 1;
+  isAdmin: boolean = false;
 
   constructor(
     private especialidadService: EspecialidadService,
     private modalService: ModalService,
+    private router: Router,
+    private location: Location
   ) { }
 
   ngOnInit(): void {
+    this.isAdmin = this.router.url.includes('/admin');
     this.getEspecialidades();
   }
 
@@ -59,5 +63,9 @@ export class EspecialidadesComponent implements OnInit {
   onPageChangeRequested(page: number): void {
     this.currentPage = page;
     this.getEspecialidades();
+  }
+
+  goBack(): void {
+    this.location.back();
   }
 }

@@ -12,6 +12,10 @@ export class MedicoService {
 
     constructor(private http: HttpClient) { }
 
+    getAll(): Observable<DataPackage> {
+        return this.http.get<DataPackage>(this.medicosUrl);
+    }
+
     search(searchTerm: string): Observable<DataPackage> {
         return this.http.get<DataPackage>(`${this.medicosUrl}/search/${searchTerm}`);
     }

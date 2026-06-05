@@ -1,0 +1,136 @@
+<div class="container py-4 page-animation">
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <h2 class="custom-title m-0">Agendas Disponibles</h2>
+    </div>
+
+    <div class="card shadow-sm mb-4" style="border: none; border-radius: 10px;">
+        <div class="card-body p-4">
+            <div class="row g-3 align-items-end">
+
+                <div class="col-md-3">
+                    <label class="mb-1 font-weight-bold"
+                        style="color: #6c757d; font-size: 0.85rem; text-transform: uppercase;">
+                        Especialidad
+                    </label>
+                    <div class="d-flex">
+                        <input type="text" class="form-control"
+                            style="border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 10px 15px;"
+                            [(ngModel)]="especialidadSeleccionada" [ngbTypeahead]="searchEspecialidad"
+                            [editable]="false" [resultFormatter]="resultFormatEspecialidad"
+                            [inputFormatter]="inputFormatEspecialidad" placeholder="Buscar especialidad..."
+                            autocomplete="off" />
+                        <button *ngIf="especialidadSeleccionada" class="btn btn-light border ms-1"
+                            style="border-radius: 8px;" (click)="especialidadSeleccionada = null" title="Limpiar">
+                            <i class="fa fa-times text-muted"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="mb-1 font-weight-bold"
+                        style="color: #6c757d; font-size: 0.85rem; text-transform: uppercase;">
+                        Médico
+                    </label>
+                    <div class="d-flex">
+                        <input type="text" class="form-control"
+                            style="border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 10px 15px;"
+                            [(ngModel)]="medicoSeleccionado" [ngbTypeahead]="searchMedico" [editable]="false"
+                            [resultFormatter]="resultFormatMedico" [inputFormatter]="inputFormatMedico"
+                            placeholder="Buscar médico..." autocomplete="off" />
+                        <button *ngIf="medicoSeleccionado" class="btn btn-light border ms-1" style="border-radius: 8px;"
+                            (click)="medicoSeleccionado = null" title="Limpiar">
+                            <i class="fa fa-times text-muted"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="mb-1 font-weight-bold"
+                        style="color: #6c757d; font-size: 0.85rem; text-transform: uppercase;">Día inicio</label>
+                    <input type="date" [(ngModel)]="fechaInicio" class="form-control"
+                        style="border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 10px 15px;" />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="mb-1 font-weight-bold"
+                        style="color: #6c757d; font-size: 0.85rem; text-transform: uppercase;">Día fin</label>
+                    <input type="date" [(ngModel)]="fechaFin" class="form-control"
+                        style="border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 10px 15px;" />
+                </div>
+
+                <div class="col-md-2">
+                    <button class="btn-purple-main w-100" style="padding: 10px 15px;" (click)="buscarAgenda()">
+                        <i class="fa fa-search mr-2"></i> Ver agenda
+                    </button>
+                </div>
+            </div>
+
+            <div *ngIf="mensajeError" class="text-danger mt-3 font-weight-bold">
+                <i class="fa fa-exclamation-triangle mr-2"></i> {{ mensajeError }}
+            </div>
+        </div>
+    </div>
+
+    <div *ngIf="busquedaRealizada">
+
+        <div *ngIf="agendas.length === 0 && !mensajeError" class="alert alert-info shadow-sm d-flex align-items-center"
+            style="border-radius: 10px;">
+            <i class="fa fa-info-circle mr-3" style="font-size: 1.5rem;"></i>
+            <div>No hay turnos disponibles para los filtros seleccionados en este rango de fechas.</div>
+        </div>
+
+        <div class="card shadow-sm mb-4" style="border: none; border-radius: 10px; overflow: hidden;"
+            *ngFor="let dia of agendas">
+
+            <div class="card-header text-white py-3" style="background-color: #685cc7;">
+                <h5 class="mb-0 font-weight-bold" style="font-size: 1.1rem;">
+                    <i class="fa fa-calendar mr-2"></i>
+                    {{ dia.diaSemana | titlecase }} - {{ dia.fecha | date:'dd/MM/yyyy' }}
+                </h5>
+            </div>
+
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item p-4" *ngFor="let esquema of dia.agendaDetalles">
+                    <div class="row align-items-center">
+
+                        <div class="col-md-2 border-end text-center">
+                            <h5 class="mb-0 text-secondary font-weight-bold">
+                                {{ formatearHora(esquema.horaInicio) }} <br> a <br> {{ formatearHora(esquema.horaFin) }}
+                            </h5>
+                            <span class="badge badge-light border mt-2 px-2 py-1">Horario</span>
+                        </div>
+
+                        <div class="col-md-4 border-end px-4">
+                            <div class="mb-3" style="color: #6f42c1;">
+                                <h6 class="mb-1 font-weight-bold"><i class="fa fa-user-md mr-2"></i>{{
+                                    esquema.medico.apellido }}, {{ esquema.medico.nombre }}</h6>
+                                <div class="text-muted small ml-4"><i class="fa fa-stethoscope mr-1"></i>{{
+                                    esquema.medico.especialidad.nombre }}</div>
+                            </div>
+                            <div style="color: #fd7e14;">
+                                <h6 class="mb-1 font-weight-bold"><i class="fa fa-building mr-2"></i>{{
+                                    esquema.centroAtencion.nombre }}</h6>
+                                <div class="text-muted small ml-4"><i class="fa fa-map-marker mr-1"></i>{{
+                                    esquema.consultorio.nombre }}</div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 pl-4">
+                            <div class="d-flex flex-wrap gap-2">
+                                <button *ngFor="let slot of esquema.turnos"
+                                    class="btn btn-sm font-weight-bold shadow-sm custom-slot-btn"
+                                    [ngClass]="slot.estaDisponible ? 'btn-success' : 'btn-danger'"
+                                    [disabled]="!slot.estaDisponible">
+                                    {{ formatearHora(slot.horario) }}
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+</div>

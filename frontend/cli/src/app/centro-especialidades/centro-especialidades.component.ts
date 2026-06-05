@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { Location, CommonModule } from '@angular/common';
 import { CentroAtencionService } from '../centro/centro-atencion.service';
-import { CommonModule } from '@angular/common';
 import { CentroAtencion } from '../centro/centro-atencion';
 import { DataPackage } from '../data-package';
 import { ModalService } from '../modal/modal.service';
@@ -23,15 +23,19 @@ export class CentroEspecialidadesComponent implements OnInit {
   centroNombre: string = 'Cargando...';
   mostrandoFormulario: boolean = false;
   especialidadSeleccionada: any = null;
+  isAdmin: boolean = false;
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
+    private location: Location,
     private centroService: CentroAtencionService,
     private modalService: ModalService,
     private espService: EspecialidadService
   ) { }
 
   ngOnInit(): void {
+    this.isAdmin = this.router.url.includes('/admin');
     this.idCentro = Number(this.route.snapshot.paramMap.get('id'));
     this.getCentroNombre();
     this.cargarEspecialidades();
@@ -122,5 +126,9 @@ export class CentroEspecialidadesComponent implements OnInit {
         this.modalService.confirm("Aviso", errorResponse?.message || "Ocurrió un error al intentar asociar.", "");
       }
     });
+  }
+
+  goBack(): void {
+    this.location.back();
   }
 }

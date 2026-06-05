@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router'; // Agregamos Router
+import { Location, CommonModule } from '@angular/common'; // Agregamos Location
 import { CentroAtencionService } from '../centro/centro-atencion.service';
-import { CommonModule } from '@angular/common';
 import { CentroAtencion } from '../centro/centro-atencion';
 import { DataPackage } from '../data-package';
 import { ModalService } from '../modal/modal.service'; 
@@ -17,14 +17,18 @@ export class CentroMedicosComponent implements OnInit {
   medicos: any[] = [];
   idCentro!: number;
   centroNombre: string = 'Cargando...';
+  isAdmin: boolean = false; 
 
   constructor(
     private route: ActivatedRoute,
+    private router: Router, 
+    private location: Location, 
     private centroService: CentroAtencionService,
     private modalService: ModalService 
   ) { }
 
   ngOnInit(): void {
+    this.isAdmin = this.router.url.includes('/admin'); 
     this.idCentro = Number(this.route.snapshot.paramMap.get('id'));
     this.getCentroNombre();
   }
@@ -75,5 +79,9 @@ export class CentroMedicosComponent implements OnInit {
       })
       .catch(() => {
       });
+  }
+
+  goBack(): void {
+    this.location.back();
   }
 }

@@ -40,7 +40,7 @@ public class EsquemaTurnoPresenter {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
             @RequestParam(required = false) Integer idEspecialidad,
-            @RequestParam(required = false) Integer idMedico) {
+            @RequestParam(required = false) Integer idMedico){
         try {
             Object agenda = esquemaTurnoService.obtenerAgendaFrontend(fechaInicio, fechaFin, idEspecialidad, idMedico);
             return Response.response(HttpStatus.OK, "Agenda encontrada", agenda);

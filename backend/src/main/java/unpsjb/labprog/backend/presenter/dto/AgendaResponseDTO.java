@@ -23,7 +23,6 @@ public class AgendaResponseDTO {
     private DiaSemana diaSemana;
     private List<EsquemaTurnoAgenda> agendaDetalles;
 
-    // --- CLASES INTERNAS (Inner Classes) ---
 
     @Getter
     @Setter

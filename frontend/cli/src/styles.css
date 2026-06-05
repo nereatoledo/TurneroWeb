@@ -133,3 +133,10 @@ body {
   border-top-right-radius: 8px;
   border-bottom-right-radius: 8px;
 }
+
+.btn-icon-only {
+  padding: 0;
+  width: 34px;
+  height: 34px;
+  justify-content: center;
+}

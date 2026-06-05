@@ -1,0 +1,21 @@
+.custom-slot-btn {
+    width: 65px;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+    margin: 4px;
+}
+
+.custom-slot-btn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15) !important;
+}
+
+.custom-slot-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.dropdown-menu {
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}

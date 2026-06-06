@@ -13,10 +13,17 @@ import { CentroEspecialidadesComponent } from './centro-especialidades/centro-es
 import { CentroMedicosComponent } from './centro-medicos/centro-medicos.component';
 import { AgendaComponent } from './agenda/agenda.component';
 
+
+import { LoginComponent } from './login/login.component';
+import { RegistroComponent } from './registro/registro.component';
+
 export const routes: Routes = [
     { path: '', component: HomeComponent, title: 'Turnero Web' },
     
-    // --- ENTORNO ADMINISTRADOR ---
+    { path: 'login', component: LoginComponent, title: 'Iniciar Sesión' },
+    { path: 'registro', component: RegistroComponent, title: 'Registro de Paciente' },
+
+    // --- ENTORNO ADMINISTRADOR (ACCESO DIRECTO) ---
     { path: 'admin', component: PanelHomeComponent, title: 'Turnero Web - Panel Admin' },
     { path: 'admin/centros_atencion', component: CentrosAtencionComponent, title: 'Centros de Atención - Admin' },
     { path: 'admin/centros_atencion/agenda', component: AgendaComponent, title: 'Agendas - Admin' },
@@ -30,7 +37,7 @@ export const routes: Routes = [
     { path: 'admin/centros_atencion/:id/consultorios/new', component: ConsultorioDetailComponent, title: 'Nuevo Consultorio' },
     { path: 'admin/centros_atencion/:id/consultorios/:idConsultorio', component: ConsultorioDetailComponent, title: 'Consultorio' },
 
-    // --- ENTORNO USUARIO ---
+    // --- ENTORNO USUARIO (ACCESO TRAS LOGIN) ---
     { path: 'usuario', component: PanelHomeComponent, title: 'Turnero Web - Portal Usuario' },
     { path: 'usuario/centros_atencion', component: CentrosAtencionComponent, title: 'Centros de Atención' },
     { path: 'usuario/centros_atencion/agenda', component: AgendaComponent, title: 'Agendas' },

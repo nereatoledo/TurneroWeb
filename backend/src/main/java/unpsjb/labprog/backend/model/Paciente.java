@@ -2,6 +2,7 @@ package unpsjb.labprog.backend.model;
 
 import java.time.LocalDate;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 import lombok.Getter;
@@ -18,4 +19,7 @@ public class Paciente extends Persona{
 
     @ManyToOne
     private ObraSocial obraSocial;
+
+    @Column(unique = true, nullable = false)
+    private String username; 
 }

@@ -1,0 +1,25 @@
+.registro-wrapper {
+  display: block;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding-top: 2rem;
+}
+.btn-purple-submit {
+  background-color: #8923dc;
+  color: #ffffff;
+  border: none;
+}
+.btn-purple-submit:hover:not([disabled]) {
+  background-color: #721cbd;
+  color: #ffffff;
+}
+.text-purple {
+  color: #8923dc;
+}
+.custom-input-purple {
+  border-color: rgba(137, 35, 220, 0.4);
+}
+.custom-input-purple:focus {
+  border-color: #8923dc;
+  box-shadow: 0 0 0 0.25rem rgba(137, 35, 220, 0.25);
+}

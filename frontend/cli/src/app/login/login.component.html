@@ -1,0 +1,52 @@
+<div class="login-wrapper">
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <h3 class="card-title text-center mb-4" style="color: #8923dc;">Portal de Pacientes</h3>
+
+                        <div *ngIf="errorMessage" class="alert alert-danger text-center">
+                            {{ errorMessage }}
+                        </div>
+
+                        <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+                            <div class="mb-4">
+                                <label for="username" class="form-label fw-bold">Nombre de Usuario</label>
+                                <input type="text" class="form-control form-control-lg" id="username"
+                                    [(ngModel)]="username" name="username" required placeholder="Ej: jperez"
+                                    autocomplete="off" autofocus>
+                            </div>
+
+                            <div class="d-grid gap-2 mb-3">
+                                <button type="submit" class="btn btn-primary btn-lg"
+                                    [disabled]="!username || username.trim() === ''"
+                                    style="background-color: #8923dc; border: none;">
+                                    Ingresar a mis Turnos
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="text-center mb-4">
+                            <p class="mb-1 small text-muted">¿No tenés una cuenta de paciente?</p>
+                            <a routerLink="/registro" class="btn btn-outline-primary w-100"
+                                style="color: #8923dc; border-color: #8923dc;">
+                                <i class="fa fa-user-plus"></i> Registrarse como Paciente
+                            </a>
+                        </div>
+
+                        <hr>
+
+                        <div class="text-center mt-3">
+                            <p class="text-muted small mb-2">¿Personal del sistema?</p>
+                            <button class="btn btn-outline-secondary btn-sm" (click)="ingresoLibreAdmin()">
+                                Ingresar al Panel de Administración
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -12,7 +12,6 @@ function buscarId(nombre) {
 }
 
 When('el administrador crea una especialidad con el nombre {string} y la descripción {string}', function (nombre, descripcion) {
-    // Agregamos intervalo: 30 para cumplir con la validación del backend
     this.lastResponse = request('POST', URL_BASE, { json: { nombre, descripcion, intervalo: 30 } });
 });
 

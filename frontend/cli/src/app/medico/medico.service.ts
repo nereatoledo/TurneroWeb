@@ -16,8 +16,12 @@ export class MedicoService {
         return this.http.get<DataPackage>(this.medicosUrl);
     }
 
-    search(searchTerm: string): Observable<DataPackage> {
-        return this.http.get<DataPackage>(`${this.medicosUrl}/search/${searchTerm}`);
+    search(searchTerm: string, especialidadId?: number): Observable<DataPackage> {
+        let url = `${this.medicosUrl}/search/${searchTerm}`;
+        if (especialidadId !== undefined && especialidadId !== null) {
+            url += `?especialidadId=${especialidadId}`;
+        }
+        return this.http.get<DataPackage>(url);
     }
 
     remove(id: number): Observable<DataPackage> {

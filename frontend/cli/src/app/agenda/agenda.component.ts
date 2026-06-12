@@ -80,7 +80,7 @@ export class AgendaComponent implements OnInit {
             distinctUntilChanged(),
             switchMap((term) =>
                 term.length < 1 ? of([]) :
-                this.medicoService.search(term).pipe(
+                this.medicoService.search(term, this.especialidadSeleccionada ? this.especialidadSeleccionada.id : undefined).pipe(
                     map((response) => <any[]>response.data),
                     catchError(() => of([]))
                 )
@@ -89,6 +89,14 @@ export class AgendaComponent implements OnInit {
 
     resultFormatMed(value: any): string { return value.apellido + ', ' + value.nombre; }
     inputFormatMed(value: any): string { return value ? value.apellido + ', ' + value.nombre : ''; }
+
+    onEspecialidadChange(): void {
+        if (this.especialidadSeleccionada && this.medicoSeleccionado) {
+            if (this.medicoSeleccionado.especialidad.id !== this.especialidadSeleccionada.id) {
+                this.medicoSeleccionado = null;
+            }
+        }
+    }
 
     goBack(): void {
         this.location.back();

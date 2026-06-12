@@ -5,7 +5,7 @@
             <button (click)="goBack()" class="btn btn-outline-secondary btn-icon-only" title="Volver atrás">
                 <i class="fa fa-arrow-left"></i>
             </button>
-            <h2 class="custom-title m-0">Agendas Disponibles</h2>
+            <h2 class="custom-title m-0">{{ centroSeleccionado ? 'Turnos de ' + centroSeleccionado.nombre + ' disponibles' : 'Agendas Disponibles' }}</h2>
         </div>
     </div>
 
@@ -13,7 +13,7 @@
         <div class="card-body p-4">
             <div class="row g-3 align-items-end">
 
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="mb-1 font-weight-bold"
                         style="color: #6c757d; font-size: 0.85rem; text-transform: uppercase;">
                         Especialidad
@@ -25,14 +25,28 @@
                         style="border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 10px 15px;" />
                 </div>
 
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="mb-1 font-weight-bold"
                         style="color: #6c757d; font-size: 0.85rem; text-transform: uppercase;">
                         Médico
                     </label>
                     <input type="text" class="form-control" [(ngModel)]="medicoSeleccionado"
+                        (ngModelChange)="onMedicoChange()"
                         [ngbTypeahead]="searchMedico" [resultFormatter]="resultFormatMed" [inputFormatter]="inputFormatMed"
                         placeholder="Todos" [editable]="false"
+                        style="border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 10px 15px;" />
+                </div>
+
+                <div class="col-md-2">
+                    <label class="mb-1 font-weight-bold"
+                        style="color: #6c757d; font-size: 0.85rem; text-transform: uppercase;">
+                        Centro de atención
+                    </label>
+                    <input type="text" class="form-control" [(ngModel)]="centroSeleccionado"
+                        (ngModelChange)="onCentroChange()"
+                        [ngbTypeahead]="searchCentro" [resultFormatter]="resultFormatCentro" [inputFormatter]="inputFormatCentro"
+                        placeholder="Todos" [editable]="false"
+                        [disabled]="isCentroLocked"
                         style="border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 10px 15px;" />
                 </div>
 

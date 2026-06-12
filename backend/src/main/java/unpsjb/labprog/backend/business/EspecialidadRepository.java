@@ -16,6 +16,8 @@ public interface EspecialidadRepository
     @Query("SELECT e FROM Especialidad e WHERE UPPER(e.nombre) = UPPER(?1)")
     Especialidad findByNombre(String nombre);
 
-    @Query("SELECT e FROM Especialidad e WHERE UPPER(e.nombre) LIKE ?1")
-    List<Especialidad> search(String term);
+    @Query("SELECT DISTINCT e FROM Especialidad e WHERE " +
+           "(UPPER(e.nombre) LIKE ?1) " +
+           "AND (?2 IS NULL OR EXISTS (SELECT c FROM CentroAtencion c JOIN c.especialidades ce WHERE c.id = ?2 AND ce = e))")
+    List<Especialidad> search(String term, Integer centroId);
 }

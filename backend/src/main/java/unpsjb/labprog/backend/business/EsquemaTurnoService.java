@@ -103,7 +103,8 @@ public class EsquemaTurnoService {
             LocalDate fechaInicio, 
             LocalDate fechaFin, 
             Integer idEspecialidad, 
-            Integer idMedico) {
+            Integer idMedico,
+            Integer idCentro) {
 
         List<AgendaResponseDTO> agendasDiarias = new ArrayList<>();
         LocalDate fechaActual = fechaInicio;
@@ -119,7 +120,7 @@ public class EsquemaTurnoService {
                 continue; 
             }
 
-            List<EsquemaTurno> esquemasDb = esquemaTurnoRepository.buscarParaAgenda(diaJava, idEspecialidad, idMedico);
+            List<EsquemaTurno> esquemasDb = esquemaTurnoRepository.buscarParaAgenda(diaJava, idEspecialidad, idMedico, idCentro);
 
             if (!esquemasDb.isEmpty()) {
                 List<EsquemaTurnoAgenda> detallesDelDia = new ArrayList<>();

@@ -23,7 +23,11 @@ public class EspecialidadService {
     }
 
     public List<Especialidad> search(String term) {
-        return repository.search("%" + term.toUpperCase() + "%");
+        return search(term, null);
+    }
+
+    public List<Especialidad> search(String term, Integer centroId) {
+        return repository.search("%" + term.toUpperCase() + "%", centroId);
     }
 
     public List<Especialidad> findAll() {

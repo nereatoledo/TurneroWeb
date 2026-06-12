@@ -79,8 +79,10 @@ public class EspecialidadPresenter {
     }
 
     @RequestMapping(value = "/search/{term}", method = RequestMethod.GET)
-    public ResponseEntity<Object> search(@PathVariable("term") String term) {
-        return Response.ok(service.search(term));
+    public ResponseEntity<Object> search(
+            @PathVariable("term") String term,
+            @RequestParam(required = false) Integer centroId) {
+        return Response.ok(service.search(term, centroId));
     }
 
     @RequestMapping(value = "/id/{id}", method = RequestMethod.GET)

@@ -16,10 +16,17 @@ export class MedicoService {
         return this.http.get<DataPackage>(this.medicosUrl);
     }
 
-    search(searchTerm: string, especialidadId?: number): Observable<DataPackage> {
+    search(searchTerm: string, especialidadId?: number, centroId?: number): Observable<DataPackage> {
         let url = `${this.medicosUrl}/search/${searchTerm}`;
+        const params = [];
         if (especialidadId !== undefined && especialidadId !== null) {
-            url += `?especialidadId=${especialidadId}`;
+            params.push(`especialidadId=${especialidadId}`);
+        }
+        if (centroId !== undefined && centroId !== null) {
+            params.push(`centroId=${centroId}`);
+        }
+        if (params.length > 0) {
+            url += `?${params.join('&')}`;
         }
         return this.http.get<DataPackage>(url);
     }

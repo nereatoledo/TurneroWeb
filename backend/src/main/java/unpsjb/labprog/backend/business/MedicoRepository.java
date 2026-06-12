@@ -15,8 +15,9 @@ public interface MedicoRepository
 
         @Query("SELECT DISTINCT m FROM StaffMedico sm JOIN sm.medico m WHERE " +
                "(UPPER(m.nombre) LIKE ?1 OR UPPER(m.apellido) LIKE ?1) " +
-               "AND (?2 IS NULL OR m.especialidad.id = ?2)")
-        List<Medico> search(String term, Integer especialidadId);
+               "AND (?2 IS NULL OR m.especialidad.id = ?2) " +
+               "AND (?3 IS NULL OR sm.centro.id = ?3)")
+        List<Medico> search(String term, Integer especialidadId, Integer centroId);
 
         @Query("SELECT e FROM Medico e WHERE e.dni = ?1")
         Medico findByDni(String dni);

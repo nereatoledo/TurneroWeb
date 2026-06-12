@@ -46,10 +46,12 @@ public interface EsquemaTurnoRepository
         @Query("SELECT e FROM EsquemaTurno e " +
                         "WHERE e.diaSemana = :dia " +
                         "AND (:idEspecialidad IS NULL OR e.staffMedico.medico.especialidad.id = :idEspecialidad) " +
-                        "AND (:idMedico IS NULL OR e.staffMedico.medico.id = :idMedico)")
+                        "AND (:idMedico IS NULL OR e.staffMedico.medico.id = :idMedico) " +
+                        "AND (:idCentro IS NULL OR e.staffMedico.centro.id = :idCentro)")
 
         List<EsquemaTurno> buscarParaAgenda(
                         @Param("dia") DiaSemana dia,
                         @Param("idEspecialidad") Integer idEspecialidad,
-                        @Param("idMedico") Integer idMedico);
+                        @Param("idMedico") Integer idMedico,
+                        @Param("idCentro") Integer idCentro);
 }

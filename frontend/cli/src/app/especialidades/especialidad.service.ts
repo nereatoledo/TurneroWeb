@@ -16,8 +16,12 @@ export class EspecialidadService {
         return this.http.get<DataPackage>(this.especialidadesUrl);
     }
 
-    search(searchTerm: string): Observable<DataPackage> {
-        return this.http.get<DataPackage>(`${this.especialidadesUrl}/search/${searchTerm}`);
+    search(searchTerm: string, centroId?: number): Observable<DataPackage> {
+        let url = `${this.especialidadesUrl}/search/${searchTerm}`;
+        if (centroId !== undefined && centroId !== null) {
+            url += `?centroId=${centroId}`;
+        }
+        return this.http.get<DataPackage>(url);
     }
 
     remove(id: number): Observable<DataPackage> {

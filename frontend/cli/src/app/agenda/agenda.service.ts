@@ -15,7 +15,7 @@ export class AgendaService {
         return this.http.post<any>('/rest/turnos', turno);
     }
 
-    buscarAgenda(fechaInicio: string, fechaFin?: string, idEspecialidad?: number, idMedico?: number): Observable<DataPackage> {
+    buscarAgenda(fechaInicio: string, fechaFin?: string, idEspecialidad?: number, idMedico?: number, idCentro?: number): Observable<DataPackage> {
         let params = new HttpParams().set('fechaInicio', fechaInicio);
 
         if (fechaFin) {
@@ -26,6 +26,9 @@ export class AgendaService {
         }
         if (idMedico) {
             params = params.set('idMedico', idMedico.toString());
+        }
+        if (idCentro) {
+            params = params.set('idCentro', idCentro.toString());
         }
 
         return this.http.get<DataPackage>(`${this.agendaUrl}/buscar`, { params });

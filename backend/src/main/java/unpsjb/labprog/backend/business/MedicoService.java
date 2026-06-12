@@ -22,8 +22,8 @@ public class MedicoService {
         return repository.save(medico);
     }
 
-    public List<Medico> search(String term, Integer especialidadId) {
-        return repository.search("%" + term.toUpperCase() + "%", especialidadId);
+    public List<Medico> search(String term, Integer especialidadId, Integer centroId) {
+        return repository.search("%" + term.toUpperCase() + "%", especialidadId, centroId);
     }
 
     public List<Medico> findAll() {

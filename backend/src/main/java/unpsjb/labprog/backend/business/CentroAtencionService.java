@@ -37,8 +37,8 @@ public class CentroAtencionService {
         return repository.save(centro);
     }
 
-    public List<CentroAtencion> search(String term) {
-        return repository.search("%" + term.toUpperCase() + "%");
+    public List<CentroAtencion> search(String term, Integer medicoId, Integer especialidadId) {
+        return repository.search("%" + term.toUpperCase() + "%", medicoId, especialidadId);
     }
 
     public boolean existeConflictoNombreDireccion(String nombre, String direccion) {

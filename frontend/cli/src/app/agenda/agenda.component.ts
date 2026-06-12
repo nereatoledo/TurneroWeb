@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common'; 
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
@@ -11,6 +11,7 @@ import { ModalService } from '../modal/modal.service';
 import { LoginService } from '../login/login.service';
 import { EspecialidadService } from '../especialidades/especialidad.service';
 import { MedicoService } from '../medico/medico.service';
+import { CentroAtencionService } from '../centro/centro-atencion.service';
 import { AgendaDia, EsquemaTurnoAgenda, TurnoSlot } from './agenda';
 import { DataPackage } from '../data-package';
 
@@ -31,6 +32,8 @@ export class AgendaComponent implements OnInit {
 
     especialidadSeleccionada: any = null;
     medicoSeleccionado: any = null;
+    centroSeleccionado: any = null;
+    isCentroLocked: boolean = false;
 
     agendas: AgendaDia[] = [];
     busquedaRealizada: boolean = false;
@@ -40,7 +43,9 @@ export class AgendaComponent implements OnInit {
         private agendaService: AgendaService,
         private espService: EspecialidadService,
         private medicoService: MedicoService,
+        private centroService: CentroAtencionService,
         private router: Router,
+        private route: ActivatedRoute,
         private modalService: ModalService,
         private loginService: LoginService,       
         private location: Location    
@@ -56,6 +61,29 @@ export class AgendaComponent implements OnInit {
 
         this.fechaInicio = hoy.toISOString().split('T')[0];
         this.fechaFin = enUnaSemana.toISOString().split('T')[0];
+
+        this.route.queryParams.subscribe(params => {
+            const centroIdParam = params['centroId'];
+            if (centroIdParam) {
+                const id = Number(centroIdParam);
+                if (!isNaN(id)) {
+                    this.cargarCentroPreseleccionado(id);
+                }
+            }
+        });
+    }
+
+    cargarCentroPreseleccionado(id: number): void {
+        this.centroService.byId(id).subscribe({
+            next: (res: DataPackage) => {
+                this.centroSeleccionado = res.data;
+                this.isCentroLocked = true;
+                this.buscarAgenda();
+            },
+            error: (err: any) => {
+                console.error('Error al cargar el centro preseleccionado', err);
+            }
+        });
     }
 
     searchEspecialidad = (text$: Observable<string>): Observable<any[]> =>
@@ -64,7 +92,7 @@ export class AgendaComponent implements OnInit {
             distinctUntilChanged(),
             switchMap((term) =>
                 term.length < 1 ? of([]) :
-                this.espService.search(term).pipe(
+                this.espService.search(term, this.centroSeleccionado ? this.centroSeleccionado.id : undefined).pipe(
                     map((response) => <any[]>response.data),
                     catchError(() => of([]))
                 )
@@ -80,7 +108,11 @@ export class AgendaComponent implements OnInit {
             distinctUntilChanged(),
             switchMap((term) =>
                 term.length < 1 ? of([]) :
-                this.medicoService.search(term, this.especialidadSeleccionada ? this.especialidadSeleccionada.id : undefined).pipe(
+                this.medicoService.search(
+                    term,
+                    this.especialidadSeleccionada ? this.especialidadSeleccionada.id : undefined,
+                    this.centroSeleccionado ? this.centroSeleccionado.id : undefined
+                ).pipe(
                     map((response) => <any[]>response.data),
                     catchError(() => of([]))
                 )
@@ -90,11 +122,51 @@ export class AgendaComponent implements OnInit {
     resultFormatMed(value: any): string { return value.apellido + ', ' + value.nombre; }
     inputFormatMed(value: any): string { return value ? value.apellido + ', ' + value.nombre : ''; }
 
+    searchCentro = (text$: Observable<string>): Observable<any[]> =>
+        text$.pipe(
+            debounceTime(300),
+            distinctUntilChanged(),
+            switchMap((term) =>
+                term.length < 1 ? of([]) :
+                this.centroService.search(
+                    term,
+                    this.medicoSeleccionado ? this.medicoSeleccionado.id : undefined,
+                    this.especialidadSeleccionada ? this.especialidadSeleccionada.id : undefined
+                ).pipe(
+                    map((response) => <any[]>response.data),
+                    catchError(() => of([]))
+                )
+            )
+        );
+
+    resultFormatCentro(value: any): string { return value.nombre; }
+    inputFormatCentro(value: any): string { return value ? value.nombre : ''; }
+
     onEspecialidadChange(): void {
-        if (this.especialidadSeleccionada && this.medicoSeleccionado) {
-            if (this.medicoSeleccionado.especialidad.id !== this.especialidadSeleccionada.id) {
+        if (this.especialidadSeleccionada) {
+            if (this.medicoSeleccionado && this.medicoSeleccionado.especialidad.id !== this.especialidadSeleccionada.id) {
                 this.medicoSeleccionado = null;
             }
+            if (this.centroSeleccionado && this.centroSeleccionado.especialidades) {
+                const tieneEsp = this.centroSeleccionado.especialidades.some((e: any) => e.id === this.especialidadSeleccionada.id);
+                if (!tieneEsp) {
+                    this.centroSeleccionado = null;
+                }
+            }
+        }
+    }
+
+    onMedicoChange(): void {
+        if (this.medicoSeleccionado) {
+            if (!this.especialidadSeleccionada || this.especialidadSeleccionada.id !== this.medicoSeleccionado.especialidad.id) {
+                this.especialidadSeleccionada = this.medicoSeleccionado.especialidad;
+            }
+        }
+    }
+
+    onCentroChange(): void {
+        if (this.centroSeleccionado && this.medicoSeleccionado) {
+            this.medicoSeleccionado = null;
         }
     }
 
@@ -113,12 +185,14 @@ export class AgendaComponent implements OnInit {
 
         const idEspecialidad = this.especialidadSeleccionada ? this.especialidadSeleccionada.id : undefined;
         const idMedico = this.medicoSeleccionado ? this.medicoSeleccionado.id : undefined;
+        const idCentro = this.centroSeleccionado ? this.centroSeleccionado.id : undefined;
 
         this.agendaService.buscarAgenda(
             this.fechaInicio,
             this.fechaFin ? this.fechaFin : undefined,
             idEspecialidad,
-            idMedico
+            idMedico,
+            idCentro
         ).subscribe({
             next: (res: DataPackage) => {
                 this.agendas = res.data as AgendaDia[];

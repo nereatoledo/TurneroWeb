@@ -34,8 +34,9 @@ public class MedicoPresenter {
     @RequestMapping(value = "/search/{term}", method = RequestMethod.GET)
     public ResponseEntity<Object> search(
             @PathVariable("term") String term,
-            @RequestParam(required = false) Integer especialidadId) {
-        return Response.ok(service.search(term, especialidadId));
+            @RequestParam(required = false) Integer especialidadId,
+            @RequestParam(required = false) Integer centroId) {
+        return Response.ok(service.search(term, especialidadId, centroId));
     }
 
     @RequestMapping(value = "/page", method = RequestMethod.GET)

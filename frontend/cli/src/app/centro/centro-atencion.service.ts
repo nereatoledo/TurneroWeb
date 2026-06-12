@@ -12,8 +12,19 @@ export class CentroAtencionService {
 
   constructor(private http: HttpClient) { }
 
-  search(searchTerm: string): Observable<DataPackage> {
-    return this.http.get<DataPackage>(`${this.centrosUrl}/search/${searchTerm}`);
+  search(searchTerm: string, medicoId?: number, especialidadId?: number): Observable<DataPackage> {
+    let url = `${this.centrosUrl}/search/${searchTerm}`;
+    const params = [];
+    if (medicoId !== undefined && medicoId !== null) {
+      params.push(`medicoId=${medicoId}`);
+    }
+    if (especialidadId !== undefined && especialidadId !== null) {
+      params.push(`especialidadId=${especialidadId}`);
+    }
+    if (params.length > 0) {
+      url += `?${params.join('&')}`;
+    }
+    return this.http.get<DataPackage>(url);
   }
 
   remove(id: number): Observable<DataPackage> {

@@ -18,8 +18,11 @@ public interface CentroAtencionRepository
     @Query("SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END FROM CentroAtencion c WHERE UPPER(c.direccion) = UPPER(?1)")
     boolean existeDireccion(String direccion);
 
-    @Query("SELECT e FROM CentroAtencion e WHERE UPPER(e.nombre) LIKE ?1")
-    List<CentroAtencion> search(String term);
+    @Query("SELECT DISTINCT c FROM CentroAtencion c WHERE " +
+           "(UPPER(c.nombre) LIKE ?1) " +
+           "AND (?2 IS NULL OR EXISTS (SELECT sm FROM StaffMedico sm WHERE sm.centro = c AND sm.medico.id = ?2)) " +
+           "AND (?3 IS NULL OR EXISTS (SELECT sm FROM StaffMedico sm WHERE sm.centro = c AND sm.medico.especialidad.id = ?3))")
+    List<CentroAtencion> search(String term, Integer medicoId, Integer especialidadId);
 
     @Query("SELECT c FROM CentroAtencion c JOIN c.consultorios cons WHERE cons.id = ?1")
     CentroAtencion findCentroByConsultorioId(Integer idConsultorio);

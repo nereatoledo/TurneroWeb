@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router'; 
+import { Router, RouterModule } from '@angular/router';
 import { LoginService } from './login.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule], 
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
@@ -16,13 +16,13 @@ export class LoginComponent {
   errorMessage: string = '';
 
   constructor(
-    private loginService: LoginService, 
+    private loginService: LoginService,
     private router: Router
-  ) {}
+  ) { }
 
   onSubmit() {
     const user = this.username.trim();
-    this.errorMessage = ''; 
+    this.errorMessage = '';
 
     if (user) {
       this.loginService.login(user).subscribe({

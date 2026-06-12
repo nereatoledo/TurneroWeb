@@ -18,7 +18,7 @@ export class EspecialidadDetailComponent implements OnInit {
   especialidad: Especialidad = <Especialidad>{
     nombre: "",
     descripcion: "",
-    intervalo: undefined // Propiedad agregada para inicializar el formulario correctamente
+    intervalo: undefined
   };
 
   constructor(
@@ -26,7 +26,7 @@ export class EspecialidadDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private location: Location,
     private modalService: ModalService,
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.get();

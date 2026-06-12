@@ -1,6 +1,6 @@
 import { Component, OnInit } from "@angular/core";
 import { Router, RouterModule } from "@angular/router";
-import { Location, CommonModule } from "@angular/common"; // 1. Importamos Location
+import { Location, CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { NgbTypeaheadModule } from "@ng-bootstrap/ng-bootstrap";
 import { Observable, of } from "rxjs";
@@ -41,7 +41,7 @@ export class CentrosAtencionComponent implements OnInit {
       debounceTime(200),
       distinctUntilChanged(),
       switchMap(term => {
-        if (term.length < 1) { 
+        if (term.length < 1) {
           return of([]);
         }
         return this.centro_atencionService.byPage(1, 1000).pipe(
@@ -112,9 +112,9 @@ export class CentrosAtencionComponent implements OnInit {
     this.getCentros();
   }
 
-ngOnInit(): void {
+  ngOnInit(): void {
     this.isAdmin = this.router.url.includes('/admin');
-    this.prefix = this.isAdmin ? '/admin' : '/usuario'; 
+    this.prefix = this.isAdmin ? '/admin' : '/usuario';
     this.getCentros();
   }
 

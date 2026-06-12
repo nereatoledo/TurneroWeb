@@ -59,10 +59,9 @@ public class EspecialidadPresenter {
             return Response.response(HttpStatus.BAD_REQUEST, "Debe especificar un intervalo mayor a 0 minutos.", null);
         }
 
-        // --- SOLUCIÓN APLICADA AQUÍ ---
         existente.setNombre(especialidadActualizada.getNombre());
         existente.setDescripcion(especialidadActualizada.getDescripcion());
-        existente.setIntervalo(especialidadActualizada.getIntervalo()); // <--- ¡AQUÍ ESTÁ LA MAGIA!
+        existente.setIntervalo(especialidadActualizada.getIntervalo());
         
         service.save(existente);
         return Response.response(HttpStatus.OK, "Especialidad editada exitosamente", existente);

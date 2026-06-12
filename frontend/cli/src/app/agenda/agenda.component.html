@@ -101,7 +101,8 @@
                 <p class="text-muted mb-0" style="font-size: 1.1rem;">No se pueden asignar turnos en ningún centro de atención durante este día.</p>
             </div>
 
-            <ul *ngIf="!dia.esFeriado" class="list-group list-group-flush">
+            <!-- Caso A: Mostrar médicos individuales (Si el médico está seleccionado, o si no hay centro seleccionado, o si no hay especialidad seleccionada) -->
+            <ul *ngIf="!dia.esFeriado && (medicoSeleccionado || !centroSeleccionado || !especialidadSeleccionada)" class="list-group list-group-flush">
                 <li class="list-group-item p-4" *ngFor="let esquema of dia.agendaDetalles">
                     <div class="row align-items-center">
 
@@ -134,6 +135,48 @@
                                     [ngClass]="slot.estaDisponible ? 'btn-success' : 'btn-secondary'"
                                     [disabled]="!slot.estaDisponible"
                                     (click)="agendarTurno(dia, esquema, slot)">
+                                    {{ formatearHora(slot.horario) }}
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </li>
+            </ul>
+
+            <!-- Caso B: Consolidado - Asignación Automática (Si no hay médico seleccionado, sí hay centro seleccionado y se seleccionó especialidad) -->
+            <ul *ngIf="!dia.esFeriado && !medicoSeleccionado && centroSeleccionado && especialidadSeleccionada" class="list-group list-group-flush">
+                <li class="list-group-item p-4">
+                    <div class="row align-items-center">
+
+                        <div class="col-md-2 border-end text-center">
+                            <h5 class="mb-0 text-secondary font-weight-bold">
+                                {{ obtenerRangoHorarioDia(dia) }}
+                            </h5>
+                            <span class="badge badge-light text-dark border mt-2 px-2 py-1">Horario</span>
+                        </div>
+
+                        <div class="col-md-4 border-end px-4">
+                            <div class="mb-3" style="color: #6f42c1;">
+                                <h6 class="mb-1 font-weight-bold"><i class="fa fa-users mr-2"></i>Asignación Automática</h6>
+                                <div class="text-muted small ml-4"><i class="fa fa-stethoscope mr-1"></i>{{
+                                    dia.agendaDetalles[0].medico.especialidad.nombre }}</div>
+                            </div>
+                            <div style="color: #fd7e14;">
+                                <h6 class="mb-1 font-weight-bold"><i class="fa fa-building mr-2"></i>{{
+                                    dia.agendaDetalles[0].centroAtencion.nombre }}</h6>
+                                <div class="text-muted small ml-4"><i class="fa fa-map-marker mr-1"></i>{{
+                                    dia.agendaDetalles[0].centroAtencion.direccion }}</div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 pl-4">
+                            <div class="d-flex flex-wrap gap-2">
+                                <button *ngFor="let slot of obtenerSlotsConsolidados(dia)"
+                                    class="btn btn-sm font-weight-bold shadow-sm custom-slot-btn"
+                                    [ngClass]="slot.estaDisponible ? 'btn-success' : 'btn-secondary'"
+                                    [disabled]="!slot.estaDisponible"
+                                    (click)="agendarTurnoConsolidado(dia, slot)">
                                     {{ formatearHora(slot.horario) }}
                                 </button>
                             </div>

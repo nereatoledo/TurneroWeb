@@ -1,6 +1,7 @@
 package unpsjb.labprog.backend.model;
 
 import java.time.LocalDate;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -15,6 +16,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class Paciente extends Persona{
 
+    @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDate fechaNacimiento;
 
     @ManyToOne

@@ -272,4 +272,47 @@ export class AgendaComponent implements OnInit {
     formatearHora(horaStr: string): string {
         return horaStr ? horaStr.substring(0, 5) : '';
     }
+
+    obtenerSlotsConsolidados(dia: AgendaDia): any[] {
+        const mapaSlots = new Map<string, { horario: string, estaDisponible: boolean, esquemasDisponibles: any[] }>();
+
+        for (const esquema of dia.agendaDetalles) {
+            for (const slot of esquema.turnos) {
+                const key = slot.horario;
+                if (!mapaSlots.has(key)) {
+                    mapaSlots.set(key, {
+                        horario: slot.horario,
+                        estaDisponible: false,
+                        esquemasDisponibles: []
+                    });
+                }
+                const entry = mapaSlots.get(key)!;
+                if (slot.estaDisponible) {
+                    entry.estaDisponible = true;
+                    entry.esquemasDisponibles.push(esquema);
+                }
+            }
+        }
+
+        return Array.from(mapaSlots.values()).sort((a, b) => a.horario.localeCompare(b.horario));
+    }
+
+    agendarTurnoConsolidado(dia: AgendaDia, slotConsolidado: any): void {
+        if (slotConsolidado.esquemasDisponibles.length > 0) {
+            const esquemaAsignado = slotConsolidado.esquemasDisponibles[0];
+            const slotOriginal = esquemaAsignado.turnos.find((t: any) => t.horario === slotConsolidado.horario);
+            this.agendarTurno(dia, esquemaAsignado, slotOriginal);
+        }
+    }
+
+    obtenerRangoHorarioDia(dia: AgendaDia): string {
+        if (!dia.agendaDetalles || dia.agendaDetalles.length === 0) return '';
+        let min = dia.agendaDetalles[0].horaInicio;
+        let max = dia.agendaDetalles[0].horaFin;
+        for (const e of dia.agendaDetalles) {
+            if (e.horaInicio < min) min = e.horaInicio;
+            if (e.horaFin > max) max = e.horaFin;
+        }
+        return `${this.formatearHora(min)} a ${this.formatearHora(max)}`;
+    }
 }

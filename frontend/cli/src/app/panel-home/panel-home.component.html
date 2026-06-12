@@ -1,7 +1,14 @@
 <div class="container py-5 mt-md-4 text-center page-animation">
-    <h1 class="custom-title display-4 mb-4" style="color: #8923dc;">
-        Turnero Web
-    </h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="custom-title display-4 mb-0" style="color: #8923dc;">
+            Turnero Web
+        </h1>
+        <div *ngIf="currentUser" class="d-flex align-items-center gap-3">
+            <span class="text-muted fw-bold">Hola, {{ currentUser.username }}</span>
+            <button class="btn btn-outline-danger btn-sm" (click)="logout()">Cerrar Sesión</button>
+        </div>
+    </div>
+    
     <p class="lead mb-5 text-muted">Sistema centralizado para la gestión de turnos.</p>
 
     <div class="row justify-content-center mt-5 px-3">

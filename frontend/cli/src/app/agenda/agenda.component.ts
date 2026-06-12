@@ -7,9 +7,11 @@ import { Observable, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from 'rxjs/operators';
 
 import { AgendaService } from './agenda.service';
+import { ModalService } from '../modal/modal.service';
+import { LoginService } from '../login/login.service';
 import { EspecialidadService } from '../especialidades/especialidad.service';
 import { MedicoService } from '../medico/medico.service';
-import { AgendaDia } from './agenda';
+import { AgendaDia, EsquemaTurnoAgenda, TurnoSlot } from './agenda';
 import { DataPackage } from '../data-package';
 
 @Component({
@@ -38,7 +40,9 @@ export class AgendaComponent implements OnInit {
         private agendaService: AgendaService,
         private espService: EspecialidadService,
         private medicoService: MedicoService,
-        private router: Router,       
+        private router: Router,
+        private modalService: ModalService,
+        private loginService: LoginService,       
         private location: Location    
     ) { }
 
@@ -118,7 +122,72 @@ export class AgendaComponent implements OnInit {
         });
     }
 
+    
+    agendarTurno(dia: AgendaDia, esquema: EsquemaTurnoAgenda, slot: TurnoSlot): void {
+        const currentUser = this.loginService.getCurrentUser();
+        if (!currentUser || !currentUser.id) {
+            this.modalService.info('Error', 'Debe iniciar sesión para agendar un turno.');
+            return;
+        }
+
+        const horaInicio = slot.horario;
+        const horaFin = this.calcularHoraFin(horaInicio, esquema.medico.especialidad.intervalo);
+        
+        const fechaFormateada = dia.fecha.split('-').reverse().join('/');
+
+        const detallesTurno = [
+            { icon: 'fa fa-calendar', label: 'Fecha', value: fechaFormateada },
+            { icon: 'fa fa-clock-o', label: 'Horario', value: this.formatearHora(slot.horario) },
+            { icon: 'fa fa-user-md', label: 'Médico', value: `${esquema.medico.apellido}, ${esquema.medico.nombre}` },
+            { icon: 'fa fa-stethoscope', label: 'Especialidad', value: esquema.medico.especialidad.nombre },
+            { icon: 'fa fa-building', label: 'Centro de atención', value: esquema.centroAtencion.nombre },
+            { icon: 'fa fa-map-marker', label: 'Dirección', value: esquema.centroAtencion.direccion }
+        ];
+
+        this.modalService.confirm('Confirmar Turno', '¿Querés agendar este turno?', '', detallesTurno)
+            .then(() => {
+                const turnoPayload = {
+                    fecha: dia.fecha,
+                    horaInicio: horaInicio,
+                    horaFin: horaFin,
+                    estado: 'PROGRAMADO',
+                    paciente: { id: currentUser.id },
+                    medico: { id: esquema.medico.id },
+                    consultorio: { id: esquema.consultorio.id }
+                };
+
+                this.agendaService.agendarTurno(turnoPayload).subscribe({
+                    next: () => {
+                        this.modalService.info('Éxito', 'Turno Agendado exitosamente')
+                            .then(() => { this.buscarAgenda(); })
+                            .catch(() => { this.buscarAgenda(); });
+                    },
+                    error: (err: any) => {
+                        console.error(err);
+                        
+                        const mensajeModal = err.error?.error || 'No se pudo agendar el turno. Intente nuevamente.';
+
+                        this.modalService.info('Error', mensajeModal)
+                            .then(() => { this.buscarAgenda(); })
+                            .catch(() => { this.buscarAgenda(); });
+                    }
+                });
+            })
+            .catch(() => {
+            });
+    }
+
+    private calcularHoraFin(horaInicio: string, intervaloMinutos?: number): string {
+        if (!intervaloMinutos) intervaloMinutos = 30; // default
+        const [horas, minutos, segundos] = horaInicio.split(':').map(Number);
+        const date = new Date();
+        date.setHours(horas, minutos, segundos || 0);
+        date.setMinutes(date.getMinutes() + intervaloMinutos);
+        const formatZero = (num: number) => num < 10 ? '0' + num : num;
+        return formatZero(date.getHours()) + ':' + formatZero(date.getMinutes()) + ':00';
+    }
+
     formatearHora(horaStr: string): string {
         return horaStr ? horaStr.substring(0, 5) : '';
     }
-}   
+}

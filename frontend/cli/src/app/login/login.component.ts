@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router'; // <-- CRUCIAL: Importar RouterModule
+import { Router, RouterModule } from '@angular/router'; 
 import { LoginService } from './login.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule], // <-- CRUCIAL: Agregar RouterModule aquí
+  imports: [CommonModule, FormsModule, RouterModule], 
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
@@ -27,8 +27,6 @@ export class LoginComponent {
     if (user) {
       this.loginService.login(user).subscribe({
         next: (res) => {
-          localStorage.setItem('currentUser', res.username);
-          if (res.id) localStorage.setItem('currentUserId', res.id.toString());
           this.router.navigate(['/usuario']);
         },
         error: (err) => {

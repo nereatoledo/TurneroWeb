@@ -24,7 +24,7 @@ public class LoginPresenter {
     @Autowired
     private ObraSocialRepository obraSocialRepository;
 
-    @PostMapping("/login")
+    @RequestMapping(value = "/login", method = RequestMethod.POST)
     public ResponseEntity<?> login(@RequestBody Map<String, String> credenciales) {
         String username = credenciales.get("username");
 
@@ -52,14 +52,14 @@ public class LoginPresenter {
                 .body(Map.of("error", "Paciente no encontrado"));
     }
 
-    @GetMapping("/obras-sociales")
+    @RequestMapping(value = "/obras-sociales", method = RequestMethod.GET)
     public ResponseEntity<List<ObraSocial>> listarObrasSociales() {
         List<ObraSocial> obrasSociales = new ArrayList<>();
         obraSocialRepository.findAll().forEach(obrasSociales::add);
         return ResponseEntity.ok(obrasSociales);
     }
 
-    @PostMapping("/register")
+    @RequestMapping(value = "/register", method = RequestMethod.POST)
     public ResponseEntity<?> registrarPaciente(@RequestBody Map<String, Object> datos) {
         String username = (String) datos.get("username");
         String nombre = (String) datos.get("nombre");
@@ -112,5 +112,45 @@ public class LoginPresenter {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(Map.of("mensaje", "Paciente creado con éxito", "username", username));
+    }
+
+    @RequestMapping(value = "/paciente/{id}", method = RequestMethod.GET)
+    public ResponseEntity<?> getPaciente(@PathVariable Integer id) {
+        Optional<Paciente> paciente = pacienteRepository.findById(id);
+        if (paciente.isPresent()) {
+            return ResponseEntity.ok(paciente.get());
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Paciente no encontrado"));
+    }
+
+    @RequestMapping(value = "/paciente/{id}", method = RequestMethod.PUT)
+    public ResponseEntity<?> updatePaciente(@PathVariable Integer id, @RequestBody Map<String, Object> datos) {
+        Optional<Paciente> pacienteOpt = pacienteRepository.findById(id);
+        if (pacienteOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Paciente no encontrado"));
+        }
+
+        Paciente paciente = pacienteOpt.get();
+        String username = (String) datos.get("username");
+        Integer obraSocialId = (Integer) datos.get("obraSocialId");
+
+        if (username != null && !username.trim().isEmpty()) {
+            username = username.trim();
+            if (!username.equals(paciente.getUsername()) && pacienteRepository.existsByUsername(username)) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(Map.of("error", "El nombre de usuario '" + username + "' ya está en uso."));
+            }
+            paciente.setUsername(username);
+        }
+
+        if (obraSocialId != null) {
+            Optional<ObraSocial> os = obraSocialRepository.findById(obraSocialId);
+            os.ifPresent(paciente::setObraSocial);
+        } else {
+            paciente.setObraSocial(null);
+        }
+
+        pacienteRepository.save(paciente);
+        return ResponseEntity.ok(Map.of("mensaje", "Paciente actualizado con éxito", "username", paciente.getUsername()));
     }
 }

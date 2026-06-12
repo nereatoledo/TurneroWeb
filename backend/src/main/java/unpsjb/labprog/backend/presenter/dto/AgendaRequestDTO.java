@@ -31,5 +31,4 @@ public class AgendaRequestDTO {
     private Integer idConsultorio; 
     private Integer idMedico; 
 
-    private List<String> feriados;
 }

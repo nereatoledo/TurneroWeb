@@ -5,11 +5,9 @@
     </div>
 
     <div class="position-relative ms-auto">
-
         <button (click)="toggleDropdown()" class="btn nav-role-btn d-flex align-items-center gap-2 font-weight-bold">
-            <i class="fa"
-                [ngClass]="{'fa-user-md': rolActual === 'Administrador', 'fa-user': rolActual === 'Usuario', 'fa-users': rolActual === 'Seleccionar Entorno'}"></i>
-            <span>{{ rolActual }}</span>
+            <i class="fa fa-user"></i>
+            <span>{{ currentUser ? currentUser.username : 'Invitado' }}</span>
             <i class="fa fa-chevron-down ms-1" style="font-size: 0.8rem; transition: transform 0.3s;"
                 [style.transform]="dropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)'"></i>
         </button>
@@ -21,26 +19,48 @@
             class="position-absolute bg-white shadow-sm rounded custom-dropdown-menu end-0 mt-2 py-2"
             style="min-width: 220px; z-index: 1050; border: 1px solid #eaeaea;">
 
-            <div class="px-3 py-1 mb-1 text-muted"
-                style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
-                Entorno
-            </div>
+            <ng-container *ngIf="currentUser; else notLoggedIn">
+                <div class="px-3 py-1 mb-1 text-muted"
+                    style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Opciones
+                </div>
 
-            <button (click)="cambiarRol('Administrador')"
-                class="dropdown-item role-item d-flex align-items-center gap-3 px-3 py-2 border-0"
-                [ngClass]="{'active-role': rolActual === 'Administrador'}">
-                <i class="fa fa-user-md" style="width: 20px; text-align: center; font-size: 1.1rem;"></i>
-                <span class="font-weight-bold flex-grow-1">Administrador</span>
-                <i *ngIf="rolActual === 'Administrador'" class="fa fa-check text-success"></i>
-            </button>
+                <a class="dropdown-item role-item d-flex align-items-center gap-3 px-3 py-2 border-0 text-decoration-none text-dark" style="cursor: pointer;">
+                    <i class="fa fa-cog" style="width: 20px; text-align: center; font-size: 1.1rem;"></i>
+                    <span class="font-weight-bold flex-grow-1">Configuración</span>
+                </a>
 
-            <button (click)="cambiarRol('Usuario')"
-                class="dropdown-item role-item d-flex align-items-center gap-3 px-3 py-2 border-0"
-                [ngClass]="{'active-role': rolActual === 'Usuario'}">
-                <i class="fa fa-user" style="width: 20px; text-align: center; font-size: 1.1rem;"></i>
-                <span class="font-weight-bold flex-grow-1">Usuario</span>
-                <i *ngIf="rolActual === 'Usuario'" class="fa fa-check text-success"></i>
-            </button>
+                <a [routerLink]="['/registro', currentUser.id]" (click)="dropdownOpen = false"
+                    class="dropdown-item role-item d-flex align-items-center gap-3 px-3 py-2 border-0 text-decoration-none text-dark" style="cursor: pointer;">
+                    <i class="fa fa-pencil" style="width: 20px; text-align: center; font-size: 1.1rem;"></i>
+                    <span class="font-weight-bold flex-grow-1">Editar perfil</span>
+                </a>
+                
+                <div class="dropdown-divider"></div>
+                
+                <button (click)="logout()"
+                    class="dropdown-item role-item d-flex align-items-center gap-3 px-3 py-2 border-0 text-danger">
+                    <i class="fa fa-sign-out" style="width: 20px; text-align: center; font-size: 1.1rem;"></i>
+                    <span class="font-weight-bold flex-grow-1">Cerrar Sesión</span>
+                </button>
+            </ng-container>
+
+            <ng-template #notLoggedIn>
+                <div class="px-3 py-1 mb-1 text-muted"
+                    style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Acceso
+                </div>
+                <a routerLink="/login" (click)="dropdownOpen = false"
+                    class="dropdown-item role-item d-flex align-items-center gap-3 px-3 py-2 border-0 text-decoration-none text-dark">
+                    <i class="fa fa-sign-in" style="width: 20px; text-align: center; font-size: 1.1rem;"></i>
+                    <span class="font-weight-bold flex-grow-1">Iniciar Sesión</span>
+                </a>
+                <a routerLink="/registro" (click)="dropdownOpen = false"
+                    class="dropdown-item role-item d-flex align-items-center gap-3 px-3 py-2 border-0 text-decoration-none text-dark">
+                    <i class="fa fa-user-plus" style="width: 20px; text-align: center; font-size: 1.1rem;"></i>
+                    <span class="font-weight-bold flex-grow-1">Registrarse</span>
+                </a>
+            </ng-template>
 
         </div>
     </div>

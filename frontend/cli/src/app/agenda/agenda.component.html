@@ -116,8 +116,9 @@
                             <div class="d-flex flex-wrap gap-2">
                                 <button *ngFor="let slot of esquema.turnos"
                                     class="btn btn-sm font-weight-bold shadow-sm custom-slot-btn"
-                                    [ngClass]="slot.estaDisponible ? 'btn-success' : 'btn-danger'"
-                                    [disabled]="!slot.estaDisponible">
+                                    [ngClass]="slot.estaDisponible ? 'btn-success' : 'btn-secondary'"
+                                    [disabled]="!slot.estaDisponible"
+                                    (click)="agendarTurno(dia, esquema, slot)">
                                     {{ formatearHora(slot.horario) }}
                                 </button>
                             </div>

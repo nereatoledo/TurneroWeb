@@ -7,8 +7,10 @@ import org.springframework.transaction.annotation.Transactional;
 import unpsjb.labprog.backend.model.CentroAtencion;
 import unpsjb.labprog.backend.model.Consultorio;
 import unpsjb.labprog.backend.model.DiaSemana;
+import unpsjb.labprog.backend.model.EstadoTurno;
 import unpsjb.labprog.backend.model.EsquemaTurno;
 import unpsjb.labprog.backend.model.StaffMedico;
+import unpsjb.labprog.backend.model.Turno;
 import unpsjb.labprog.backend.model.Feriado;
 import unpsjb.labprog.backend.presenter.dto.AgendaRequestDTO;
 import unpsjb.labprog.backend.presenter.dto.AgendaResponseDTO;
@@ -17,6 +19,7 @@ import unpsjb.labprog.backend.presenter.dto.AgendaResponseDTO.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -34,6 +37,8 @@ public class EsquemaTurnoService {
     private StaffMedicoRepository staffMedicoRepository;
     @Autowired
     private FeriadoRepository feriadoRepository;
+    @Autowired
+    private TurnoRepository turnoRepository;
 
     @Transactional
     public void procesarYGuardarAgenda(AgendaRequestDTO dto) {
@@ -51,19 +56,6 @@ public class EsquemaTurnoService {
             staffMedico = staffMedicoRepository.findByCentroNombreYMedicoId(centro.getNombre(), dto.getIdMedico());
             if (staffMedico == null) {
                 throw new IllegalArgumentException("El médico no está asociado al centro de atención de este consultorio.");
-            }
-        }
-
-        // GUARDADO DE FERIADOS
-        if (dto.getFeriados() != null && !dto.getFeriados().isEmpty()) {
-            for (String fechaStr : dto.getFeriados()) {
-                LocalDate fechaFeriado = LocalDate.parse(fechaStr);
-                if (!feriadoRepository.existeFeriadoPorFecha(fechaFeriado)) {
-                    Feriado nuevoFeriado = new Feriado();
-                    nuevoFeriado.setFecha(fechaFeriado);
-                    nuevoFeriado.setDescripcion("Feriado agendado");
-                    feriadoRepository.save(nuevoFeriado);
-                }
             }
         }
 
@@ -148,7 +140,8 @@ public class EsquemaTurnoService {
                     
                     int intervaloMinutos = (intervaloEsp != null && intervaloEsp > 0) ? intervaloEsp : 30;
 
-                    List<SlotTurnoAgenda> slots = generarSlots(esquema.getHoraInicio(), esquema.getHoraFin(), intervaloMinutos);
+                    List<Turno> turnosOcupados = turnoRepository.find(fechaActual, esquema.getConsultorio().getId(), Arrays.asList(EstadoTurno.PROGRAMADO, EstadoTurno.CONFIRMADO, EstadoTurno.REAGENDADO));
+                    List<SlotTurnoAgenda> slots = generarSlots(esquema.getHoraInicio(), esquema.getHoraFin(), intervaloMinutos, turnosOcupados);
 
                     EsquemaTurnoAgenda tarjeta = new EsquemaTurnoAgenda(
                             esquema.getHoraInicio(),
@@ -170,12 +163,19 @@ public class EsquemaTurnoService {
         return agendasDiarias;
     }
 
-    private List<SlotTurnoAgenda> generarSlots(LocalTime inicio, LocalTime fin, int intervaloMinutos) {
+    private List<SlotTurnoAgenda> generarSlots(LocalTime inicio, LocalTime fin, int intervaloMinutos, List<Turno> turnosOcupados) {
         List<SlotTurnoAgenda> slots = new ArrayList<>();
         LocalTime actual = inicio;
 
         while (actual.isBefore(fin)) {
-            slots.add(new SlotTurnoAgenda(actual, true));
+            boolean disponible = true;
+            for (Turno t : turnosOcupados) {
+                if (t.getHoraInicio() != null && t.getHoraInicio().equals(actual)) {
+                    disponible = false;
+                    break;
+                }
+            }
+            slots.add(new SlotTurnoAgenda(actual, disponible));
             actual = actual.plusMinutes(intervaloMinutos);
         }
         return slots;

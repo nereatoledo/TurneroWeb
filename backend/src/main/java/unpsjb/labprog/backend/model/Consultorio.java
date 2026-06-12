@@ -1,10 +1,7 @@
 package unpsjb.labprog.backend.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore; // <-- AGREGAR IMPORT
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,5 +21,10 @@ public class Consultorio {
 
     @Column(nullable = false)
     private Integer numero;
+
+    @ManyToOne
+    @JoinColumn(name = "centro_atencion_id") 
+    @JsonIgnore
+    private CentroAtencion centro;
 
 }

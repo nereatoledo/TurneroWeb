@@ -39,8 +39,7 @@ public class CentroAtencion {
     @JoinColumn(name = "coordenadas_id", nullable = false)
     private Point coordenadas;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "centro_atencion_id") 
+    @OneToMany(mappedBy = "centro", cascade = CascadeType.ALL, orphanRemoval = true)
     private Collection<Consultorio> consultorios = new ArrayList<>();
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -61,11 +60,13 @@ public class CentroAtencion {
     private Set<Medico> medicos = new HashSet<>();
 
     public void agregarConsultorio(Consultorio consultorio) {
+        consultorio.setCentro(this);
         this.consultorios.add(consultorio);
     }
 
     public void removerConsultorio(Consultorio consultorio) {
         this.consultorios.remove(consultorio);
+        consultorio.setCentro(null);
     }
 
     public void agregarEspecialidad(Especialidad especialidad) {

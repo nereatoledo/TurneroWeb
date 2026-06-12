@@ -4,7 +4,9 @@
             <div class="col-md-8 col-lg-6">
                 <div class="card shadow-sm border-0">
                     <div class="card-body p-4">
-                        <h3 class="card-title text-center mb-4" style="color: #8923dc;">Registro de Nuevo Paciente</h3>
+                        <h3 class="card-title text-center mb-4" style="color: #8923dc;">
+                            {{ isEditMode ? 'Editar Perfil' : 'Registro de Nuevo Paciente' }}
+                        </h3>
 
                         <div *ngIf="errorMessage" class="alert alert-danger text-center">
                             {{ errorMessage }}
@@ -20,12 +22,12 @@
                                 <div class="col-md-6 mb-3">
                                     <label for="nombre" class="form-label fw-bold">Nombre *</label>
                                     <input type="text" class="form-control" id="nombre" [(ngModel)]="paciente.nombre"
-                                        name="nombre" required placeholder="Juan">
+                                        name="nombre" required placeholder="Juan" [disabled]="isEditMode">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="apellido" class="form-label fw-bold">Apellido *</label>
                                     <input type="text" class="form-control" id="apellido"
-                                        [(ngModel)]="paciente.apellido" name="apellido" required placeholder="Pérez">
+                                        [(ngModel)]="paciente.apellido" name="apellido" required placeholder="Pérez" [disabled]="isEditMode">
                                 </div>
                             </div>
 
@@ -33,13 +35,13 @@
                                 <div class="col-md-6 mb-3">
                                     <label for="dni" class="form-label fw-bold">DNI *</label>
                                     <input type="text" class="form-control" id="dni" [(ngModel)]="paciente.dni"
-                                        name="dni" required placeholder="12345678">
+                                        name="dni" required placeholder="12345678" [disabled]="isEditMode">
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label for="fechaNacimiento" class="form-label fw-bold">Fecha de Nacimiento
                                         *</label>
                                     <input type="date" class="form-control" id="fechaNacimiento"
-                                        [(ngModel)]="paciente.fechaNacimiento" name="fechaNacimiento" required>
+                                        [(ngModel)]="paciente.fechaNacimiento" name="fechaNacimiento" required [disabled]="isEditMode">
                                 </div>
                             </div>
 
@@ -69,9 +71,9 @@
                             <div class="d-grid gap-2">
                                 <button type="submit" class="btn btn-purple-submit btn-lg"
                                     [disabled]="!registroForm.form.valid || !username.trim()">
-                                    Finalizar Registro
+                                    {{ isEditMode ? 'Guardar Cambios' : 'Finalizar Registro' }}
                                 </button>
-                                <a routerLink="/login" class="btn btn-light text-center">
+                                <a [routerLink]="isEditMode ? ['/usuario'] : ['/login']" class="btn btn-light text-center">
                                     Cancelar y Volver
                                 </a>
                             </div>

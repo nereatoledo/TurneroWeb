@@ -7,9 +7,13 @@ import { DataPackage } from '../data-package';
     providedIn: 'root'
 })
 export class AgendaService {
-    private agendaUrl = 'http://localhost:8080/esquemas-turnos';
+    private agendaUrl = '/rest/esquemas-turnos';
 
     constructor(private http: HttpClient) { }
+
+    agendarTurno(turno: any): Observable<any> {
+        return this.http.post<any>('/rest/turnos', turno);
+    }
 
     buscarAgenda(fechaInicio: string, fechaFin?: string, idEspecialidad?: number, idMedico?: number): Observable<DataPackage> {
         let params = new HttpParams().set('fechaInicio', fechaInicio);

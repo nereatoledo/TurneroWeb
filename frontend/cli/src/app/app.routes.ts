@@ -22,6 +22,7 @@ export const routes: Routes = [
     
     { path: 'login', component: LoginComponent, title: 'Iniciar Sesión' },
     { path: 'registro', component: RegistroComponent, title: 'Registro de Paciente' },
+    { path: 'registro/:id', component: RegistroComponent, title: 'Editar Perfil' },
 
     // --- ENTORNO ADMINISTRADOR (ACCESO DIRECTO) ---
     { path: 'admin', component: PanelHomeComponent, title: 'Turnero Web - Panel Admin' },

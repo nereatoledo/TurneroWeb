@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { LoginService } from './login/login.service';
 
 @Component({
   selector: 'app-root',
@@ -11,20 +12,12 @@ import { CommonModule } from '@angular/common';
 })
 export class AppComponent implements OnInit {
   title = 'Turnero Web';
-  rolActual: string = 'Seleccionar Entorno';
   dropdownOpen: boolean = false;
+  currentUser: any = null;
 
-  constructor(private router: Router) {
-    this.router.events.subscribe(event => {
-      if (event instanceof NavigationEnd) {
-        if (event.urlAfterRedirects.includes('/admin')) {
-          this.rolActual = 'Administrador';
-        } else if (event.urlAfterRedirects.includes('/usuario')) {
-          this.rolActual = 'Usuario';
-        } else if (event.urlAfterRedirects === '/') {
-          this.rolActual = 'Seleccionar Entorno';
-        }
-      }
+  constructor(private router: Router, private loginService: LoginService) {
+    this.loginService.currentUser$.subscribe(user => {
+      this.currentUser = user;
     });
   }
 
@@ -34,24 +27,9 @@ export class AppComponent implements OnInit {
     this.dropdownOpen = !this.dropdownOpen;
   }
 
-cambiarRol(nuevoRol: string) {
-    this.dropdownOpen = false; 
-    let urlActual = this.router.url;
-
-    if (nuevoRol === 'Administrador') {
-      if (urlActual.includes('/usuario')) {
-        urlActual = urlActual.replace('/usuario', '/admin');
-      } else if (!urlActual.includes('/admin')) {
-        urlActual = '/admin';
-      }
-    } else if (nuevoRol === 'Usuario') {
-      if (urlActual.includes('/admin')) {
-        urlActual = urlActual.replace('/admin', '/usuario');
-      } else if (!urlActual.includes('/usuario')) {
-        urlActual = '/usuario';
-      }
-    }
-
-    this.router.navigateByUrl(urlActual, { replaceUrl: true });
+  logout() {
+    this.loginService.logout();
+    this.dropdownOpen = false;
+    this.router.navigate(['/']);
   }
 }

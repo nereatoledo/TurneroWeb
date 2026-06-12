@@ -15,4 +15,6 @@ export class ModalComponent {
   message = '';
   description = '';
   showCancelButton = true;
+
+  detailsList: {icon: string, label: string, value: string}[] = [];
 }

@@ -7,5 +7,6 @@ export interface Medico {
     especialidad: {
         id?: number;
         nombre: string;
+        intervalo?: number;
     };
 }

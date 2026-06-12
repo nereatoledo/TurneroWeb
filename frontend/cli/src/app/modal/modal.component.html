@@ -2,23 +2,35 @@
 
     <div class="modal-header border-0 pb-0">
         <h4 class="custom-title m-0" id="modal-title">{{title}}</h4>
-        <button type="button" class="close-btn" aria-describedby="modal-title" (click)="modal.dismiss()">
-            <i class="fa fa-times"></i>
-        </button>
     </div>
 
     <div class="modal-body py-4">
-        <p class="message-text">
+        <p class="message-text mb-1">
             {{message}}
         </p>
-        <p *ngIf="description" class="description-text mt-2">
+        
+        <p *ngIf="description && (!detailsList || detailsList.length === 0)" class="description-text mt-2" style="white-space: pre-wrap;">
             {{description}}
         </p>
+
+        <ul *ngIf="detailsList && detailsList.length > 0" class="list-group mt-3 shadow-sm" style="border-radius: 10px; border: 1px solid #e2e8f0; overflow: hidden;">
+            <li *ngFor="let item of detailsList" class="list-group-item d-flex align-items-center py-2 px-3 border-0 border-bottom" style="background-color: #f8f9fa;">
+                
+                <div class="mr-3 text-center d-flex justify-content-center align-items-center" style="width: 38px; height: 38px; background-color: #e0dcf8; border-radius: 50%; color: #685cc7;">
+                    <i [class]="item.icon"></i>
+                </div>
+                
+                <div class="ml-2">
+                    <small class="text-muted text-uppercase d-block mb-0" style="font-size: 0.70rem; font-weight: 700; letter-spacing: 0.5px;">{{item.label}}</small>
+                    <span class="text-dark" style="font-size: 0.95rem; font-weight: 600;">{{item.value}}</span>
+                </div>
+
+            </li>
+        </ul>
     </div>
 
     <div class="modal-footer border-0 pt-0">
         <button *ngIf="showCancelButton" type="button" class="btn-back" (click)="modal.dismiss()">Cancelar</button>
-
         <button type="button" class="btn-purple-main" (click)="modal.close()">Aceptar</button>
     </div>
 </div>

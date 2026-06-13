@@ -50,8 +50,8 @@ public class TurnoPresenter {
     @RequestMapping(method=RequestMethod.POST)
     public ResponseEntity<Object> create(@RequestBody Turno aTurno){
         try {
-            service.save(aTurno);
-            return Response.ok(null, "Turno Ingresado Correctamente");
+            Turno savedTurno = service.save(aTurno);
+            return Response.ok(savedTurno, "Turno Ingresado Correctamente");
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of("error", "El turno no se encuentra disponible. Por favor seleccione otro horario."));

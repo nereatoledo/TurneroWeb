@@ -38,6 +38,9 @@ export class AgendaComponent implements OnInit {
     agendas: AgendaDia[] = [];
     busquedaRealizada: boolean = false;
     mensajeError: string = '';
+    sugerenciasMismoMedico: any[] = [];
+    sugerenciasOtrosMedicos: any[] = [];
+    buscandoSugerencias: boolean = false;
 
     constructor(
         private agendaService: AgendaService,
@@ -92,7 +95,7 @@ export class AgendaComponent implements OnInit {
             distinctUntilChanged(),
             switchMap((term) =>
                 term.length < 1 ? of([]) :
-                this.espService.search(term, this.centroSeleccionado ? this.centroSeleccionado.id : undefined).pipe(
+                this.espService.search(term).pipe(
                     map((response) => <any[]>response.data),
                     catchError(() => of([]))
                 )
@@ -108,11 +111,7 @@ export class AgendaComponent implements OnInit {
             distinctUntilChanged(),
             switchMap((term) =>
                 term.length < 1 ? of([]) :
-                this.medicoService.search(
-                    term,
-                    this.especialidadSeleccionada ? this.especialidadSeleccionada.id : undefined,
-                    this.centroSeleccionado ? this.centroSeleccionado.id : undefined
-                ).pipe(
+                this.medicoService.search(term).pipe(
                     map((response) => <any[]>response.data),
                     catchError(() => of([]))
                 )
@@ -128,11 +127,7 @@ export class AgendaComponent implements OnInit {
             distinctUntilChanged(),
             switchMap((term) =>
                 term.length < 1 ? of([]) :
-                this.centroService.search(
-                    term,
-                    this.medicoSeleccionado ? this.medicoSeleccionado.id : undefined,
-                    this.especialidadSeleccionada ? this.especialidadSeleccionada.id : undefined
-                ).pipe(
+                this.centroService.search(term).pipe(
                     map((response) => <any[]>response.data),
                     catchError(() => of([]))
                 )
@@ -180,8 +175,27 @@ export class AgendaComponent implements OnInit {
             return;
         }
 
+        if (this.especialidadSeleccionada && typeof this.especialidadSeleccionada === 'string') {
+            this.mensajeError = 'Por favor, seleccione una especialidad de la lista desplegable.';
+            return;
+        }
+        if (this.medicoSeleccionado && typeof this.medicoSeleccionado === 'string') {
+            if (this.medicoSeleccionado.toLowerCase() === 'todos') {
+                this.medicoSeleccionado = null;
+            } else {
+                this.mensajeError = 'Por favor, seleccione un médico de la lista desplegable.';
+                return;
+            }
+        }
+        if (this.centroSeleccionado && typeof this.centroSeleccionado === 'string') {
+            this.mensajeError = 'Por favor, seleccione un centro de atención de la lista desplegable.';
+            return;
+        }
+
         this.mensajeError = '';
         this.busquedaRealizada = true;
+        this.sugerenciasMismoMedico = [];
+        this.sugerenciasOtrosMedicos = [];
 
         const idEspecialidad = this.especialidadSeleccionada ? this.especialidadSeleccionada.id : undefined;
         const idMedico = this.medicoSeleccionado ? this.medicoSeleccionado.id : undefined;
@@ -196,6 +210,10 @@ export class AgendaComponent implements OnInit {
         ).subscribe({
             next: (res: DataPackage) => {
                 this.agendas = res.data as AgendaDia[];
+                this.agendas = res.data as AgendaDia[];
+                if (idCentro && idEspecialidad && !this.tieneTurnosDisponibles(this.agendas)) {
+                    this.buscarAlternativas(this.fechaInicio, this.fechaFin, idEspecialidad, idMedico, idCentro);
+                }
             },
             error: (err: any) => {
                 console.error(err);
@@ -314,5 +332,86 @@ export class AgendaComponent implements OnInit {
             if (e.horaFin > max) max = e.horaFin;
         }
         return `${this.formatearHora(min)} a ${this.formatearHora(max)}`;
+    }
+
+    tieneTurnosDisponibles(dias: AgendaDia[]): boolean {
+        if (!dias || dias.length === 0) return false;
+        return dias.some(dia => 
+            !dia.esFeriado && 
+            dia.agendaDetalles && 
+            dia.agendaDetalles.some(esquema => 
+                esquema.turnos && esquema.turnos.some((t: any) => t.estaDisponible)
+            )
+        );
+    }
+
+    buscarAlternativas(fechaInicio: string, fechaFin: string, idEspecialidad: number, idMedico: number | undefined, idCentro: number): void {
+        this.buscandoSugerencias = true;
+
+        // Alternativa 1: Otros centros (mismo médico si se especificó, cualquier médico de la especialidad si no)
+        this.agendaService.buscarAgenda(fechaInicio, fechaFin, idEspecialidad, idMedico, undefined, undefined, idCentro).subscribe({
+            next: (res: DataPackage) => {
+                const diasSugeridos = res.data as AgendaDia[];
+                const listaSugerencias: any[] = [];
+                for (const dia of diasSugeridos) {
+                    if (dia.esFeriado) continue;
+                    for (const esquema of dia.agendaDetalles) {
+                        for (const slot of esquema.turnos) {
+                            if (slot.estaDisponible) {
+                                listaSugerencias.push({
+                                    dia: dia,
+                                    esquema: esquema,
+                                    slot: slot
+                                });
+                            }
+                        }
+                    }
+                }
+                this.sugerenciasMismoMedico = listaSugerencias.sort((a, b) => {
+                    const compFecha = a.dia.fecha.localeCompare(b.dia.fecha);
+                    if (compFecha !== 0) return compFecha;
+                    return a.slot.horario.localeCompare(b.slot.horario);
+                });
+                if (!idMedico) this.checkBuscandoSugerenciasFinalizado();
+            },
+            error: () => {
+                if (!idMedico) this.checkBuscandoSugerenciasFinalizado();
+            }
+        });
+
+        // Alternativa 2: Otros médicos de la misma especialidad en el mismo centro
+        if (idMedico) {
+            this.agendaService.buscarAgenda(fechaInicio, fechaFin, idEspecialidad, undefined, idCentro, idMedico, undefined).subscribe({
+                next: (res: DataPackage) => {
+                    const diasSugeridos = res.data as AgendaDia[];
+                    const listaSugerencias: any[] = [];
+                    for (const dia of diasSugeridos) {
+                        if (dia.esFeriado) continue;
+                        for (const esquema of dia.agendaDetalles) {
+                            for (const slot of esquema.turnos) {
+                                if (slot.estaDisponible) {
+                                    listaSugerencias.push({
+                                        dia: dia,
+                                        esquema: esquema,
+                                        slot: slot
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    this.sugerenciasOtrosMedicos = listaSugerencias.sort((a, b) => {
+                        const compFecha = a.dia.fecha.localeCompare(b.dia.fecha);
+                        if (compFecha !== 0) return compFecha;
+                        return a.slot.horario.localeCompare(b.slot.horario);
+                    });
+                    this.checkBuscandoSugerenciasFinalizado();
+                },
+                error: () => this.checkBuscandoSugerenciasFinalizado()
+            });
+        }
+    }
+
+    private checkBuscandoSugerenciasFinalizado(): void {
+        this.buscandoSugerencias = false;
     }
 }

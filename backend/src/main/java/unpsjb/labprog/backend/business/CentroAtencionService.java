@@ -84,8 +84,7 @@ public class CentroAtencionService {
             throw new IllegalArgumentException("No existe la especialidad");
         }
 
-        boolean yaEstaAsociada = centro.getEspecialidades().stream()
-                .anyMatch(e -> e.getId() == idEspecialidad);
+        boolean yaEstaAsociada = repository.tieneEspecialidad(idCentro, idEspecialidad);
 
         if (yaEstaAsociada) {
             throw new IllegalStateException("Especialidad ya se encuentra asociada");
@@ -132,8 +131,7 @@ public class CentroAtencionService {
             throw new IllegalStateException("Médico no existe con la matrícula indicada");
         }
 
-        boolean especialidadDisponible = centro.getEspecialidades().stream()
-                .anyMatch(e -> e.getNombre().equalsIgnoreCase(medico.getEspecialidad().getNombre()));
+        boolean especialidadDisponible = repository.tieneEspecialidadPorNombre(centro.getId(), medico.getEspecialidad().getNombre());
         if (!especialidadDisponible) {
             throw new IllegalStateException(
                     "La especialidad del médico no se encuentra disponible para el centro de salud");

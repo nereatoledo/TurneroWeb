@@ -35,4 +35,10 @@ public interface CentroAtencionRepository
 
     @Query("SELECT DISTINCT c FROM CentroAtencion c JOIN FETCH c.especialidades")
     List<CentroAtencion> findAllConEspecialidades();
+
+    @Query("SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END FROM CentroAtencion c JOIN c.especialidades e WHERE c.id = ?1 AND e.id = ?2")
+    boolean tieneEspecialidad(int idCentro, int idEspecialidad);
+
+    @Query("SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END FROM CentroAtencion c JOIN c.especialidades e WHERE c.id = ?1 AND UPPER(e.nombre) = UPPER(?2)")
+    boolean tieneEspecialidadPorNombre(int idCentro, String nombreEspecialidad);
 }

@@ -79,7 +79,7 @@ public class EsquemaTurnoService {
                             staffMedico.getId(), diaJava, dto.getHoraInicio(), dto.getHoraFin()
                     );
                     if (hayConflictoMedico) {
-                        throw new IllegalArgumentException("El médico ya está asignado en otro consultorio");
+                        System.out.println("DEBUG: Conflicto medico!"); throw new IllegalArgumentException("El médico ya está asignado en otro consultorio");
                     }
                 }
 

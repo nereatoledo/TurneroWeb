@@ -44,12 +44,14 @@ public interface EsquemaTurnoRepository
                         @Param("horaFin") LocalTime horaFin);
 
         @Query("SELECT e FROM EsquemaTurno e " +
+                        "LEFT JOIN e.staffMedico sm " +
                         "WHERE e.diaSemana = :dia " +
-                        "AND (:idEspecialidad IS NULL OR e.staffMedico.medico.especialidad.id = :idEspecialidad) " +
-                        "AND (:idMedico IS NULL OR e.staffMedico.medico.id = :idMedico) " +
-                        "AND (:idCentro IS NULL OR e.staffMedico.centro.id = :idCentro) " +
-                        "AND (:idMedicoExcluido IS NULL OR e.staffMedico.medico.id <> :idMedicoExcluido) " +
-                        "AND (:idCentroExcluido IS NULL OR e.staffMedico.centro.id <> :idCentroExcluido)")
+                        "AND sm IS NOT NULL " +
+                        "AND (:idEspecialidad IS NULL OR sm.medico.especialidad.id = :idEspecialidad) " +
+                        "AND (:idMedico IS NULL OR sm.medico.id = :idMedico) " +
+                        "AND (:idCentro IS NULL OR sm.centro.id = :idCentro) " +
+                        "AND (:idMedicoExcluido IS NULL OR sm.medico.id <> :idMedicoExcluido) " +
+                        "AND (:idCentroExcluido IS NULL OR sm.centro.id <> :idCentroExcluido)")
         List<EsquemaTurno> buscarParaAgenda(
                         @Param("dia") DiaSemana dia,
                         @Param("idEspecialidad") Integer idEspecialidad,

@@ -38,9 +38,8 @@ export class AgendaComponent implements OnInit {
     agendas: AgendaDia[] = [];
     busquedaRealizada: boolean = false;
     mensajeError: string = '';
-    sugerenciasMismoMedico: any[] = [];
-    sugerenciasOtrosMedicos: any[] = [];
-    buscandoSugerencias: boolean = false;
+    esSugerencia: boolean = false;
+    mensajeSugerencia: string = '';
 
     constructor(
         private agendaService: AgendaService,
@@ -194,10 +193,13 @@ export class AgendaComponent implements OnInit {
 
         this.mensajeError = '';
         this.busquedaRealizada = true;
-        this.sugerenciasMismoMedico = [];
-        this.sugerenciasOtrosMedicos = [];
+        this.esSugerencia = false;
+        this.mensajeSugerencia = '';
 
-        const idEspecialidad = this.especialidadSeleccionada ? this.especialidadSeleccionada.id : undefined;
+        // Si el médico está seleccionado, usamos su especialidad aunque no se haya elegido explícitamente
+        const idEspecialidad = this.especialidadSeleccionada
+            ? this.especialidadSeleccionada.id
+            : (this.medicoSeleccionado?.especialidad?.id ?? undefined);
         const idMedico = this.medicoSeleccionado ? this.medicoSeleccionado.id : undefined;
         const idCentro = this.centroSeleccionado ? this.centroSeleccionado.id : undefined;
 
@@ -209,11 +211,11 @@ export class AgendaComponent implements OnInit {
             idCentro
         ).subscribe({
             next: (res: DataPackage) => {
-                this.agendas = res.data as AgendaDia[];
-                this.agendas = res.data as AgendaDia[];
-                if (idCentro && idEspecialidad && !this.tieneTurnosDisponibles(this.agendas)) {
-                    this.buscarAlternativas(this.fechaInicio, this.fechaFin, idEspecialidad, idMedico, idCentro);
-                }
+                // El backend devuelve { esSugerencia, mensaje, agendas }
+                const resultado = res.data as { esSugerencia: boolean; mensaje: string; agendas: AgendaDia[] };
+                this.agendas = resultado.agendas ?? [];
+                this.mensajeSugerencia = resultado.esSugerencia ? resultado.mensaje : '';
+                this.esSugerencia = resultado.esSugerencia ?? false;
             },
             error: (err: any) => {
                 console.error(err);
@@ -336,82 +338,12 @@ export class AgendaComponent implements OnInit {
 
     tieneTurnosDisponibles(dias: AgendaDia[]): boolean {
         if (!dias || dias.length === 0) return false;
-        return dias.some(dia => 
-            !dia.esFeriado && 
-            dia.agendaDetalles && 
-            dia.agendaDetalles.some(esquema => 
+        return dias.some(dia =>
+            !dia.esFeriado &&
+            dia.agendaDetalles &&
+            dia.agendaDetalles.some(esquema =>
                 esquema.turnos && esquema.turnos.some((t: any) => t.estaDisponible)
             )
         );
-    }
-
-    buscarAlternativas(fechaInicio: string, fechaFin: string, idEspecialidad: number, idMedico: number | undefined, idCentro: number): void {
-        this.buscandoSugerencias = true;
-
-        // Alternativa 1: Otros centros (mismo médico si se especificó, cualquier médico de la especialidad si no)
-        this.agendaService.buscarAgenda(fechaInicio, fechaFin, idEspecialidad, idMedico, undefined, undefined, idCentro).subscribe({
-            next: (res: DataPackage) => {
-                const diasSugeridos = res.data as AgendaDia[];
-                const listaSugerencias: any[] = [];
-                for (const dia of diasSugeridos) {
-                    if (dia.esFeriado) continue;
-                    for (const esquema of dia.agendaDetalles) {
-                        for (const slot of esquema.turnos) {
-                            if (slot.estaDisponible) {
-                                listaSugerencias.push({
-                                    dia: dia,
-                                    esquema: esquema,
-                                    slot: slot
-                                });
-                            }
-                        }
-                    }
-                }
-                this.sugerenciasMismoMedico = listaSugerencias.sort((a, b) => {
-                    const compFecha = a.dia.fecha.localeCompare(b.dia.fecha);
-                    if (compFecha !== 0) return compFecha;
-                    return a.slot.horario.localeCompare(b.slot.horario);
-                });
-                if (!idMedico) this.checkBuscandoSugerenciasFinalizado();
-            },
-            error: () => {
-                if (!idMedico) this.checkBuscandoSugerenciasFinalizado();
-            }
-        });
-
-        // Alternativa 2: Otros médicos de la misma especialidad en el mismo centro
-        if (idMedico) {
-            this.agendaService.buscarAgenda(fechaInicio, fechaFin, idEspecialidad, undefined, idCentro, idMedico, undefined).subscribe({
-                next: (res: DataPackage) => {
-                    const diasSugeridos = res.data as AgendaDia[];
-                    const listaSugerencias: any[] = [];
-                    for (const dia of diasSugeridos) {
-                        if (dia.esFeriado) continue;
-                        for (const esquema of dia.agendaDetalles) {
-                            for (const slot of esquema.turnos) {
-                                if (slot.estaDisponible) {
-                                    listaSugerencias.push({
-                                        dia: dia,
-                                        esquema: esquema,
-                                        slot: slot
-                                    });
-                                }
-                            }
-                        }
-                    }
-                    this.sugerenciasOtrosMedicos = listaSugerencias.sort((a, b) => {
-                        const compFecha = a.dia.fecha.localeCompare(b.dia.fecha);
-                        if (compFecha !== 0) return compFecha;
-                        return a.slot.horario.localeCompare(b.slot.horario);
-                    });
-                    this.checkBuscandoSugerenciasFinalizado();
-                },
-                error: () => this.checkBuscandoSugerenciasFinalizado()
-            });
-        }
-    }
-
-    private checkBuscandoSugerenciasFinalizado(): void {
-        this.buscandoSugerencias = false;
     }
 }

@@ -11,11 +11,11 @@ const backendUrl = 'http://backend:8080';
 function obtenerFechasSemanaLaboral() {
     let fecha = new Date();
     let diasParaLunes = (1 - fecha.getDay() + 7) % 7;
-    if (diasParaLunes === 0) diasParaLunes = 7; 
-    
+    if (diasParaLunes === 0) diasParaLunes = 7;
+
     let inicio = new Date(fecha);
     inicio.setDate(fecha.getDate() + diasParaLunes);
-    
+
     let fin = new Date(inicio);
     fin.setDate(inicio.getDate() + 4);
 
@@ -26,16 +26,47 @@ function obtenerFechasSemanaLaboral() {
 }
 
 function buscarIdConsultorio(nombreEsperado) {
+    if (agendaDTO.idMedico) {
+        return resolverIdConsultorio(nombreEsperado, agendaDTO.idMedico);
+    }
     const res = request('GET', `${backendUrl}/consultorios`);
     const consultorios = JSON.parse(res.getBody('utf8')).data;
     const encontrado = consultorios.find(c => c.nombre === nombreEsperado);
-    return encontrado ? encontrado.id : 1; 
+    return encontrado ? encontrado.id : 1;
+}
+
+function resolverIdConsultorio(nombreConsultorio, idMedico) {
+    if (!nombreConsultorio) return 1;
+    const resCentros = request('GET', `${backendUrl}/centros`);
+    const centros = JSON.parse(resCentros.getBody('utf8')).data;
+    const resMedicos = request('GET', `${backendUrl}/centros/medicos`);
+    const centrosMedicos = JSON.parse(resMedicos.getBody('utf8')).data;
+    const centrosDelMedico = centrosMedicos
+        .filter(c => c.medicos.some(m => m.id === idMedico))
+        .map(c => c.centro_de_atencion);
+    let mejorConsultorio = null;
+    for (let centro of centros) {
+        if (centrosDelMedico.includes(centro.nombre)) {
+            let cons = centro.consultorios.find(c => c.nombre === nombreConsultorio);
+            if (cons) {
+                mejorConsultorio = cons;
+                if (centro.nombre !== "Trelew Salud") {
+                    return cons.id;
+                }
+            }
+        }
+    }
+    if (mejorConsultorio) return mejorConsultorio.id;
+    const resAll = request('GET', `${backendUrl}/consultorios`);
+    const allCons = JSON.parse(resAll.getBody('utf8')).data;
+    const encontrado = allCons.find(c => c.nombre === nombreConsultorio);
+    return encontrado ? encontrado.id : 1;
 }
 
 function buscarIdMedico(nombreEsperado) {
-    const res = request('GET', `${backendUrl}/centros/medicos`); 
+    const res = request('GET', `${backendUrl}/centros/medicos`);
     const centrosData = JSON.parse(res.getBody('utf8')).data;
-    
+
     for (let centro of centrosData) {
         let med = centro.medicos.find(m => `${m.nombre} ${m.apellido}`.includes(nombreEsperado));
         if (med) return med.id;
@@ -58,13 +89,14 @@ function enviarPostAgenda(dto) {
 let agendaDTO = {
     nombre: "Agenda Generada Automáticamente",
     descripcion: "Prueba Cucumber",
-    horaInicio: "", horaFin: "", fechaInicio: "", fechaFin: "",    
+    horaInicio: "", horaFin: "", fechaInicio: "", fechaFin: "",
     idConsultorio: null, idMedico: null,
     feriados: []
 };
 
 let respuestaServidor;
-let accionEspecial = 'CREAR'; 
+let accionEspecial = 'CREAR';
+let nombreConsultorioActual = null;
 
 // ======================================================================
 // 3. STEP DEFINITIONS
@@ -73,11 +105,10 @@ let accionEspecial = 'CREAR';
 // --- Bloques para Creación Exitosa ---
 
 Given('que el administrador configura la agenda del {string}', function (nombreConsultorio) {
-    // RESETEAMOS el estado del DTO para evitar fugas entre un escenario y el siguiente
     agendaDTO.feriados = [];
-    agendaDTO.idMedico = null; 
+    agendaDTO.idMedico = null;
     accionEspecial = 'CREAR';
-    
+    nombreConsultorioActual = nombreConsultorio;
     agendaDTO.idConsultorio = buscarIdConsultorio(nombreConsultorio);
 });
 
@@ -91,13 +122,14 @@ Given('define el horario de atención de {string} a {string} de {word} a {word}'
 
 Given('asigna al Dr. {string} con especialidad {string}', function (nombreMedico, especialidad) {
     agendaDTO.idMedico = buscarIdMedico(nombreMedico);
+    if (nombreConsultorioActual) {
+        agendaDTO.idConsultorio = resolverIdConsultorio(nombreConsultorioActual, agendaDTO.idMedico);
+    }
 });
 
 
-// --- Bloques Específicos para Forzar Errores de Conflicto ---
 
 Given('define un horario de atención de {string} a {string} para el Dr. {string}', function (horaInicio, horaFin, nombreMedico) {
-    // La Dra. Ana López ya fue guardada en el Feature 17, no repetimos peticiones aquí.
 });
 
 Given('posteriormente intenta asignar al Dr. {string} de {string} a {string} en el mismo consultorio', function (nombreMedico, horaInicio, horaFin) {
@@ -107,6 +139,9 @@ Given('posteriormente intenta asignar al Dr. {string} de {string} a {string} en 
     agendaDTO.fechaInicio = fechas.inicio;
     agendaDTO.fechaFin = fechas.fin;
     agendaDTO.idMedico = buscarIdMedico(nombreMedico);
+    if (nombreConsultorioActual) {
+        agendaDTO.idConsultorio = resolverIdConsultorio(nombreConsultorioActual, agendaDTO.idMedico);
+    }
 });
 
 Given('que el Dr. {string} está asignado al {string} de {string} a {string}', function (nombreMedico, nombreConsultorio, horaInicio, horaFin) {
@@ -116,15 +151,15 @@ Given('que el Dr. {string} está asignado al {string} de {string} a {string}', f
     agendaDTO.fechaInicio = fechas.inicio;
     agendaDTO.fechaFin = fechas.fin;
     agendaDTO.idMedico = buscarIdMedico(nombreMedico);
+    agendaDTO.idConsultorio = resolverIdConsultorio(nombreConsultorio, agendaDTO.idMedico);
 });
 
 When('el administrador intenta asignarlo al {string} en el mismo horario', function (nombreConsultorio) {
-    agendaDTO.idConsultorio = buscarIdConsultorio(nombreConsultorio);
+    agendaDTO.idConsultorio = resolverIdConsultorio(nombreConsultorio, agendaDTO.idMedico);
     respuestaServidor = enviarPostAgenda(agendaDTO);
 });
 
 
-// --- Bloques Específicos para el Día Feriado ---
 
 When('agrega el {string} como día feriado', function (fechaFeriado) {
     const meses = {
@@ -132,11 +167,11 @@ When('agrega el {string} como día feriado', function (fechaFeriado) {
         "mayo": "05", "junio": "06", "julio": "07", "agosto": "08",
         "septiembre": "09", "octubre": "10", "noviembre": "11", "diciembre": "12"
     };
-    const partes = fechaFeriado.split(" "); 
+    const partes = fechaFeriado.split(" ");
     const dia = partes[0].padStart(2, '0');
     const mes = meses[partes[2].toLowerCase()];
-    const anio = new Date().getFullYear(); 
-    
+    const anio = new Date().getFullYear();
+
     agendaDTO.feriados = [`${anio}-${mes}-${dia}`];
 
     // Se envía tal cual. agendaDTO.idMedico está en null gracias al reseteo del primer paso.
@@ -166,6 +201,9 @@ When('guarda la configuración', function () {
 });
 
 Then('el sistema confirma la creación de la agenda con código {int}', function (codigoEsperado) {
+    if (respuestaServidor.statusCode !== codigoEsperado) {
+        console.log("Error del servidor: ", respuestaServidor.body.toString('utf8'));
+    }
     assert.strictEqual(respuestaServidor.statusCode, codigoEsperado);
 });
 

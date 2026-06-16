@@ -103,11 +103,10 @@
             <div class="card shadow-sm mb-4" style="border: none; border-radius: 10px; overflow: hidden;"
                 *ngFor="let dia of agendas">
 
-            <div class="card-header text-white py-3" [style.background-color]="esSugerencia ? '#fd7e14' : '#685cc7'">
+            <div class="card-header text-white py-3" style="background-color: #685cc7;">
                 <h5 class="mb-0 font-weight-bold" style="font-size: 1.1rem;">
                     <i class="fa fa-calendar mr-2"></i>
                     {{ dia.diaSemana | titlecase }} - {{ dia.fecha | date:'dd/MM/yyyy' }}
-                    <span *ngIf="esSugerencia" class="badge badge-light text-dark ml-2" style="font-size: 0.75rem;">Sugerencia</span>
                 </h5>
             </div>
 

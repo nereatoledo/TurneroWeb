@@ -60,7 +60,6 @@
             | Edmundo   | Parra     | 51447740 | 23/08/1983      | UNION PERSONAL       | 200         | Paciente ingresado correctamente |
             | Antonia   | Peña      | 34797587 | 02/10/1981      | VISITAR              | 200         | Paciente ingresado correctamente |
             | Gustavo   | Pérez     | 54728744 | 19/05/1986      | PRO SALUD            | 200         | Paciente ingresado correctamente |
-            | Nerea     | Toledo    | 45297621 | 25/07/2003      | PAMI                 | 200         | Paciente ingresado correctamente |
 
 
             Esquema del escenario: Crear un paciente invalido

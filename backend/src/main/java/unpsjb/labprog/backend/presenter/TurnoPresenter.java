@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.TurnoService;
+import unpsjb.labprog.backend.model.Paciente;
 import unpsjb.labprog.backend.model.Turno;
 
 @RestController
@@ -52,6 +53,9 @@ public class TurnoPresenter {
         try {
             Turno savedTurno = service.save(aTurno);
             return Response.ok(savedTurno, "Turno Ingresado Correctamente");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", e.getMessage()));
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of("error", "El turno no se encuentra disponible. Por favor seleccione otro horario."));
@@ -66,6 +70,9 @@ public class TurnoPresenter {
         try {
             service.save(aTurno);
             return Response.ok(null, "Turno Modificado Correctamente");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", e.getMessage()));
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(Map.of("error", "Conflicto de horarios. El turno ya existe en ese consultorio."));
@@ -79,5 +86,24 @@ public class TurnoPresenter {
     public ResponseEntity<Object> delete(@PathVariable("id") int id){
         service.delete(id);
         return Response.ok(null, "Turno eliminado exitosamente");
+    }
+
+    /**
+     * Confirma un turno de forma atómica.
+     * Si dos pacientes intentan confirmar el mismo turno simultáneamente,
+     * solo uno éxito y el otro recibe 409 Conflict.
+     */
+    @RequestMapping(value="/id/{id}/confirmar", method=RequestMethod.PATCH)
+    public ResponseEntity<Object> confirmar(
+        @PathVariable("id") int id,
+        @RequestBody Paciente aPaciente
+    ){
+        try {
+            Turno turno = service.confirmar(id, aPaciente);
+            return Response.ok(turno, "Turno confirmado correctamente");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", e.getMessage()));
+        }
     }
 }

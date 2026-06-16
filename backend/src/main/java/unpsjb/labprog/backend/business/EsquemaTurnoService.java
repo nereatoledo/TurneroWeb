@@ -12,6 +12,7 @@ import unpsjb.labprog.backend.model.EsquemaTurno;
 import unpsjb.labprog.backend.model.StaffMedico;
 import unpsjb.labprog.backend.model.Turno;
 import unpsjb.labprog.backend.model.Feriado;
+import unpsjb.labprog.backend.presenter.dto.AgendaBusquedaResultadoDTO;
 import unpsjb.labprog.backend.presenter.dto.AgendaRequestDTO;
 import unpsjb.labprog.backend.presenter.dto.AgendaResponseDTO;
 import unpsjb.labprog.backend.presenter.dto.AgendaResponseDTO.*;
@@ -99,7 +100,126 @@ public class EsquemaTurnoService {
         }
     }
 
-    public List<AgendaResponseDTO> obtenerAgendaFrontend(
+    /**
+     * Punto de entrada principal para el presenter.
+     * Ejecuta la búsqueda con los filtros del paciente y, si no hay slots disponibles,
+     * reintenta automáticamente con criterios relajados devolviendo sugerencias.
+     *
+     * Cascada de fallbacks:
+     *  1. Búsqueda directa → esSugerencia=false
+     *  2. (con médico) mismo médico en otro centro → esSugerencia=true
+     *  3. (con médico) otro médico misma especialidad → esSugerencia=true
+     *  4. (solo centro) misma especialidad en otro centro → esSugerencia=true
+     *
+     * Optimización: antes de ejecutar el pipeline completo de carga de agenda
+     * (N queries por día), se hace una pre-verificación liviana con existeEsquemaParaDias()
+     * (1 sola query) para descartar fallbacks sin esquemas sin cargar datos.
+     */
+    public AgendaBusquedaResultadoDTO buscarConFallback(
+            LocalDate fechaInicio,
+            LocalDate fechaFin,
+            Integer idEspecialidad,
+            Integer idMedico,
+            Integer idCentro) {
+
+        // Pre-computa los días de semana del rango: reutilizado en todos los pre-filtros
+        List<DiaSemana> diasSemana = obtenerDiasSemana(fechaInicio, fechaFin);
+
+        // 1. Búsqueda principal (siempre se ejecuta)
+        List<AgendaResponseDTO> agendas = obtenerAgendaFrontend(
+                fechaInicio, fechaFin, idEspecialidad, idMedico, idCentro, null, null);
+
+        if (tieneSlotsDisponibles(agendas)) {
+            return new AgendaBusquedaResultadoDTO(false, null, agendas);
+        }
+
+        // 2 y 3: fallbacks cuando se especificó un médico
+        if (idMedico != null) {
+
+            // 2. Mismo médico en otro centro
+            //    Pre-check (1 query) antes del pipeline completo (~N queries por día)
+            if (idCentro != null &&
+                    esquemaTurnoRepository.existeEsquemaParaDias(
+                            diasSemana, idEspecialidad, idMedico, null, null, idCentro)) {
+
+                List<AgendaResponseDTO> fallbackA = obtenerAgendaFrontend(
+                        fechaInicio, fechaFin, idEspecialidad, idMedico, null, null, idCentro);
+                if (tieneSlotsDisponibles(fallbackA)) {
+                    return new AgendaBusquedaResultadoDTO(
+                            true,
+                            "El médico no tiene disponibilidad en el centro seleccionado. " +
+                            "Te mostramos su agenda en otros centros de atención.",
+                            fallbackA);
+                }
+            }
+
+            // 3. Otro médico de la misma especialidad (en cualquier centro)
+            //    Pre-check (1 query) antes del pipeline completo
+            if (esquemaTurnoRepository.existeEsquemaParaDias(
+                    diasSemana, idEspecialidad, null, null, idMedico, null)) {
+
+                List<AgendaResponseDTO> fallbackB = obtenerAgendaFrontend(
+                        fechaInicio, fechaFin, idEspecialidad, null, null, idMedico, null);
+                if (tieneSlotsDisponibles(fallbackB)) {
+                    return new AgendaBusquedaResultadoDTO(
+                            true,
+                            "No hay disponibilidad para ese médico. " +
+                            "Te mostramos otros médicos disponibles de la misma especialidad.",
+                            fallbackB);
+                }
+            }
+        }
+
+        // 4. Fallback cuando se especificó solo centro (sin médico)
+        //    Pre-check (1 query) antes del pipeline completo
+        if (idCentro != null && idMedico == null &&
+                esquemaTurnoRepository.existeEsquemaParaDias(
+                        diasSemana, idEspecialidad, null, null, null, idCentro)) {
+
+            List<AgendaResponseDTO> fallbackC = obtenerAgendaFrontend(
+                    fechaInicio, fechaFin, idEspecialidad, null, null, null, idCentro);
+            if (tieneSlotsDisponibles(fallbackC)) {
+                return new AgendaBusquedaResultadoDTO(
+                        true,
+                        "No hay disponibilidad en el centro seleccionado para esa especialidad. " +
+                        "Te mostramos turnos disponibles en otros centros de atención.",
+                        fallbackC);
+            }
+        }
+
+        // Sin resultados en ningún fallback
+        return new AgendaBusquedaResultadoDTO(false, null, agendas);
+    }
+
+    /**
+     * Deriva los días de semana distintos cubiertos por el rango [fechaInicio, fechaFin].
+     * Se usa para la query de existencia de esquemas, que filtra por diaSemana IN :dias.
+     */
+    private List<DiaSemana> obtenerDiasSemana(LocalDate fechaInicio, LocalDate fechaFin) {
+        Set<DiaSemana> dias = new HashSet<>();
+        LocalDate fecha = fechaInicio;
+        while (!fecha.isAfter(fechaFin) && dias.size() < 7) {
+            DiaSemana dia = DiaSemana.desdeJava(fecha.getDayOfWeek());
+            if (dia != null) dias.add(dia);
+            fecha = fecha.plusDays(1);
+        }
+        return new ArrayList<>(dias);
+    }
+
+    /**
+     * Verifica si la lista de agendas contiene al menos un slot disponible
+     * (excluyendo los días feriados).
+     */
+    private boolean tieneSlotsDisponibles(List<AgendaResponseDTO> agendas) {
+        if (agendas == null || agendas.isEmpty()) return false;
+        return agendas.stream()
+                .filter(dia -> !dia.isEsFeriado())
+                .flatMap(dia -> dia.getAgendaDetalles().stream())
+                .flatMap(esquema -> esquema.getTurnos().stream())
+                .anyMatch(SlotTurnoAgenda::isEstaDisponible);
+    }
+
+    private List<AgendaResponseDTO> obtenerAgendaFrontend(
             LocalDate fechaInicio, 
             LocalDate fechaFin, 
             Integer idEspecialidad, 

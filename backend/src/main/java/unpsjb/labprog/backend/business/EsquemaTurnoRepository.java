@@ -60,12 +60,6 @@ public interface EsquemaTurnoRepository
                         @Param("idMedicoExcluido") Integer idMedicoExcluido,
                         @Param("idCentroExcluido") Integer idCentroExcluido);
 
-        /**
-         * Query de existencia liviana: verifica en UNA sola consulta si hay al menos
-         * un EsquemaTurno que cumpla los filtros para cualquiera de los días de semana dados.
-         * Se usa como pre-filtro en buscarConFallback() para evitar ejecutar el pipeline
-         * completo de carga de agenda cuando el resultado sería vacío.
-         */
         @Query("SELECT COUNT(e) > 0 FROM EsquemaTurno e " +
                         "LEFT JOIN e.staffMedico sm " +
                         "WHERE sm IS NOT NULL " +
@@ -82,4 +76,9 @@ public interface EsquemaTurnoRepository
                         @Param("idCentro") Integer idCentro,
                         @Param("idMedicoExcluido") Integer idMedicoExcluido,
                         @Param("idCentroExcluido") Integer idCentroExcluido);
+
+        @Query("SELECT e FROM EsquemaTurno e WHERE e.consultorio.id = :consultorioId AND e.diaSemana = :dia")
+        List<EsquemaTurno> findByConsultorioIdYDia(
+                        @Param("consultorioId") int consultorioId,
+                        @Param("dia") DiaSemana dia);
 }

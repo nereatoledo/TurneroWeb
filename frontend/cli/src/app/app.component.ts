@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { LoginService } from './login/login.service';
+import { LoginService } from './home/login.service';
 
 @Component({
   selector: 'app-root',
@@ -23,6 +23,10 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {}
 
+  get isAdmin(): boolean {
+    return this.loginService.isAdmin();
+  }
+
   toggleDropdown() {
     this.dropdownOpen = !this.dropdownOpen;
   }
@@ -30,6 +34,18 @@ export class AppComponent implements OnInit {
   logout() {
     this.loginService.logout();
     this.dropdownOpen = false;
-    this.router.navigate(['/']);
+    this.router.navigate(['/login']);
+  }
+
+  navigateToHome() {
+    if (!this.currentUser) {
+      this.router.navigate(['/login']);
+    } else {
+      if (this.loginService.isAdmin()) {
+        this.router.navigate(['/admin']);
+      } else {
+        this.router.navigate(['/usuario']);
+      }
+    }
   }
 }

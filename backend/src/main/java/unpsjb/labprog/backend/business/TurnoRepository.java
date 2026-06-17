@@ -1,6 +1,7 @@
 package unpsjb.labprog.backend.business;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import org.springframework.data.domain.Page;
@@ -45,13 +46,16 @@ public interface TurnoRepository extends CrudRepository<Turno, Integer>, PagingA
            "WHERE t.estado IN :estadosDisponibles " +
            "AND (:especialidadId IS NULL OR t.medico.especialidad.id = :especialidadId) " +
            "AND (:medicoId IS NULL OR t.medico.id = :medicoId) " +
-           "AND (:centroId IS NULL OR t.consultorio.centro.id = :centroId) " + 
+           "AND (:centroId IS NULL OR t.consultorio.centro.id = :centroId) " +
+           "AND (t.fecha > :hoy OR (t.fecha = :hoy AND t.horaInicio > :ahora)) " +
            "ORDER BY t.fecha ASC, t.horaInicio ASC")
     List<Turno> buscarDisponiblesParaPaciente(
         @Param("estadosDisponibles") List<EstadoTurno> estadosDisponibles,
         @Param("especialidadId") Integer especialidadId,
         @Param("medicoId") Integer medicoId,
-        @Param("centroId") Integer centroId
+        @Param("centroId") Integer centroId,
+        @Param("hoy") LocalDate hoy,
+        @Param("ahora") LocalTime ahora
     );
 
     @Query("SELECT t FROM Turno t WHERE t.fecha = :fecha AND t.horaInicio = :horaInicio " +
@@ -65,14 +69,6 @@ public interface TurnoRepository extends CrudRepository<Turno, Integer>, PagingA
         @Param("estados") List<EstadoTurno> estados
     );
 
-    /**
-     * Confirma un turno de forma atómica directamente en la BD.
-     * No requiere SELECT previo: el UPDATE falla (0 filas) si el estado
-     * actual no está en la lista de estados disponibles, lo que ocurre
-     * cuando otro usuario ya tomó el turno en el mismo instante.
-     *
-     * @return cantidad de filas afectadas (1 = éxito, 0 = turno ya no disponible)
-     */
     @Modifying
     @Query("UPDATE Turno t SET t.paciente = :paciente, t.estado = :estadoNuevo " +
            "WHERE t.id = :id AND t.estado IN :estadosDisponibles")
@@ -81,5 +77,62 @@ public interface TurnoRepository extends CrudRepository<Turno, Integer>, PagingA
         @Param("paciente") Paciente paciente,
         @Param("estadoNuevo") EstadoTurno estadoNuevo,
         @Param("estadosDisponibles") List<EstadoTurno> estadosDisponibles
+    );
+
+    @Modifying
+    @Query("UPDATE Turno t SET t.estado = :estadoNuevo, t.paciente = :paciente, t.timestamp = :ts " +
+           "WHERE t.id = :id AND t.estado IN :estadosDisponibles")
+    int reservar(
+        @Param("id") int id,
+        @Param("paciente") Paciente paciente,
+        @Param("estadoNuevo") EstadoTurno estadoNuevo,
+        @Param("estadosDisponibles") List<EstadoTurno> estadosDisponibles,
+        @Param("ts") LocalDateTime ts
+    );
+
+    @Modifying
+    @Query("UPDATE Turno t SET t.estado = unpsjb.labprog.backend.model.EstadoTurno.CANCELADO, t.paciente = null, t.timestamp = null " +
+           "WHERE t.estado = unpsjb.labprog.backend.model.EstadoTurno.RESERVADO AND t.timestamp < :limite")
+    int liberarReservasVencidas(@Param("limite") LocalDateTime limite);
+
+    @Modifying
+    @Query("UPDATE Turno t SET t.estado = unpsjb.labprog.backend.model.EstadoTurno.PROGRAMADO, t.paciente = null, t.timestamp = null " +
+           "WHERE t.id = :id AND t.estado = unpsjb.labprog.backend.model.EstadoTurno.RESERVADO AND t.paciente.id = :pacienteId")
+    int cancelarReserva(@Param("id") int id, @Param("pacienteId") int pacienteId);
+
+
+    @Query("SELECT t FROM Turno t WHERE t.medico.id = :medicoId " +
+           "AND t.fecha BETWEEN :desde AND :hasta " +
+           "AND t.estado IN :estados " +
+           "ORDER BY t.fecha ASC, t.horaInicio ASC")
+    List<Turno> buscarParaReprogramar(
+        @Param("medicoId") int medicoId,
+        @Param("desde") LocalDate desde,
+        @Param("hasta") LocalDate hasta,
+        @Param("estados") List<EstadoTurno> estados
+    );
+
+    @Query("SELECT COUNT(t) > 0 FROM Turno t " +
+           "WHERE t.paciente.id = :pacienteId " +
+           "AND t.medico.id = :medicoId " +
+           "AND t.fecha = :fecha " +
+           "AND t.estado IN :estados")
+    boolean existeTurnoMismoMedicoMisDia(
+        @Param("pacienteId") int pacienteId,
+        @Param("medicoId") int medicoId,
+        @Param("fecha") LocalDate fecha,
+        @Param("estados") List<EstadoTurno> estados
+    );
+
+    @Query("SELECT t FROM Turno t " +
+           "WHERE t.paciente.id = :pacienteId " +
+           "AND t.medico.especialidad.id = :especialidadId " +
+           "AND t.fecha = :fecha " +
+           "AND t.estado IN :estados")
+    List<Turno> buscarTurnosMismaEspecialidadMisDia(
+        @Param("pacienteId") int pacienteId,
+        @Param("especialidadId") int especialidadId,
+        @Param("fecha") LocalDate fecha,
+        @Param("estados") List<EstadoTurno> estados
     );
 }

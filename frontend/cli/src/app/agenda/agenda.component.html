@@ -79,7 +79,7 @@
 
     <div *ngIf="busquedaRealizada">
 
-        <!-- Alerta: no hay turnos y no hay sugerencias -->
+        
         <div *ngIf="!tieneTurnosDisponibles(agendas) && !esSugerencia && !mensajeError"
             class="alert alert-info shadow-sm d-flex align-items-center"
             style="border-radius: 10px;">
@@ -87,7 +87,7 @@
             <div>No hay turnos disponibles para los filtros seleccionados en este rango de fechas.</div>
         </div>
 
-        <!-- Alerta: el backend devolvió sugerencias alternativas -->
+        
         <div *ngIf="esSugerencia && mensajeSugerencia"
             class="alert shadow-sm d-flex flex-column gap-2 p-4 mb-4"
             style="border-radius: 10px; border-left: 5px solid #fd7e14; background-color: #fff8f0;">
@@ -98,7 +98,7 @@
             <p class="mb-0 text-muted">{{ mensajeSugerencia }}</p>
         </div>
 
-        <!-- Lista de turnos (resultados directos o sugerencias del backend) -->
+        
         <div *ngIf="tieneTurnosDisponibles(agendas)">
             <div class="card shadow-sm mb-4" style="border: none; border-radius: 10px; overflow: hidden;"
                 *ngFor="let dia of agendas">

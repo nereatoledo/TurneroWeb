@@ -1,0 +1,78 @@
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white pb-0 border-0">
+                    <h3 class="mb-0 mt-3 text-center" style="color: #8923dc;">Generación Automática de Agendas</h3>
+                </div>
+                <div class="card-body p-4">
+                    <div *ngIf="errorMessage" class="alert alert-danger text-center">
+                        {{ errorMessage }}
+                    </div>
+                    <div *ngIf="successMessage" class="alert alert-success text-center">
+                        {{ successMessage }}
+                    </div>
+
+                    <form (ngSubmit)="onSubmit()" #agendaForm="ngForm">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Nombre de la Agenda *</label>
+                                <input type="text" class="form-control" [(ngModel)]="request.nombre" name="nombre" required placeholder="Ej: Agenda Semanal Dr. Pérez">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Descripción</label>
+                                <input type="text" class="form-control" [(ngModel)]="request.descripcion" name="descripcion" placeholder="Opcional">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Centro de Atención *</label>
+                                <input type="text" class="form-control" list="centrosList" [(ngModel)]="centroSeleccionadoNombre" name="centroSeleccionadoNombre" (change)="onCentroChange()" placeholder="Escriba para buscar..." autocomplete="off" required>
+                                <datalist id="centrosList">
+                                    <option *ngFor="let c of centros" [value]="c.nombre"></option>
+                                </datalist>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Médico *</label>
+                                <input type="text" class="form-control" list="medicosList" [(ngModel)]="medicoSeleccionadoNombre" name="medicoSeleccionadoNombre" (change)="onMedicoChange()" placeholder="Escriba para buscar..." autocomplete="off" required>
+                                <datalist id="medicosList">
+                                    <option *ngFor="let m of medicos" [value]="getMedicoDisplayName(m)"></option>
+                                </datalist>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Fecha Desde *</label>
+                                <input type="date" class="form-control" [(ngModel)]="request.fechaInicio" name="fechaInicio" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Fecha Hasta *</label>
+                                <input type="date" class="form-control" [(ngModel)]="request.fechaFin" name="fechaFin" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Hora Inicio (Jornada) *</label>
+                                <input type="time" class="form-control" [(ngModel)]="request.horaInicio" name="horaInicio" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Hora Fin (Jornada) *</label>
+                                <input type="time" class="form-control" [(ngModel)]="request.horaFin" name="horaFin" required>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-lg text-white" style="background-color: #8923dc; border-color: #8923dc;" [disabled]="!agendaForm.form.valid || !request.idCentro || !request.idMedico">
+                                <i class="fa fa-cogs"></i> Generar y Asignar Consultorios
+                            </button>
+                            <a routerLink="/admin" class="btn btn-light mt-2">Volver al Panel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

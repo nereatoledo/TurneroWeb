@@ -12,6 +12,7 @@ import { LoginService } from './login.service';
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent {
+  roleSelected: 'PACIENTE' | 'ADMIN' = 'PACIENTE';
   username: string = '';
   errorMessage: string = '';
 
@@ -27,16 +28,26 @@ export class LoginComponent {
     if (user) {
       this.loginService.login(user).subscribe({
         next: (res) => {
-          this.router.navigate(['/usuario']);
+          if (res.rol === 'ADMIN') {
+            if (this.roleSelected === 'PACIENTE') {
+                this.errorMessage = 'El usuario ingresado es administrador. Seleccione el perfil correspondiente.';
+                this.loginService.logout();
+                return;
+            }
+            this.router.navigate(['/admin']);
+          } else {
+            if (this.roleSelected === 'ADMIN') {
+                this.errorMessage = 'El usuario ingresado no es administrador.';
+                this.loginService.logout();
+                return;
+            }
+            this.router.navigate(['/usuario']);
+          }
         },
         error: (err) => {
-          this.errorMessage = 'Paciente no encontrado. Por favor, verifique el usuario.';
+          this.errorMessage = 'Usuario no encontrado. Por favor, verifique sus datos.';
         }
       });
     }
-  }
-
-  ingresoLibreAdmin() {
-    this.router.navigate(['/admin']);
   }
 }

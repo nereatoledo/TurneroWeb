@@ -8,10 +8,11 @@ import { catchError, debounceTime, distinctUntilChanged, map, switchMap } from '
 
 import { AgendaService } from './agenda.service';
 import { ModalService } from '../modal/modal.service';
-import { LoginService } from '../login/login.service';
+import { LoginService } from '../home/login.service';
 import { EspecialidadService } from '../especialidades/especialidad.service';
 import { MedicoService } from '../medico/medico.service';
 import { CentroAtencionService } from '../centro/centro-atencion.service';
+import { TurnoService } from '../turno/turno.service';
 import { AgendaDia, EsquemaTurnoAgenda, TurnoSlot } from './agenda';
 import { DataPackage } from '../data-package';
 
@@ -46,6 +47,7 @@ export class AgendaComponent implements OnInit {
         private espService: EspecialidadService,
         private medicoService: MedicoService,
         private centroService: CentroAtencionService,
+        private turnoService: TurnoService,
         private router: Router,
         private route: ActivatedRoute,
         private modalService: ModalService,
@@ -196,7 +198,7 @@ export class AgendaComponent implements OnInit {
         this.esSugerencia = false;
         this.mensajeSugerencia = '';
 
-        // Si el médico está seleccionado, usamos su especialidad aunque no se haya elegido explícitamente
+        
         const idEspecialidad = this.especialidadSeleccionada
             ? this.especialidadSeleccionada.id
             : (this.medicoSeleccionado?.especialidad?.id ?? undefined);
@@ -211,7 +213,7 @@ export class AgendaComponent implements OnInit {
             idCentro
         ).subscribe({
             next: (res: DataPackage) => {
-                // El backend devuelve { esSugerencia, mensaje, agendas }
+                
                 const resultado = res.data as { esSugerencia: boolean; mensaje: string; agendas: AgendaDia[] };
                 this.agendas = resultado.agendas ?? [];
                 this.mensajeSugerencia = resultado.esSugerencia ? resultado.mensaje : '';
@@ -258,29 +260,66 @@ export class AgendaComponent implements OnInit {
                     consultorio: { id: esquema.consultorio.id }
                 };
 
-                this.agendaService.agendarTurno(turnoPayload).subscribe({
-                    next: () => {
-                        this.modalService.info('Éxito', 'Turno Agendado exitosamente')
-                            .then(() => { this.buscarAgenda(); })
-                            .catch(() => { this.buscarAgenda(); });
-                    },
-                    error: (err: any) => {
-                        console.error(err);
-                        
-                        const mensajeModal = err.error?.error || 'No se pudo agendar el turno. Intente nuevamente.';
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                turnoPayload.estado = 'RESERVADO';
 
-                        this.modalService.info('Error', mensajeModal)
-                            .then(() => { this.buscarAgenda(); })
-                            .catch(() => { this.buscarAgenda(); });
-                    }
+                this.agendaService.agendarTurno(turnoPayload).subscribe({
+                    next: (res: any) => {
+                        const savedTurno = res.data;
+                        
+                        this.turnoService.confirmarTurno(savedTurno.id, { id: currentUser.id }).subscribe({
+                            next: (confRes: any) => {
+                                if (confRes.requiereConfirmacion) {
+                                    this.modalService.confirm('Aviso', confRes.advertencia, 'Confirmar de todas formas', [])
+                                        .then(() => {
+                                            this.turnoService.confirmarTurno(savedTurno.id, { id: currentUser.id }, true).subscribe({
+                                                next: () => {
+                                                    this.modalService.info('Éxito', 'Turno Agendado y Confirmado exitosamente').then(() => this.buscarAgenda());
+                                                },
+                                                error: (err: any) => this.mostrarError(err)
+                                            });
+                                        })
+                                        .catch(() => {
+                                            
+                                            this.modalService.info('Aviso', 'El turno quedó reservado por 15 minutos en Mis Turnos.').then(() => this.buscarAgenda());
+                                        });
+                                } else {
+                                    this.modalService.info('Éxito', 'Turno Agendado exitosamente').then(() => this.buscarAgenda());
+                                }
+                            },
+                            error: (err: any) => this.mostrarError(err)
+                        });
+                    },
+                    error: (err: any) => this.mostrarError(err)
                 });
             })
             .catch(() => {
             });
     }
 
+    private mostrarError(err: any): void {
+        console.error(err);
+        const mensajeModal = err.error?.error || 'No se pudo agendar el turno. Intente nuevamente.';
+        this.modalService.info('Error', mensajeModal).then(() => this.buscarAgenda()).catch(() => this.buscarAgenda());
+    }
+
     private calcularHoraFin(horaInicio: string, intervaloMinutos?: number): string {
-        if (!intervaloMinutos) intervaloMinutos = 30; // default
+        if (!intervaloMinutos) intervaloMinutos = 30; 
         const [horas, minutos, segundos] = horaInicio.split(':').map(Number);
         const date = new Date();
         date.setHours(horas, minutos, segundos || 0);

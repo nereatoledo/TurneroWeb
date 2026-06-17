@@ -29,4 +29,8 @@ export class AgendaService {
         if (idCentro)       params = params.set('idCentro', idCentro.toString());
         return this.http.get<DataPackage>(`${this.agendaUrl}/buscar`, { params });
     }
+
+    autoAsignarAgenda(autoAgendaRequest: any): Observable<any> {
+        return this.http.post<any>(`${this.agendaUrl}/auto-asignar`, autoAgendaRequest);
+    }
 }

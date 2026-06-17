@@ -1,7 +1,7 @@
 package unpsjb.labprog.backend.model;
 
 import jakarta.persistence.*;
-import com.fasterxml.jackson.annotation.JsonIgnore; // <-- AGREGAR IMPORT
+import com.fasterxml.jackson.annotation.JsonIgnore; 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

@@ -51,6 +51,11 @@ export class LoginService {
         return this.currentUserSubject.value;
     }
 
+    isAdmin(): boolean {
+        const user = this.getCurrentUser();
+        return user && user.rol === 'ADMIN';
+    }
+
     getObrasSociales(): Observable<any[]> {
         return this.http.get<any[]>(`${this.authUrl}/obras-sociales`);
     }

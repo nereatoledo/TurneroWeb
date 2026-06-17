@@ -134,6 +134,10 @@
                             class="btn-purple-main justify-content-center w-100 mb-2">
                             Ver Agenda
                         </a>
+                        <a *ngIf="isAdmin" routerLink="/admin/agendas-auto"
+                            class="btn-outline-purple justify-content-center w-100">
+                            Generar Auto Agenda
+                        </a>
                     </div>
                 </div>
             </div>

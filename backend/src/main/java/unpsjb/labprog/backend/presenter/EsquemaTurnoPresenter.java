@@ -10,8 +10,11 @@ import org.springframework.web.bind.annotation.*;
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.EsquemaTurnoService;
 import unpsjb.labprog.backend.presenter.dto.AgendaRequestDTO;
+import unpsjb.labprog.backend.presenter.dto.AutoAgendaRequestDTO;
+import unpsjb.labprog.backend.model.EsquemaTurno;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @CrossOrigin
@@ -21,7 +24,7 @@ public class EsquemaTurnoPresenter {
     @Autowired
     private EsquemaTurnoService esquemaTurnoService;
 
-    @PostMapping
+    @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<Object> crearAgenda(@RequestBody AgendaRequestDTO dto) {
         try {
             esquemaTurnoService.procesarYGuardarAgenda(dto);
@@ -36,7 +39,7 @@ public class EsquemaTurnoPresenter {
         }
     }
 
-    @GetMapping("/buscar")
+    @RequestMapping(value = "/buscar", method = RequestMethod.GET)
     public ResponseEntity<Object> buscarAgenda(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin,
@@ -53,11 +56,24 @@ public class EsquemaTurnoPresenter {
         }
     }
 
-    @DeleteMapping("/medico/{idMedico}/consultorio/{idConsultorio}")
+    @RequestMapping(value = "/medico/{idMedico}/consultorio/{idConsultorio}", method = RequestMethod.DELETE)
     public ResponseEntity<Object> cancelarDisponibilidad(
             @PathVariable int idMedico, 
             @PathVariable int idConsultorio) {
         
         return Response.response(HttpStatus.OK, "Disponibilidad cancelada y pacientes notificados.", null);
+    }
+
+    @RequestMapping(value = "/auto-asignar", method = RequestMethod.POST)
+    public ResponseEntity<Object> autoAsignarAgenda(@RequestBody AutoAgendaRequestDTO dto) {
+        try {
+            List<EsquemaTurno> esquemas = esquemaTurnoService.autoAsignarAgenda(dto);
+            return Response.response(HttpStatus.OK, "Agenda auto-asignada exitosamente.", esquemas);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return Response.response(HttpStatus.CONFLICT, e.getMessage(), null);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.response(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno: " + e.getMessage(), null);
+        }
     }
 }

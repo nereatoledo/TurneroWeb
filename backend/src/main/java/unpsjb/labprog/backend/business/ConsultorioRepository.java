@@ -7,6 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import unpsjb.labprog.backend.model.Consultorio;
@@ -32,4 +33,7 @@ public interface ConsultorioRepository
             "FROM CentroAtencion ca JOIN ca.consultorios c " +
             "WHERE ca.id = ?1")
     Page<Consultorio> findByCentroId(Integer idCentro, PageRequest pageable);
+
+    @Query("SELECT c FROM Consultorio c WHERE c.centro.id = :centroId ORDER BY c.numero ASC")
+    List<Consultorio> findByCentroIdOrdenados(@Param("centroId") int centroId);
 }

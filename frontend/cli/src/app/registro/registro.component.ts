@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
-import { LoginService } from '../login/login.service';
+import { LoginService } from '../home/login.service';
 
 @Component({
     selector: 'app-registro',
@@ -25,6 +25,7 @@ export class RegistroComponent implements OnInit {
     successMessage: string = '';
     isEditMode: boolean = false;
     pacienteId: number | null = null;
+    obraSocialSeleccionada: string = '';
 
     constructor(
         private loginService: LoginService,
@@ -56,12 +57,26 @@ export class RegistroComponent implements OnInit {
                 this.paciente.dni = data.dni;
                 this.paciente.fechaNacimiento = data.fechaNacimiento;
                 this.paciente.obraSocialId = data.obraSocial ? data.obraSocial.id : null;
+                this.obraSocialSeleccionada = data.obraSocial ? data.obraSocial.nombre : 'Particular / Ninguna';
                 this.username = data.username;
             },
             error: (err) => {
                 this.errorMessage = 'No se pudo cargar el perfil del paciente.';
             }
         });
+    }
+
+    onObraSocialChange() {
+        if (!this.obraSocialSeleccionada || this.obraSocialSeleccionada === 'Particular / Ninguna') {
+            this.paciente.obraSocialId = null;
+            return;
+        }
+        const found = this.obrasSociales.find(os => os.nombre === this.obraSocialSeleccionada);
+        if (found) {
+            this.paciente.obraSocialId = found.id;
+        } else {
+            this.paciente.obraSocialId = null;
+        }
     }
 
     onSubmit() {

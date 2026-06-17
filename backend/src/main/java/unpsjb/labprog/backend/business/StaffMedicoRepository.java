@@ -27,4 +27,7 @@ public interface StaffMedicoRepository
 
     @Query("SELECT s FROM StaffMedico s JOIN FETCH s.centro JOIN FETCH s.medico m LEFT JOIN FETCH m.especialidad")
     List<StaffMedico> findAllStaffConDetalles();
+
+    @Query("SELECT s FROM StaffMedico s WHERE s.centro.id = ?1 AND s.medico.id = ?2")
+    StaffMedico findByCentroIdYMedicoId(int centroId, int medicoId);
 }

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { LoginService } from '../login/login.service';
+import { LoginService } from '../home/login.service';
 
 @Component({
     selector: 'app-panel-home',
@@ -31,6 +31,6 @@ export class PanelHomeComponent implements OnInit {
 
     logout(): void {
         this.loginService.logout();
-        this.router.navigate(['/']);
+        this.router.navigate(['/login']);
     }
 }

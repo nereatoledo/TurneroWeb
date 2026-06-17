@@ -1,7 +1,7 @@
 <nav class="navbar navbar-expand-lg px-4 py-3 shadow-sm d-flex justify-content-between align-items-center bg-white">
 
     <div class="d-flex align-items-center gap-3">
-        <a class="navbar-brand font-weight-bold m-0" style="color: #8923dc;" routerLink="/">Turnero Web</a>
+        <a class="navbar-brand font-weight-bold m-0" style="cursor: pointer; color: #8923dc;" (click)="navigateToHome()">Turnero Web</a>
     </div>
 
     <div class="position-relative ms-auto">
@@ -25,16 +25,19 @@
                     Opciones
                 </div>
 
-                <a class="dropdown-item role-item d-flex align-items-center gap-3 px-3 py-2 border-0 text-decoration-none text-dark" style="cursor: pointer;">
-                    <i class="fa fa-cog" style="width: 20px; text-align: center; font-size: 1.1rem;"></i>
-                    <span class="font-weight-bold flex-grow-1">Configuración</span>
-                </a>
+                <ng-container *ngIf="!isAdmin">
+                    <a [routerLink]="['/usuario/mis-turnos']" (click)="dropdownOpen = false"
+                        class="dropdown-item role-item d-flex align-items-center gap-3 px-3 py-2 border-0 text-decoration-none text-dark" style="cursor: pointer;">
+                        <i class="fa fa-calendar" style="width: 20px; text-align: center; font-size: 1.1rem;"></i>
+                        <span class="font-weight-bold flex-grow-1">Mis Turnos</span>
+                    </a>
 
-                <a [routerLink]="['/registro', currentUser.id]" (click)="dropdownOpen = false"
-                    class="dropdown-item role-item d-flex align-items-center gap-3 px-3 py-2 border-0 text-decoration-none text-dark" style="cursor: pointer;">
-                    <i class="fa fa-pencil" style="width: 20px; text-align: center; font-size: 1.1rem;"></i>
-                    <span class="font-weight-bold flex-grow-1">Editar perfil</span>
-                </a>
+                    <a [routerLink]="['/registro', currentUser.id]" (click)="dropdownOpen = false"
+                        class="dropdown-item role-item d-flex align-items-center gap-3 px-3 py-2 border-0 text-decoration-none text-dark" style="cursor: pointer;">
+                        <i class="fa fa-pencil" style="width: 20px; text-align: center; font-size: 1.1rem;"></i>
+                        <span class="font-weight-bold flex-grow-1">Editar perfil</span>
+                    </a>
+                </ng-container>
                 
                 <div class="dropdown-divider"></div>
                 

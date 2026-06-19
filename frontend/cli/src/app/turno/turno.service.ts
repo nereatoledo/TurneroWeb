@@ -46,6 +46,14 @@ export class TurnoService {
         return this.http.get<DataPackage>(`${this.turnosUrl}/${turnoId}/reprogramar`);
     }
 
+    reprogramarTurno(turnoId: number, payload: any): Observable<any> {
+        return this.http.patch<any>(`${this.turnosUrl}/${turnoId}/reprogramar`, payload);
+    }
+
+    getHistorial(turnoId: number): Observable<DataPackage> {
+        return this.http.get<DataPackage>(`${this.turnosUrl}/id/${turnoId}/historial`);
+    }
+
     delete(turnoId: number): Observable<any> {
         return this.http.delete<any>(`${this.turnosUrl}/${turnoId}`);
     }

@@ -13,7 +13,7 @@ import { EspecialidadService } from '../especialidades/especialidad.service';
 import { MedicoService } from '../medico/medico.service';
 import { CentroAtencionService } from '../centro/centro-atencion.service';
 import { TurnoService } from '../turno/turno.service';
-import { AgendaDia, EsquemaTurnoAgenda, TurnoSlot } from './agenda';
+import { AgendaDia, EsquemaTurnoAgenda, SlotDTO } from './agenda';
 import { DataPackage } from '../data-package';
 
 @Component({
@@ -217,14 +217,6 @@ export class AgendaComponent implements OnInit {
                 const resultado = res.data as { esSugerencia: boolean; mensaje: string; agendas: AgendaDia[] };
                 this.agendas = resultado.agendas ?? [];
 
-                this.agendas.forEach(dia => {
-                    if (dia.agendaDetalles) {
-                        dia.agendaDetalles.forEach(esquema => {
-                            esquema.turnos = this.generarSlots(esquema.bloquesLibres, esquema.intervalo);
-                        });
-                    }
-                });
-
                 this.mensajeSugerencia = resultado.esSugerencia ? resultado.mensaje : '';
                 this.esSugerencia = resultado.esSugerencia ?? false;
             },
@@ -236,7 +228,7 @@ export class AgendaComponent implements OnInit {
     }
 
 
-    agendarTurno(dia: AgendaDia, esquema: EsquemaTurnoAgenda, slot: TurnoSlot): void {
+    agendarTurno(dia: AgendaDia, esquema: EsquemaTurnoAgenda, slot: SlotDTO): void {
         const currentUser = this.loginService.getCurrentUser();
         if (!currentUser || !currentUser.id) {
             this.modalService.info('Error', 'Debe iniciar sesión para agendar un turno.');
@@ -308,23 +300,6 @@ export class AgendaComponent implements OnInit {
         this.modalService.info('Error', mensajeModal).then(() => this.buscarAgenda()).catch(() => this.buscarAgenda());
     }
 
-    private generarSlots(bloques: any[], intervalo: number): TurnoSlot[] {
-        const slots: TurnoSlot[] = [];
-        if (!bloques || bloques.length === 0) return slots;
-
-        bloques.forEach(bloque => {
-            let actual = bloque.horaInicio;
-            while (actual < bloque.horaFin) {
-                const finSlot = this.calcularHoraFin(actual, intervalo);
-                if (finSlot <= bloque.horaFin) {
-                    slots.push({ horario: actual, estaDisponible: true });
-                }
-                actual = finSlot;
-            }
-        });
-        return slots;
-    }
-
     private calcularHoraFin(horaInicio: string, intervaloMinutos?: number): string {
         if (!intervaloMinutos) intervaloMinutos = 30;
         const [horas, minutos, segundos] = horaInicio.split(':').map(Number);
@@ -343,8 +318,8 @@ export class AgendaComponent implements OnInit {
         const mapaSlots = new Map<string, { horario: string, estaDisponible: boolean, esquemasDisponibles: any[] }>();
 
         for (const esquema of dia.agendaDetalles) {
-            if (esquema.turnos) {
-                for (const slot of esquema.turnos) {
+            if (esquema.slots) {
+                for (const slot of esquema.slots) {
                     const key = slot.horario;
                     if (!mapaSlots.has(key)) {
                         mapaSlots.set(key, {
@@ -354,7 +329,7 @@ export class AgendaComponent implements OnInit {
                         });
                     }
                     const entry = mapaSlots.get(key)!;
-                    if (slot.estaDisponible) {
+                    if (slot.disponible) {
                         entry.estaDisponible = true;
                         entry.esquemasDisponibles.push(esquema);
                     }
@@ -368,7 +343,7 @@ export class AgendaComponent implements OnInit {
     agendarTurnoConsolidado(dia: AgendaDia, slotConsolidado: any): void {
         if (slotConsolidado.esquemasDisponibles.length > 0) {
             const esquemaAsignado = slotConsolidado.esquemasDisponibles[0];
-            const slotOriginal = esquemaAsignado.turnos?.find((t: any) => t.horario === slotConsolidado.horario);
+            const slotOriginal = esquemaAsignado.slots?.find((t: any) => t.horario === slotConsolidado.horario);
             this.agendarTurno(dia, esquemaAsignado, slotOriginal);
         }
     }
@@ -390,7 +365,7 @@ export class AgendaComponent implements OnInit {
             !dia.esFeriado &&
             dia.agendaDetalles &&
             dia.agendaDetalles.some(esquema =>
-                esquema.turnos && esquema.turnos.some((t: any) => t.estaDisponible)
+                esquema.slots && esquema.slots.some((t: any) => t.disponible)
             )
         );
     }

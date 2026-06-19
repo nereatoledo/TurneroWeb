@@ -3,11 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { LoginService } from '../home/login.service';
+import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { Observable } from 'rxjs';
+import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 
 @Component({
     selector: 'app-registro',
     standalone: true,
-    imports: [CommonModule, FormsModule, RouterModule],
+    imports: [CommonModule, FormsModule, RouterModule, NgbTypeaheadModule],
     templateUrl: './registro.component.html',
     styleUrls: ['./registro.component.css']
 })
@@ -25,7 +28,7 @@ export class RegistroComponent implements OnInit {
     successMessage: string = '';
     isEditMode: boolean = false;
     pacienteId: number | null = null;
-    obraSocialSeleccionada: string = '';
+    obraSocialSeleccionada: any = '';
 
     constructor(
         private loginService: LoginService,
@@ -66,12 +69,27 @@ export class RegistroComponent implements OnInit {
         });
     }
 
+    searchObraSocial = (text$: Observable<string>) =>
+        text$.pipe(
+            debounceTime(200),
+            distinctUntilChanged(),
+            map(term => term.length < 1 ? []
+                : this.obrasSociales.filter(v => v.nombre.toLowerCase().indexOf(term.toLowerCase()) > -1).slice(0, 10))
+        );
+
+    resultFormatOS = (value: any) => value.nombre;
+    inputFormatOS = (value: any) => value ? (value.nombre || value) : '';
+
     onObraSocialChange() {
-        if (!this.obraSocialSeleccionada || this.obraSocialSeleccionada === 'Particular / Ninguna') {
+        let nombre = typeof this.obraSocialSeleccionada === 'string' 
+            ? this.obraSocialSeleccionada 
+            : this.obraSocialSeleccionada?.nombre;
+
+        if (!nombre || nombre === 'Particular / Ninguna') {
             this.paciente.obraSocialId = null;
             return;
         }
-        const found = this.obrasSociales.find(os => os.nombre === this.obraSocialSeleccionada);
+        const found = this.obrasSociales.find(os => os.nombre === nombre);
         if (found) {
             this.paciente.obraSocialId = found.id;
         } else {

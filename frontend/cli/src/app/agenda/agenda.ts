@@ -1,9 +1,9 @@
 import { Medico } from '../medico/medico';
 import { Consultorio } from '../consultorio/consultorio';
 
-export interface TurnoSlot {
+export interface SlotDTO {
     horario: string;
-    estaDisponible: boolean;
+    disponible: boolean;
 }
 
 export interface CentroAtencionInfo {
@@ -15,11 +15,6 @@ export interface CentroAtencionInfo {
     coordenadas: any;
 }
 
-export interface BloqueLibreDTO {
-    horaInicio: string;
-    horaFin: string;
-}
-
 export interface EsquemaTurnoAgenda {
     horaInicio: string;
     horaFin: string;
@@ -27,8 +22,7 @@ export interface EsquemaTurnoAgenda {
     centroAtencion: CentroAtencionInfo;
     consultorio: Consultorio;
     intervalo: number;
-    bloquesLibres: BloqueLibreDTO[];
-    turnos?: TurnoSlot[];
+    slots: SlotDTO[];
 }
 
 export interface AgendaDia {

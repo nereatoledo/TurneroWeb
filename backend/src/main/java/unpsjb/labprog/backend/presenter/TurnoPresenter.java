@@ -29,6 +29,9 @@ public class TurnoPresenter {
     @Autowired
     unpsjb.labprog.backend.business.AgendaService agendaService;
 
+    @Autowired
+    unpsjb.labprog.backend.business.ModificacionTurnoService modificacionTurnoService;
+
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<Object> findAll() {
         return Response.ok(service.findAll(), "Turnos recuperados correctamente");
@@ -123,6 +126,37 @@ public class TurnoPresenter {
         }
     }
 
+    @RequestMapping(value = "/id/{id}/historial", method = RequestMethod.GET)
+    public ResponseEntity<Object> obtenerHistorial(@PathVariable("id") int id) {
+        try {
+            return Response.ok(modificacionTurnoService.obtenerHistorialPorTurno(id), "Historial recuperado con éxito");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Error al recuperar historial"));
+        }
+    }
+
+    @RequestMapping(value = "/{id}/reprogramar", method = RequestMethod.PATCH)
+    public ResponseEntity<Object> confirmarReprogramacion(
+            @PathVariable("id") int id,
+            @RequestBody TurnoReservaDTO dto) {
+        try {
+            Turno turnoActualizado = service.reprogramarTurno(
+                    id,
+                    dto.getFecha(),
+                    dto.getHoraInicio(),
+                    dto.getHoraFin(),
+                    dto.getConsultorioId());
+            return Response.ok(turnoActualizado, "Turno reprogramado exitosamente");
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "Ese horario ya no se encuentra disponible. Por favor, actualizá la agenda."));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Error al reprogramar el turno."));
+        }
+    }
+
     @RequestMapping(value = "/reservar", method = RequestMethod.POST)
     public ResponseEntity<Object> reservar(
             @RequestBody TurnoReservaDTO dto) {
@@ -135,10 +169,14 @@ public class TurnoPresenter {
                     dto.getMedicoId(),
                     dto.getConsultorioId());
             return Response.ok(turno, "Turno reservado. Tenés 15 minutos para confirmar.");
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "Ese horario ya no se encuentra disponible. Por favor, actualizá la agenda."));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Ocurrió un error inesperado al procesar la reserva."));
         }
     }
 
@@ -169,6 +207,12 @@ public class TurnoPresenter {
             return Response.ok(resultado.getTurno(), "Turno confirmado correctamente");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("error", "Error de integridad de datos al confirmar el turno."));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Ocurrió un error inesperado al confirmar el turno."));
         }
     }
 }

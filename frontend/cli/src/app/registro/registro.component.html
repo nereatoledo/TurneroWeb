@@ -47,14 +47,11 @@
 
                             <div class="mb-3">
                                 <label for="obraSocial" class="form-label fw-bold">Obra Social</label>
-                                <input type="text" list="obrasSocialesList" class="form-control" id="obraSocial"
+                                <input type="text" class="form-control" id="obraSocial"
                                        [(ngModel)]="obraSocialSeleccionada" name="obraSocialSeleccionada"
-                                       (change)="onObraSocialChange()"
+                                       (ngModelChange)="onObraSocialChange()"
+                                       [ngbTypeahead]="searchObraSocial" [resultFormatter]="resultFormatOS" [inputFormatter]="inputFormatOS"
                                        placeholder="Buscar Obra Social..." autocomplete="off">
-                                <datalist id="obrasSocialesList">
-                                    <option value="Particular / Ninguna"></option>
-                                    <option *ngFor="let os of obrasSociales" [value]="os.nombre"></option>
-                                </datalist>
                             </div>
 
                             <hr class="my-4">

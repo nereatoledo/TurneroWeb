@@ -15,6 +15,7 @@ import unpsjb.labprog.backend.presenter.dto.AgendaBusquedaResultadoDTO;
 import unpsjb.labprog.backend.presenter.dto.AgendaResponseDTO;
 import unpsjb.labprog.backend.presenter.dto.AgendaResponseDTO.*;
 import unpsjb.labprog.backend.presenter.dto.AutoAgendaRequestDTO;
+import unpsjb.labprog.backend.presenter.dto.SlotDTO;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -50,7 +51,7 @@ public class AgendaService {
         List<AgendaResponseDTO> agendas = obtenerAgendaFrontend(
                 fechaInicio, fechaFin, idEspecialidad, idMedico, idCentro, null, null);
 
-        if (tieneBloquesLibres(agendas)) {
+        if (tieneSlotsDisponibles(agendas)) {
             return new AgendaBusquedaResultadoDTO(false, null, agendas);
         }
 
@@ -62,7 +63,7 @@ public class AgendaService {
 
                 List<AgendaResponseDTO> fallbackA = obtenerAgendaFrontend(
                         fechaInicio, fechaFin, idEspecialidad, idMedico, null, null, idCentro);
-                if (tieneBloquesLibres(fallbackA)) {
+                if (tieneSlotsDisponibles(fallbackA)) {
                     return new AgendaBusquedaResultadoDTO(
                             true,
                             "El médico no tiene disponibilidad en el centro seleccionado. " +
@@ -76,7 +77,7 @@ public class AgendaService {
 
                 List<AgendaResponseDTO> fallbackB = obtenerAgendaFrontend(
                         fechaInicio, fechaFin, idEspecialidad, null, null, idMedico, null);
-                if (tieneBloquesLibres(fallbackB)) {
+                if (tieneSlotsDisponibles(fallbackB)) {
                     return new AgendaBusquedaResultadoDTO(
                             true,
                             "No hay disponibilidad para ese médico. " +
@@ -92,7 +93,7 @@ public class AgendaService {
 
             List<AgendaResponseDTO> fallbackC = obtenerAgendaFrontend(
                     fechaInicio, fechaFin, idEspecialidad, null, null, null, idCentro);
-            if (tieneBloquesLibres(fallbackC)) {
+            if (tieneSlotsDisponibles(fallbackC)) {
                 return new AgendaBusquedaResultadoDTO(
                         true,
                         "No hay disponibilidad en el centro seleccionado para esa especialidad. " +
@@ -116,13 +117,13 @@ public class AgendaService {
         return new ArrayList<>(dias);
     }
 
-    private boolean tieneBloquesLibres(List<AgendaResponseDTO> agendas) {
+    private boolean tieneSlotsDisponibles(List<AgendaResponseDTO> agendas) {
         if (agendas == null || agendas.isEmpty())
             return false;
         return agendas.stream()
                 .filter(dia -> !dia.isEsFeriado())
                 .flatMap(dia -> dia.getAgendaDetalles().stream())
-                .anyMatch(esquema -> !esquema.getBloquesLibres().isEmpty());
+                .anyMatch(esquema -> esquema.getSlots().stream().anyMatch(SlotDTO::isDisponible));
     }
 
     private List<AgendaResponseDTO> obtenerAgendaFrontend(
@@ -172,10 +173,10 @@ public class AgendaService {
 
                     List<Turno> turnosOcupados = turnoRepository.find(fechaActual, esquema.getConsultorio().getId(),
                             Arrays.asList(EstadoTurno.PROGRAMADO, EstadoTurno.CONFIRMADO, EstadoTurno.REAGENDADO));
-                    List<BloqueLibreDTO> bloques = calcularBloquesLibres(fechaActual, esquema.getHoraInicio(),
-                            esquema.getHoraFin(), turnosOcupados);
+                    List<SlotDTO> slots = generarGrillaSlots(fechaActual, esquema.getHoraInicio(),
+                            esquema.getHoraFin(), turnosOcupados, intervaloMinutos);
 
-                    if (!bloques.isEmpty()) {
+                    if (!slots.isEmpty()) {
                         EsquemaTurnoAgenda tarjeta = new EsquemaTurnoAgenda(
                                 esquema.getHoraInicio(),
                                 esquema.getHoraFin(),
@@ -183,7 +184,7 @@ public class AgendaService {
                                 centroInfo,
                                 esquema.getConsultorio(),
                                 intervaloMinutos,
-                                bloques);
+                                slots);
 
                         detallesDelDia.add(tarjeta);
                     }
@@ -199,44 +200,45 @@ public class AgendaService {
         return agendasDiarias;
     }
 
-    private List<BloqueLibreDTO> calcularBloquesLibres(LocalDate fechaActual, LocalTime inicio, LocalTime fin,
-            List<Turno> turnosOcupados) {
-        List<BloqueLibreDTO> bloquesLibres = new ArrayList<>();
+    private List<SlotDTO> generarGrillaSlots(LocalDate fechaActual, LocalTime inicio, LocalTime fin,
+            List<Turno> turnosOcupados, int intervaloMinutos) {
+        List<SlotDTO> slots = new ArrayList<>();
         LocalDate hoy = LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires"));
         LocalTime ahora = LocalTime.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires"));
 
         LocalTime actual = inicio;
 
-        if (fechaActual.isBefore(hoy)) {
-            return bloquesLibres;
-        } else if (fechaActual.isEqual(hoy) && actual.isBefore(ahora)) {
-            actual = ahora;
-        }
-
-        if (actual.isAfter(fin) || actual.equals(fin)) {
-            return bloquesLibres;
-        }
-
-        turnosOcupados.sort((t1, t2) -> t1.getHoraInicio().compareTo(t2.getHoraInicio()));
-
-        for (Turno t : turnosOcupados) {
-            if (t.getHoraInicio().isAfter(actual) || t.getHoraInicio().equals(actual)) {
-                if (t.getHoraInicio().isAfter(actual)) {
-                    bloquesLibres.add(new BloqueLibreDTO(actual, t.getHoraInicio()));
-                }
-                if (t.getHoraFin() != null && t.getHoraFin().isAfter(actual)) {
-                    actual = t.getHoraFin();
-                }
-            } else if (t.getHoraFin() != null && t.getHoraFin().isAfter(actual)) {
-                actual = t.getHoraFin();
+        while (actual.isBefore(fin)) {
+            LocalTime finSlot = actual.plusMinutes(intervaloMinutos);
+            if (finSlot.isAfter(fin)) {
+                finSlot = fin;
             }
+
+            boolean disponible = true;
+
+            // Past validation
+            if (fechaActual.isBefore(hoy) || (fechaActual.isEqual(hoy) && actual.isBefore(ahora))) {
+                disponible = false;
+            }
+
+            // Occupied validation
+            if (disponible) {
+                for (Turno t : turnosOcupados) {
+                    LocalTime tInicio = t.getHoraInicio();
+                    LocalTime tFin = t.getHoraFin() != null ? t.getHoraFin() : tInicio.plusMinutes(intervaloMinutos);
+                    
+                    if (tInicio.isBefore(finSlot) && tFin.isAfter(actual)) {
+                        disponible = false;
+                        break;
+                    }
+                }
+            }
+
+            slots.add(new SlotDTO(actual, disponible));
+            actual = finSlot;
         }
 
-        if (actual.isBefore(fin)) {
-            bloquesLibres.add(new BloqueLibreDTO(actual, fin));
-        }
-
-        return bloquesLibres;
+        return slots;
     }
 
     @Transactional

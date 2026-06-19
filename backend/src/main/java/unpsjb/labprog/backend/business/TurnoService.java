@@ -29,8 +29,6 @@ public class TurnoService {
     private static final int MINUTOS_RESERVA = 15;
     private static final int HORAS_LIMITE_CANCELACION = 24;
 
-    private static final List<EstadoTurno> ESTADOS_ACTIVOS = Arrays.asList(
-            EstadoTurno.PROGRAMADO, EstadoTurno.CONFIRMADO);
 
     @Autowired
     TurnoRepository repository;
@@ -83,21 +81,9 @@ public class TurnoService {
         EstadoTurno estadoAnterior = t.getEstado();
 
         if (LocalDateTime.now().isAfter(limite24hs)) {
-            t.setEstado(EstadoTurno.CANCELADO_TARDIO);
-            repository.save(t);
-
-            ModificacionTurno mod = new ModificacionTurno(
-                    0, LocalDateTime.now(), estadoAnterior, EstadoTurno.CANCELADO_TARDIO,
-                    "Cancelación tardía ejecutada por el paciente", t);
-            modificacionTurnoRepository.save(mod);
+            registrarCambioEstado(t, estadoAnterior, EstadoTurno.CANCELADO_TARDIO, "Cancelación tardía ejecutada por el paciente");
         } else {
-            t.setEstado(EstadoTurno.CANCELADO);
-            repository.save(t);
-
-            ModificacionTurno mod = new ModificacionTurno(
-                    0, LocalDateTime.now(), estadoAnterior, EstadoTurno.CANCELADO,
-                    "Cancelación normal ejecutada por el paciente", t);
-            modificacionTurnoRepository.save(mod);
+            registrarCambioEstado(t, estadoAnterior, EstadoTurno.CANCELADO, "Cancelación normal ejecutada por el paciente");
         }
     }
 
@@ -137,13 +123,7 @@ public class TurnoService {
         for (Turno turno : reservasVencidas) {
             EstadoTurno estadoAnterior = turno.getEstado();
 
-            turno.setEstado(EstadoTurno.CANCELADO);
-            repository.save(turno);
-
-            ModificacionTurno mod = new ModificacionTurno(
-                    0, LocalDateTime.now(), estadoAnterior, EstadoTurno.CANCELADO,
-                    "Reserva auto-cancelada por el sistema (Expiró tiempo de 15 min)", turno);
-            modificacionTurnoRepository.save(mod);
+            registrarCambioEstado(turno, estadoAnterior, EstadoTurno.CANCELADO, "Reserva auto-cancelada por el sistema (Expiró tiempo de 15 min)");
         }
 
         if (!reservasVencidas.isEmpty()) {
@@ -163,13 +143,7 @@ public class TurnoService {
             if (LocalDateTime.now().isAfter(vencimiento)) {
                 EstadoTurno estadoAnterior = turno.getEstado();
 
-                turno.setEstado(EstadoTurno.FINALIZADO);
-                repository.save(turno);
-
-                ModificacionTurno mod = new ModificacionTurno(
-                        0, LocalDateTime.now(), estadoAnterior, EstadoTurno.FINALIZADO,
-                        "Auto-finalizado por el sistema tras cumplirse el horario", turno);
-                modificacionTurnoRepository.save(mod);
+                registrarCambioEstado(turno, estadoAnterior, EstadoTurno.FINALIZADO, "Auto-finalizado por el sistema tras cumplirse el horario");
             }
         }
     }
@@ -182,13 +156,7 @@ public class TurnoService {
         turnoValidator.validarCancelacionReserva(turno, pacienteId);
 
         EstadoTurno estadoAnterior = turno.getEstado();
-        turno.setEstado(EstadoTurno.CANCELADO);
-        repository.save(turno);
-
-        ModificacionTurno mod = new ModificacionTurno(
-                0, LocalDateTime.now(), estadoAnterior, EstadoTurno.CANCELADO,
-                "Reserva cancelada por el usuario antes de confirmar", turno);
-        modificacionTurnoRepository.save(mod);
+        registrarCambioEstado(turno, estadoAnterior, EstadoTurno.CANCELADO, "Reserva cancelada por el usuario antes de confirmar");
     }
 
     @Transactional
@@ -212,15 +180,39 @@ public class TurnoService {
 
         EstadoTurno estadoAnterior = turno.getEstado();
 
-        turno.setEstado(EstadoTurno.CONFIRMADO);
-        turno.setPaciente(pacienteRepository.findById(aPaciente.getId()).orElseThrow());
+        turno.setPaciente(pacienteRepository.findById(aPaciente.getId()).orElseThrow(() -> new IllegalArgumentException("El paciente proporcionado es inválido o no existe.")));
+        registrarCambioEstado(turno, estadoAnterior, EstadoTurno.CONFIRMADO, "Turno confirmado exitosamente por el paciente");
+
+        return TurnoConfirmacionResultado.ok(turno);
+    }
+
+    private void registrarCambioEstado(Turno turno, EstadoTurno estadoAnterior, EstadoTurno nuevoEstado, String motivo) {
+        turno.setEstado(nuevoEstado);
         repository.save(turno);
 
         ModificacionTurno mod = new ModificacionTurno(
-                0, LocalDateTime.now(), estadoAnterior, EstadoTurno.CONFIRMADO,
-                "Turno confirmado exitosamente por el paciente", turno);
+                0, LocalDateTime.now(), estadoAnterior, nuevoEstado, motivo, turno);
         modificacionTurnoRepository.save(mod);
+    }
 
-        return TurnoConfirmacionResultado.ok(turno);
+    @Transactional
+    public Turno reprogramarTurno(int turnoId, LocalDate nuevaFecha, LocalTime nuevaHoraInicio, LocalTime nuevaHoraFin, int consultorioId) {
+        Turno turno = repository.findById(turnoId)
+                .orElseThrow(() -> new IllegalArgumentException("Turno no encontrado."));
+
+        Integer pacienteId = turno.getPaciente() != null ? turno.getPaciente().getId() : null;
+        turnoValidator.validarReserva(nuevaFecha, nuevaHoraInicio, nuevaHoraFin, pacienteId, turno.getMedico().getId(), consultorioId);
+
+        EstadoTurno estadoAnterior = turno.getEstado();
+
+        turno.setFecha(nuevaFecha);
+        turno.setHoraInicio(nuevaHoraInicio);
+        turno.setHoraFin(nuevaHoraFin);
+        turno.setConsultorio(consultorioRepository.findById(consultorioId)
+                .orElseThrow(() -> new IllegalArgumentException("Consultorio no encontrado")));
+
+        registrarCambioEstado(turno, estadoAnterior, EstadoTurno.REAGENDADO, "Reprogramado por el paciente");
+
+        return turno;
     }
 }

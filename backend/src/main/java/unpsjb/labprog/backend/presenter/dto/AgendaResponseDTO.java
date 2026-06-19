@@ -36,7 +36,7 @@ public class AgendaResponseDTO {
         private CentroAtencionInfo centroAtencion;
         private Consultorio consultorio;
         private Integer intervalo;
-        private List<BloqueLibreDTO> bloquesLibres;
+        private List<SlotDTO> slots;
     }
 
     @Getter
@@ -50,14 +50,5 @@ public class AgendaResponseDTO {
         private String provincia;
         private String telefono;
         private Point coordenadas;
-    }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class BloqueLibreDTO {
-        private LocalTime horaInicio;
-        private LocalTime horaFin;
     }
 }

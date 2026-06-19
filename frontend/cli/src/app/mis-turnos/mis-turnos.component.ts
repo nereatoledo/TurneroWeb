@@ -32,6 +32,9 @@ export class MisTurnosComponent implements OnInit {
   turnoAReprogramar: any = null;
   turnoSeleccionadoParaReprogramar: any = null;
 
+  historialActivo: boolean = false;
+  historialTurno: any[] = [];
+
   constructor(
     private turnoService: TurnoService,
     private loginService: LoginService,
@@ -135,6 +138,22 @@ export class MisTurnosComponent implements OnInit {
       .catch(() => {});
   }
 
+  verHistorial(turno: any) {
+    this.errorMessage = '';
+    this.turnoService.getHistorial(turno.id).subscribe({
+      next: (res: any) => {
+        this.historialTurno = res.data || res;
+        this.historialActivo = true;
+      },
+      error: () => this.errorMessage = 'Error al cargar el historial.'
+    });
+  }
+
+  cerrarHistorial() {
+    this.historialActivo = false;
+    this.historialTurno = [];
+  }
+
   iniciarReprogramacion(turno: any) {
     this.errorMessage = '';
     this.turnoAReprogramar = turno;
@@ -146,17 +165,20 @@ export class MisTurnosComponent implements OnInit {
             resultado.agendas.forEach((dia: any) => {
                 if (dia.agendaDetalles) {
                     dia.agendaDetalles.forEach((esquema: any) => {
-                        const slots = this.generarSlots(esquema.bloquesLibres, esquema.intervalo);
-                        slots.forEach(slot => {
-                            opciones.push({
-                                fecha: dia.fecha,
-                                horaInicio: slot.horario,
-                                horaFin: this.calcularHoraFin(slot.horario, esquema.intervalo),
-                                consultorio: esquema.consultorio,
-                                medicoId: esquema.medico.id,
-                                consultorioId: esquema.consultorio.id
+                        const slots = esquema.slots;
+                        if (slots) {
+                            slots.forEach((slot: any) => {
+                                opciones.push({
+                                    fecha: dia.fecha,
+                                    horaInicio: slot.horario,
+                                    horaFin: this.calcularHoraFin(slot.horario, esquema.intervalo),
+                                    consultorio: esquema.consultorio,
+                                    medicoId: esquema.medico.id,
+                                    consultorioId: esquema.consultorio.id,
+                                    disponible: slot.disponible
+                                });
                             });
-                        });
+                        }
                     });
                 }
             });
@@ -186,46 +208,16 @@ export class MisTurnosComponent implements OnInit {
         fecha: this.turnoSeleccionadoParaReprogramar.fecha,
         horaInicio: this.turnoSeleccionadoParaReprogramar.horaInicio,
         horaFin: this.turnoSeleccionadoParaReprogramar.horaFin,
-        pacienteId: this.pacienteId,
-        medicoId: this.turnoSeleccionadoParaReprogramar.medicoId,
         consultorioId: this.turnoSeleccionadoParaReprogramar.consultorioId
     };
 
-    this.turnoService.reservarTurno(payload).subscribe({
+    this.turnoService.reprogramarTurno(this.turnoAReprogramar.id, payload).subscribe({
       next: (res: any) => {
-        const nuevoId = res.data?.id || res.id;
-        
-        this.turnoService.delete(this.turnoAReprogramar.id).subscribe({
-          next: () => {
-             this.confirmarNuevo(nuevoId);
-          },
-          error: () => this.errorMessage = 'Error al cancelar el turno original.'
-        });
+        this.cerrarReprogramacion();
+        this.cargarTurnos();
+        this.successMessage = 'Turno reprogramado exitosamente.';
       },
-      error: (err: any) => this.errorMessage = err.error?.error || 'Ese horario ya fue tomado por otro paciente.'
-    });
-  }
-
-  confirmarNuevo(nuevoId: number) {
-    this.turnoService.confirmarTurno(nuevoId, { id: this.pacienteId }).subscribe({
-      next: (res) => {
-        if (res.requiereConfirmacion) {
-          this.modalService.confirm('Advertencia', res.advertencia, '¿Querés confirmar de todas formas?')
-            .then(() => {
-              this.forzarConfirmacionNuevo(nuevoId);
-            })
-            .catch(() => {
-               this.cerrarReprogramacion();
-               this.cargarTurnos();
-               this.successMessage = 'Turno reservado (falta confirmación definitiva).';
-            });
-        } else {
-          this.cerrarReprogramacion();
-          this.cargarTurnos();
-          this.successMessage = 'Turno reprogramado exitosamente.';
-        }
-      },
-      error: () => this.errorMessage = 'Error al confirmar el nuevo turno.'
+      error: (err: any) => this.errorMessage = err.error?.error || 'Error al reprogramar el turno.'
     });
   }
 
@@ -240,22 +232,6 @@ export class MisTurnosComponent implements OnInit {
     });
   }
 
-  private generarSlots(bloques: any[], intervalo: number): any[] {
-        const slots: any[] = [];
-        if (!bloques || bloques.length === 0) return slots;
-        
-        bloques.forEach((bloque: any) => {
-            let actual = bloque.horaInicio;
-            while (actual < bloque.horaFin) {
-                const finSlot = this.calcularHoraFin(actual, intervalo);
-                if (finSlot <= bloque.horaFin) {
-                    slots.push({ horario: actual, estaDisponible: true });
-                }
-                actual = finSlot;
-            }
-        });
-        return slots;
-    }
 
     private calcularHoraFin(horaInicio: string, intervaloMinutos?: number): string {
         if (!intervaloMinutos) intervaloMinutos = 30;

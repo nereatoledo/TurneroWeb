@@ -47,13 +47,16 @@
                                 }">{{ turno.estado }}</span>
                             </td>
                             <td class="text-center">
+                                <button class="btn btn-sm btn-outline-info me-1" (click)="verHistorial(turno)" title="Ver Historial">
+                                    <i class="fa fa-history"></i>
+                                </button>
                                 <button *ngIf="turno.estado === 'RESERVADO' && !isTurnoPasado(turno)" class="btn btn-sm btn-success me-1" (click)="confirmar(turno)" title="Confirmar Reserva">
                                     <i class="fa fa-check"></i>
                                 </button>
                                 <button *ngIf="turno.estado === 'RESERVADO' && !isTurnoPasado(turno)" class="btn btn-sm btn-outline-secondary me-1" (click)="cancelarReserva(turno)" title="Deshacer Reserva">
                                     <i class="fa fa-undo"></i>
                                 </button>
-                                <button *ngIf="turno.estado === 'CANCELADO' && !isTurnoPasado(turno)" class="btn btn-sm btn-outline-primary me-1" (click)="iniciarReprogramacion(turno)" title="Reprogramar">
+                                <button *ngIf="turno.estado === 'CANCELADO'" class="btn btn-sm btn-outline-primary me-1" (click)="iniciarReprogramacion(turno)" title="Reprogramar">
                                     <i class="fa fa-calendar-alt"></i> Reprogramar
                                 </button>
                                 <button *ngIf="turno.estado === 'CONFIRMADO' && !isTurnoPasado(turno)" class="btn btn-sm btn-outline-danger" (click)="cancelarTurno(turno)" title="Cancelar">
@@ -101,13 +104,16 @@
                 <div class="list-group">
                     <button *ngFor="let op of opcionesReprogramar" type="button" 
                             class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                            [class.active]="turnoSeleccionadoParaReprogramar?.id === op.id"
+                            [class.active]="turnoSeleccionadoParaReprogramar?.horaInicio === op.horaInicio && turnoSeleccionadoParaReprogramar?.fecha === op.fecha"
+                            [disabled]="!op.disponible"
+                            [ngClass]="{'bg-light text-muted': !op.disponible}"
                             (click)="seleccionarOpcion(op)">
                         <div>
                             <i class="fa fa-calendar me-2"></i> {{ op.fecha | date:'dd/MM/yyyy' }}
                             <i class="fa fa-clock ms-3 me-1"></i> {{ op.horaInicio | slice:0:5 }}
+                            <span *ngIf="!op.disponible" class="ms-2 text-danger small">(Ocupado)</span>
                         </div>
-                        <span class="badge bg-light text-dark border">{{ op.consultorio?.nombre }}</span>
+                        <span class="badge border" [ngClass]="op.disponible ? 'bg-light text-dark' : 'bg-secondary'">{{ op.consultorio?.nombre }}</span>
                     </button>
                     <div *ngIf="opcionesReprogramar.length === 0" class="text-center py-4 text-muted">
                         No hay turnos disponibles para los próximos 7 días.
@@ -120,6 +126,42 @@
                         [disabled]="!turnoSeleccionadoParaReprogramar" (click)="ejecutarReprogramacion()">
                     Confirmar Cambio
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div *ngIf="historialActivo" class="modal-backdrop fade show"></div>
+<div *ngIf="historialActivo" class="modal fade show d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header text-white" style="background-color: #8923dc;">
+                <h5 class="modal-title">Línea de Tiempo del Turno</h5>
+                <button type="button" class="btn-close btn-close-white" (click)="cerrarHistorial()"></button>
+            </div>
+            <div class="modal-body">
+                <div class="timeline">
+                    <div *ngFor="let mod of historialTurno" class="timeline-item mb-3 pb-2 border-bottom">
+                        <div class="fw-bold">{{ mod.fechaModificacion | date:'dd/MM/yyyy HH:mm' }}</div>
+                        <div>
+                            Estado: <span class="badge bg-secondary">{{ mod.estadoAnterior }}</span> 
+                            <i class="fa fa-arrow-right mx-2 text-muted"></i> 
+                            <span class="badge" [ngClass]="{
+                                'bg-success': mod.estadoNuevo === 'CONFIRMADO',
+                                'bg-danger': mod.estadoNuevo === 'CANCELADO' || mod.estadoNuevo === 'CANCELADO_TARDIO',
+                                'bg-info text-dark': mod.estadoNuevo === 'REAGENDADO',
+                                'bg-warning text-dark': mod.estadoNuevo === 'PROGRAMADO'
+                            }">{{ mod.estadoNuevo }}</span>
+                        </div>
+                        <div class="text-muted small mt-1"><i class="fa fa-comment-alt"></i> {{ mod.motivo }}</div>
+                    </div>
+                    <div *ngIf="historialTurno.length === 0" class="text-center py-4 text-muted">
+                        No hay historial registrado para este turno.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-outline-secondary" (click)="cerrarHistorial()">Cerrar</button>
             </div>
         </div>
     </div>

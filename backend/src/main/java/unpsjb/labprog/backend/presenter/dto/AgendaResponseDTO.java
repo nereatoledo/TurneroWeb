@@ -35,7 +35,8 @@ public class AgendaResponseDTO {
         private Medico medico;
         private CentroAtencionInfo centroAtencion;
         private Consultorio consultorio;
-        private List<SlotTurnoAgenda> turnos;
+        private Integer intervalo;
+        private List<BloqueLibreDTO> bloquesLibres;
     }
 
     @Getter
@@ -55,8 +56,8 @@ public class AgendaResponseDTO {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class SlotTurnoAgenda {
-        private LocalTime horario;
-        private boolean estaDisponible;
+    public static class BloqueLibreDTO {
+        private LocalTime horaInicio;
+        private LocalTime horaFin;
     }
 }

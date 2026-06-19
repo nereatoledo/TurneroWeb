@@ -42,75 +42,25 @@ public interface TurnoRepository extends CrudRepository<Turno, Integer>, PagingA
            "AND (:medicoId IS NULL OR t.medico.id = :medicoId)")
     Page<Turno> search(@Param("fecha") LocalDate fecha, @Param("estado") EstadoTurno estado, @Param("pacienteId") Integer pacienteId, @Param("especialidadId") Integer especialidadId, @Param("medicoId") Integer medicoId, Pageable pageable);
 
-    @Query("SELECT t FROM Turno t " +
-           "WHERE t.estado IN :estadosDisponibles " +
-           "AND (:especialidadId IS NULL OR t.medico.especialidad.id = :especialidadId) " +
-           "AND (:medicoId IS NULL OR t.medico.id = :medicoId) " +
-           "AND (:centroId IS NULL OR t.consultorio.centro.id = :centroId) " +
-           "AND (t.fecha > :hoy OR (t.fecha = :hoy AND t.horaInicio > :ahora)) " +
-           "ORDER BY t.fecha ASC, t.horaInicio ASC")
-    List<Turno> buscarDisponiblesParaPaciente(
-        @Param("estadosDisponibles") List<EstadoTurno> estadosDisponibles,
-        @Param("especialidadId") Integer especialidadId,
-        @Param("medicoId") Integer medicoId,
-        @Param("centroId") Integer centroId,
-        @Param("hoy") LocalDate hoy,
-        @Param("ahora") LocalTime ahora
-    );
 
-    @Query("SELECT t FROM Turno t WHERE t.fecha = :fecha AND t.horaInicio = :horaInicio " +
+
+    @Query("SELECT COUNT(t) > 0 FROM Turno t WHERE t.fecha = :fecha " +
            "AND (t.consultorio.id = :consultorioId OR t.medico.id = :medicoId) " +
-           "AND t.estado IN :estados")
-    List<Turno> buscarConflictos(
+           "AND t.estado IN :estados " +
+           "AND t.horaInicio < :horaFin AND t.horaFin > :horaInicio")
+    boolean existeSuperposicion(
         @Param("fecha") LocalDate fecha,
         @Param("horaInicio") LocalTime horaInicio,
+        @Param("horaFin") LocalTime horaFin,
         @Param("consultorioId") int consultorioId,
         @Param("medicoId") int medicoId,
         @Param("estados") List<EstadoTurno> estados
     );
 
-    @Modifying
-    @Query("UPDATE Turno t SET t.paciente = :paciente, t.estado = :estadoNuevo " +
-           "WHERE t.id = :id AND t.estado IN :estadosDisponibles")
-    int confirmar(
-        @Param("id") int id,
-        @Param("paciente") Paciente paciente,
-        @Param("estadoNuevo") EstadoTurno estadoNuevo,
-        @Param("estadosDisponibles") List<EstadoTurno> estadosDisponibles
-    );
-
-    @Modifying
-    @Query("UPDATE Turno t SET t.estado = :estadoNuevo, t.paciente = :paciente, t.timestamp = :ts " +
-           "WHERE t.id = :id AND t.estado IN :estadosDisponibles")
-    int reservar(
-        @Param("id") int id,
-        @Param("paciente") Paciente paciente,
-        @Param("estadoNuevo") EstadoTurno estadoNuevo,
-        @Param("estadosDisponibles") List<EstadoTurno> estadosDisponibles,
-        @Param("ts") LocalDateTime ts
-    );
-
-    @Modifying
-    @Query("UPDATE Turno t SET t.estado = unpsjb.labprog.backend.model.EstadoTurno.CANCELADO, t.paciente = null, t.timestamp = null " +
-           "WHERE t.estado = unpsjb.labprog.backend.model.EstadoTurno.RESERVADO AND t.timestamp < :limite")
-    int liberarReservasVencidas(@Param("limite") LocalDateTime limite);
-
-    @Modifying
-    @Query("UPDATE Turno t SET t.estado = unpsjb.labprog.backend.model.EstadoTurno.PROGRAMADO, t.paciente = null, t.timestamp = null " +
-           "WHERE t.id = :id AND t.estado = unpsjb.labprog.backend.model.EstadoTurno.RESERVADO AND t.paciente.id = :pacienteId")
-    int cancelarReserva(@Param("id") int id, @Param("pacienteId") int pacienteId);
+    List<Turno> findByEstadoAndTimestampBefore(EstadoTurno estado, LocalDateTime limite);
 
 
-    @Query("SELECT t FROM Turno t WHERE t.medico.id = :medicoId " +
-           "AND t.fecha BETWEEN :desde AND :hasta " +
-           "AND t.estado IN :estados " +
-           "ORDER BY t.fecha ASC, t.horaInicio ASC")
-    List<Turno> buscarParaReprogramar(
-        @Param("medicoId") int medicoId,
-        @Param("desde") LocalDate desde,
-        @Param("hasta") LocalDate hasta,
-        @Param("estados") List<EstadoTurno> estados
-    );
+
 
     @Query("SELECT COUNT(t) > 0 FROM Turno t " +
            "WHERE t.paciente.id = :pacienteId " +
@@ -134,5 +84,15 @@ public interface TurnoRepository extends CrudRepository<Turno, Integer>, PagingA
         @Param("especialidadId") int especialidadId,
         @Param("fecha") LocalDate fecha,
         @Param("estados") List<EstadoTurno> estados
+    );
+
+    @Query("SELECT COUNT(t) FROM Turno t " +
+           "WHERE t.paciente.id = :pacienteId " +
+           "AND t.estado = :estado " +
+           "AND t.fecha >= :fechaDesde")
+    long countCancelacionesTardias(
+        @Param("pacienteId") int pacienteId,
+        @Param("estado") EstadoTurno estado,
+        @Param("fechaDesde") LocalDate fechaDesde
     );
 }

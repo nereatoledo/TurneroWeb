@@ -113,7 +113,7 @@ public class EsquemaTurnoService {
         List<AgendaResponseDTO> agendas = obtenerAgendaFrontend(
                 fechaInicio, fechaFin, idEspecialidad, idMedico, idCentro, null, null);
 
-        if (tieneSlotsDisponibles(agendas)) {
+        if (tieneBloquesLibres(agendas)) {
             return new AgendaBusquedaResultadoDTO(false, null, agendas);
         }
 
@@ -125,7 +125,7 @@ public class EsquemaTurnoService {
 
                 List<AgendaResponseDTO> fallbackA = obtenerAgendaFrontend(
                         fechaInicio, fechaFin, idEspecialidad, idMedico, null, null, idCentro);
-                if (tieneSlotsDisponibles(fallbackA)) {
+                if (tieneBloquesLibres(fallbackA)) {
                     return new AgendaBusquedaResultadoDTO(
                             true,
                             "El médico no tiene disponibilidad en el centro seleccionado. " +
@@ -139,7 +139,7 @@ public class EsquemaTurnoService {
 
                 List<AgendaResponseDTO> fallbackB = obtenerAgendaFrontend(
                         fechaInicio, fechaFin, idEspecialidad, null, null, idMedico, null);
-                if (tieneSlotsDisponibles(fallbackB)) {
+                if (tieneBloquesLibres(fallbackB)) {
                     return new AgendaBusquedaResultadoDTO(
                             true,
                             "No hay disponibilidad para ese médico. " +
@@ -155,7 +155,7 @@ public class EsquemaTurnoService {
 
             List<AgendaResponseDTO> fallbackC = obtenerAgendaFrontend(
                     fechaInicio, fechaFin, idEspecialidad, null, null, null, idCentro);
-            if (tieneSlotsDisponibles(fallbackC)) {
+            if (tieneBloquesLibres(fallbackC)) {
                 return new AgendaBusquedaResultadoDTO(
                         true,
                         "No hay disponibilidad en el centro seleccionado para esa especialidad. " +
@@ -178,13 +178,12 @@ public class EsquemaTurnoService {
         return new ArrayList<>(dias);
     }
 
-    private boolean tieneSlotsDisponibles(List<AgendaResponseDTO> agendas) {
+    private boolean tieneBloquesLibres(List<AgendaResponseDTO> agendas) {
         if (agendas == null || agendas.isEmpty()) return false;
         return agendas.stream()
                 .filter(dia -> !dia.isEsFeriado())
                 .flatMap(dia -> dia.getAgendaDetalles().stream())
-                .flatMap(esquema -> esquema.getTurnos().stream())
-                .anyMatch(SlotTurnoAgenda::isEstaDisponible);
+                .anyMatch(esquema -> !esquema.getBloquesLibres().isEmpty());
     }
 
     private List<AgendaResponseDTO> obtenerAgendaFrontend(
@@ -231,17 +230,18 @@ public class EsquemaTurnoService {
                     
                     int intervaloMinutos = (intervaloEsp != null && intervaloEsp > 0) ? intervaloEsp : 30;
 
-                    List<Turno> turnosOcupados = turnoRepository.find(fechaActual, esquema.getConsultorio().getId(), Arrays.asList(EstadoTurno.PROGRAMADO, EstadoTurno.CONFIRMADO, EstadoTurno.REAGENDADO));
-                    List<SlotTurnoAgenda> slots = generarSlots(fechaActual, esquema.getHoraInicio(), esquema.getHoraFin(), intervaloMinutos, turnosOcupados);
+                    List<Turno> turnosOcupados = turnoRepository.find(fechaActual, esquema.getConsultorio().getId(), Arrays.asList(EstadoTurno.RESERVADO, EstadoTurno.CONFIRMADO, EstadoTurno.REAGENDADO));
+                    List<BloqueLibreDTO> bloques = calcularBloquesLibres(fechaActual, esquema.getHoraInicio(), esquema.getHoraFin(), turnosOcupados);
 
-                    if (!slots.isEmpty()) {
+                    if (!bloques.isEmpty()) {
                         EsquemaTurnoAgenda tarjeta = new EsquemaTurnoAgenda(
                                 esquema.getHoraInicio(),
                                 esquema.getHoraFin(),
                                 esquema.getStaffMedico().getMedico(), 
                                 centroInfo,
                                 esquema.getConsultorio(),             
-                                slots
+                                intervaloMinutos,
+                                bloques
                         );
                         
                         detallesDelDia.add(tarjeta);
@@ -258,28 +258,43 @@ public class EsquemaTurnoService {
         return agendasDiarias;
     }
 
-    private List<SlotTurnoAgenda> generarSlots(LocalDate fechaActual, LocalTime inicio, LocalTime fin, int intervaloMinutos, List<Turno> turnosOcupados) {
-        List<SlotTurnoAgenda> slots = new ArrayList<>();
-        LocalTime actual = inicio;
+    private List<BloqueLibreDTO> calcularBloquesLibres(LocalDate fechaActual, LocalTime inicio, LocalTime fin, List<Turno> turnosOcupados) {
+        List<BloqueLibreDTO> bloquesLibres = new ArrayList<>();
         LocalDate hoy = LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires"));
         LocalTime ahora = LocalTime.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires"));
 
-        while (actual.isBefore(fin)) {
-            boolean disponible = true;
-            boolean esPasado = fechaActual.isBefore(hoy) || (fechaActual.isEqual(hoy) && actual.isBefore(ahora));
-
-            if (!esPasado) {
-                for (Turno t : turnosOcupados) {
-                    if (t.getHoraInicio() != null && t.getHoraInicio().equals(actual)) {
-                        disponible = false;
-                        break;
-                    }
-                }
-                slots.add(new SlotTurnoAgenda(actual, disponible));
-            }
-            actual = actual.plusMinutes(intervaloMinutos);
+        LocalTime actual = inicio;
+        
+        if (fechaActual.isBefore(hoy)) {
+            return bloquesLibres;
+        } else if (fechaActual.isEqual(hoy) && actual.isBefore(ahora)) {
+            actual = ahora;
         }
-        return slots;
+
+        if (actual.isAfter(fin) || actual.equals(fin)) {
+            return bloquesLibres;
+        }
+
+        turnosOcupados.sort((t1, t2) -> t1.getHoraInicio().compareTo(t2.getHoraInicio()));
+
+        for (Turno t : turnosOcupados) {
+            if (t.getHoraInicio().isAfter(actual) || t.getHoraInicio().equals(actual)) {
+                if (t.getHoraInicio().isAfter(actual)) {
+                    bloquesLibres.add(new BloqueLibreDTO(actual, t.getHoraInicio()));
+                }
+                if (t.getHoraFin() != null && t.getHoraFin().isAfter(actual)) {
+                     actual = t.getHoraFin();
+                }
+            } else if (t.getHoraFin() != null && t.getHoraFin().isAfter(actual)) {
+                actual = t.getHoraFin();
+            }
+        }
+
+        if (actual.isBefore(fin)) {
+            bloquesLibres.add(new BloqueLibreDTO(actual, fin));
+        }
+
+        return bloquesLibres;
     }
 
 

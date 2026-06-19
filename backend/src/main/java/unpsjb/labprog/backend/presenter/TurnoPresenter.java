@@ -12,10 +12,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import unpsjb.labprog.backend.Response;
+import unpsjb.labprog.backend.business.EsquemaTurnoService;
 import unpsjb.labprog.backend.business.TurnoService;
+import unpsjb.labprog.backend.presenter.dto.TurnoReservaDTO;
 import unpsjb.labprog.backend.model.Paciente;
 import unpsjb.labprog.backend.model.Turno;
 import unpsjb.labprog.backend.model.EstadoTurno;
+import unpsjb.labprog.backend.presenter.dto.AgendaBusquedaResultadoDTO;
 import unpsjb.labprog.backend.presenter.dto.TurnoConfirmacionResultado;
 import org.springframework.data.domain.Page;
 
@@ -25,6 +28,9 @@ public class TurnoPresenter {
 
     @Autowired
     TurnoService service;
+
+    @Autowired
+    EsquemaTurnoService esquemaTurnoService;
 
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<Object> findAll() {
@@ -57,11 +63,11 @@ public class TurnoPresenter {
             @RequestParam(required = false, name = "medico_id") Integer medicoId,
             @RequestParam(required = false, name = "centro_id") Integer centroId
     ) {
-        List<Turno> turnos = service.buscarTurnosConFiltros(especialidadId, medicoId, centroId);
-        if (turnos == null || turnos.isEmpty()) {
-            return Response.ok(new ArrayList<>(), "No se encontraron turnos disponibles con esos filtros");
-        }
-        return Response.ok(turnos, "Turnos recuperados con éxito");
+        java.time.LocalDate hoy = java.time.LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires"));
+        AgendaBusquedaResultadoDTO resultado = esquemaTurnoService.buscarConFallback(
+            hoy, hoy.plusDays(7), especialidadId, medicoId, centroId
+        );
+        return Response.ok(resultado, "Agenda recuperada con éxito");
     }
 
     @RequestMapping(method = RequestMethod.POST)
@@ -109,22 +115,33 @@ public class TurnoPresenter {
     @RequestMapping(value = "/{id}/reprogramar", method = RequestMethod.GET)
     public ResponseEntity<Object> buscarParaReprogramar(@PathVariable("id") int id) {
         try {
-            List<Turno> disponibles = service.buscarParaReprogramar(id);
-            return Response.ok(disponibles, "Turnos disponibles para reprogramar");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
-        } catch (NoSuchElementException e) {
+            Turno origen = service.findById(id);
+            if (origen == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Turno origen no encontrado."));
+            }
+            java.time.LocalDate desde = java.time.LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires")).plusDays(1);
+            AgendaBusquedaResultadoDTO resultado = esquemaTurnoService.buscarConFallback(
+                desde, desde.plusDays(7), null, origen.getMedico().getId(), null
+            );
+            return Response.ok(resultado, "Turnos disponibles para reprogramar");
+        } catch (IllegalArgumentException | NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
         }
     }
 
-    @RequestMapping(value = "/id/{id}/reservar", method = RequestMethod.PATCH)
+    @RequestMapping(value = "/reservar", method = RequestMethod.POST)
     public ResponseEntity<Object> reservar(
-            @PathVariable("id") int id,
-            @RequestBody Paciente aPaciente
+            @RequestBody TurnoReservaDTO dto
     ) {
         try {
-            Turno turno = service.reservar(id, aPaciente);
+            Turno turno = service.registrarNuevoTurno(
+                dto.getFecha(), 
+                dto.getHoraInicio(), 
+                dto.getHoraFin(), 
+                dto.getPacienteId(), 
+                dto.getMedicoId(), 
+                dto.getConsultorioId()
+            );
             return Response.ok(turno, "Turno reservado. Tenés 15 minutos para confirmar.");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));

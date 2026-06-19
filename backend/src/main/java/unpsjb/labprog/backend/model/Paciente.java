@@ -24,4 +24,6 @@ public class Paciente extends Persona{
 
     @Column(unique = true, nullable = false)
     private String username; 
+
+    private LocalDate fechaFinRestriccion;
 }

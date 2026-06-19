@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule, Location } from '@angular/common'; 
+import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
@@ -51,8 +51,8 @@ export class AgendaComponent implements OnInit {
         private router: Router,
         private route: ActivatedRoute,
         private modalService: ModalService,
-        private loginService: LoginService,       
-        private location: Location    
+        private loginService: LoginService,
+        private location: Location
     ) { }
 
     ngOnInit(): void {
@@ -96,10 +96,10 @@ export class AgendaComponent implements OnInit {
             distinctUntilChanged(),
             switchMap((term) =>
                 term.length < 1 ? of([]) :
-                this.espService.search(term).pipe(
-                    map((response) => <any[]>response.data),
-                    catchError(() => of([]))
-                )
+                    this.espService.search(term).pipe(
+                        map((response) => <any[]>response.data),
+                        catchError(() => of([]))
+                    )
             )
         );
 
@@ -112,10 +112,10 @@ export class AgendaComponent implements OnInit {
             distinctUntilChanged(),
             switchMap((term) =>
                 term.length < 1 ? of([]) :
-                this.medicoService.search(term).pipe(
-                    map((response) => <any[]>response.data),
-                    catchError(() => of([]))
-                )
+                    this.medicoService.search(term).pipe(
+                        map((response) => <any[]>response.data),
+                        catchError(() => of([]))
+                    )
             )
         );
 
@@ -128,10 +128,10 @@ export class AgendaComponent implements OnInit {
             distinctUntilChanged(),
             switchMap((term) =>
                 term.length < 1 ? of([]) :
-                this.centroService.search(term).pipe(
-                    map((response) => <any[]>response.data),
-                    catchError(() => of([]))
-                )
+                    this.centroService.search(term).pipe(
+                        map((response) => <any[]>response.data),
+                        catchError(() => of([]))
+                    )
             )
         );
 
@@ -198,7 +198,7 @@ export class AgendaComponent implements OnInit {
         this.esSugerencia = false;
         this.mensajeSugerencia = '';
 
-        
+
         const idEspecialidad = this.especialidadSeleccionada
             ? this.especialidadSeleccionada.id
             : (this.medicoSeleccionado?.especialidad?.id ?? undefined);
@@ -213,9 +213,18 @@ export class AgendaComponent implements OnInit {
             idCentro
         ).subscribe({
             next: (res: DataPackage) => {
-                
+
                 const resultado = res.data as { esSugerencia: boolean; mensaje: string; agendas: AgendaDia[] };
                 this.agendas = resultado.agendas ?? [];
+
+                this.agendas.forEach(dia => {
+                    if (dia.agendaDetalles) {
+                        dia.agendaDetalles.forEach(esquema => {
+                            esquema.turnos = this.generarSlots(esquema.bloquesLibres, esquema.intervalo);
+                        });
+                    }
+                });
+
                 this.mensajeSugerencia = resultado.esSugerencia ? resultado.mensaje : '';
                 this.esSugerencia = resultado.esSugerencia ?? false;
             },
@@ -226,7 +235,7 @@ export class AgendaComponent implements OnInit {
         });
     }
 
-    
+
     agendarTurno(dia: AgendaDia, esquema: EsquemaTurnoAgenda, slot: TurnoSlot): void {
         const currentUser = this.loginService.getCurrentUser();
         if (!currentUser || !currentUser.id) {
@@ -235,8 +244,8 @@ export class AgendaComponent implements OnInit {
         }
 
         const horaInicio = slot.horario;
-        const horaFin = this.calcularHoraFin(horaInicio, esquema.medico.especialidad.intervalo);
-        
+        const horaFin = this.calcularHoraFin(horaInicio, esquema.intervalo);
+
         const fechaFormateada = dia.fecha.split('-').reverse().join('/');
 
         const detallesTurno = [
@@ -254,34 +263,15 @@ export class AgendaComponent implements OnInit {
                     fecha: dia.fecha,
                     horaInicio: horaInicio,
                     horaFin: horaFin,
-                    estado: 'PROGRAMADO',
-                    paciente: { id: currentUser.id },
-                    medico: { id: esquema.medico.id },
-                    consultorio: { id: esquema.consultorio.id }
+                    pacienteId: currentUser.id,
+                    medicoId: esquema.medico.id,
+                    consultorioId: esquema.consultorio.id
                 };
-
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                
-                turnoPayload.estado = 'RESERVADO';
 
                 this.agendaService.agendarTurno(turnoPayload).subscribe({
                     next: (res: any) => {
                         const savedTurno = res.data;
-                        
+
                         this.turnoService.confirmarTurno(savedTurno.id, { id: currentUser.id }).subscribe({
                             next: (confRes: any) => {
                                 if (confRes.requiereConfirmacion) {
@@ -295,7 +285,7 @@ export class AgendaComponent implements OnInit {
                                             });
                                         })
                                         .catch(() => {
-                                            
+
                                             this.modalService.info('Aviso', 'El turno quedó reservado por 15 minutos en Mis Turnos.').then(() => this.buscarAgenda());
                                         });
                                 } else {
@@ -318,8 +308,25 @@ export class AgendaComponent implements OnInit {
         this.modalService.info('Error', mensajeModal).then(() => this.buscarAgenda()).catch(() => this.buscarAgenda());
     }
 
+    private generarSlots(bloques: any[], intervalo: number): TurnoSlot[] {
+        const slots: TurnoSlot[] = [];
+        if (!bloques || bloques.length === 0) return slots;
+
+        bloques.forEach(bloque => {
+            let actual = bloque.horaInicio;
+            while (actual < bloque.horaFin) {
+                const finSlot = this.calcularHoraFin(actual, intervalo);
+                if (finSlot <= bloque.horaFin) {
+                    slots.push({ horario: actual, estaDisponible: true });
+                }
+                actual = finSlot;
+            }
+        });
+        return slots;
+    }
+
     private calcularHoraFin(horaInicio: string, intervaloMinutos?: number): string {
-        if (!intervaloMinutos) intervaloMinutos = 30; 
+        if (!intervaloMinutos) intervaloMinutos = 30;
         const [horas, minutos, segundos] = horaInicio.split(':').map(Number);
         const date = new Date();
         date.setHours(horas, minutos, segundos || 0);
@@ -336,19 +343,21 @@ export class AgendaComponent implements OnInit {
         const mapaSlots = new Map<string, { horario: string, estaDisponible: boolean, esquemasDisponibles: any[] }>();
 
         for (const esquema of dia.agendaDetalles) {
-            for (const slot of esquema.turnos) {
-                const key = slot.horario;
-                if (!mapaSlots.has(key)) {
-                    mapaSlots.set(key, {
-                        horario: slot.horario,
-                        estaDisponible: false,
-                        esquemasDisponibles: []
-                    });
-                }
-                const entry = mapaSlots.get(key)!;
-                if (slot.estaDisponible) {
-                    entry.estaDisponible = true;
-                    entry.esquemasDisponibles.push(esquema);
+            if (esquema.turnos) {
+                for (const slot of esquema.turnos) {
+                    const key = slot.horario;
+                    if (!mapaSlots.has(key)) {
+                        mapaSlots.set(key, {
+                            horario: slot.horario,
+                            estaDisponible: false,
+                            esquemasDisponibles: []
+                        });
+                    }
+                    const entry = mapaSlots.get(key)!;
+                    if (slot.estaDisponible) {
+                        entry.estaDisponible = true;
+                        entry.esquemasDisponibles.push(esquema);
+                    }
                 }
             }
         }
@@ -359,7 +368,7 @@ export class AgendaComponent implements OnInit {
     agendarTurnoConsolidado(dia: AgendaDia, slotConsolidado: any): void {
         if (slotConsolidado.esquemasDisponibles.length > 0) {
             const esquemaAsignado = slotConsolidado.esquemasDisponibles[0];
-            const slotOriginal = esquemaAsignado.turnos.find((t: any) => t.horario === slotConsolidado.horario);
+            const slotOriginal = esquemaAsignado.turnos?.find((t: any) => t.horario === slotConsolidado.horario);
             this.agendarTurno(dia, esquemaAsignado, slotOriginal);
         }
     }

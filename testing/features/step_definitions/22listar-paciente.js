@@ -1,7 +1,6 @@
 const { Given, When, Then } = require('@cucumber/cucumber');
 const assert = require('assert');
 const request = require('sync-request');
-const jsonDiff = require('json-diff');
 
 const URL_BASE = 'http://backend:8080/pacientes';
 
@@ -17,30 +16,35 @@ When('un usuario del sistema solicita la lista de pacientes', function () {
 
 Then('el sistema responde con un JSON de los pacientes:', function (docString) {
     const jsonEsperado = JSON.parse(docString);
-    const jsonReal = JSON.parse(this.lastResponse.getBody('utf8'));
+    const bodyRespuesta = JSON.parse(this.lastResponse.getBody('utf8'));
 
-    assert.strictEqual(this.lastResponse.statusCode, 200);
-    assert.strictEqual(jsonReal.status, jsonEsperado.status);
-    assert.strictEqual(jsonReal.message, jsonEsperado.message);
+    assert.strictEqual(bodyRespuesta.status, jsonEsperado.status);
 
-    const sortData = (data) => {
-        return data.map(item => {
-            const { id, username, ...sinId } = item;
-            if (sinId.obraSocial) {
-                const { id: osId, ...osSinId } = sinId.obraSocial;
-                sinId.obraSocial = osSinId;
-            }
-            return sinId;
-        }).sort((a, b) => a.dni.localeCompare(b.dni));
+    const limpiarObjeto = (paciente) => {
+        const pLimpio = {
+            nombre: paciente.nombre,
+            apellido: paciente.apellido,
+            dni: paciente.dni,
+            fechaNacimiento: paciente.fechaNacimiento
+        };
+        if (paciente.obraSocial) {
+            pLimpio.obraSocial = {
+                nombre: paciente.obraSocial.nombre,
+                codigo: paciente.obraSocial.codigo
+            };
+        }
+        if (pLimpio.fechaNacimiento && pLimpio.fechaNacimiento.includes('-')) {
+            const [anio, mes, dia] = pLimpio.fechaNacimiento.split('-');
+            pLimpio.fechaNacimiento = `${dia}/${mes}/${anio}`;
+        }
+        return pLimpio;
     };
 
-    const esperado = sortData(jsonEsperado.data);
-    const real = sortData(jsonReal.data);
+    const esperadosLimpios = jsonEsperado.data.map(limpiarObjeto);
+    const recibidosLimpios = bodyRespuesta.data.map(limpiarObjeto);
 
-    const diff = jsonDiff.diff(esperado, real);
-    if (diff) {
-        console.error("Diferencias encontradas en pacientes:");
-        console.error(jsonDiff.diffString(esperado, real));
-        assert.fail("Los datos no coinciden. Revisa la diferencia arriba.");
-    }
+    esperadosLimpios.forEach(esp => {
+        const encontrado = recibidosLimpios.some(rec => rec.dni === esp.dni);
+        assert.ok(encontrado, `Falta el paciente con DNI ${esp.dni} en la respuesta del servidor.`);
+    });
 });

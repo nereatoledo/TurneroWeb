@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.EsquemaTurnoService;
+import unpsjb.labprog.backend.business.AgendaService;
 import unpsjb.labprog.backend.presenter.dto.AgendaRequestDTO;
 import unpsjb.labprog.backend.presenter.dto.AutoAgendaRequestDTO;
 import unpsjb.labprog.backend.model.EsquemaTurno;
@@ -23,6 +24,9 @@ public class EsquemaTurnoPresenter {
 
     @Autowired
     private EsquemaTurnoService esquemaTurnoService;
+
+    @Autowired
+    private AgendaService agendaService;
 
     @RequestMapping(method = RequestMethod.POST)
     public ResponseEntity<Object> crearAgenda(@RequestBody AgendaRequestDTO dto) {
@@ -48,7 +52,7 @@ public class EsquemaTurnoPresenter {
             @RequestParam(required = false) Integer idCentro) {
         try {
             LocalDate fin = (fechaFin != null) ? fechaFin : fechaInicio;
-            Object resultado = esquemaTurnoService.buscarConFallback(fechaInicio, fin, idEspecialidad, idMedico, idCentro);
+            Object resultado = agendaService.buscarConFallback(fechaInicio, fin, idEspecialidad, idMedico, idCentro);
             return Response.response(HttpStatus.OK, "Agenda encontrada", resultado);
         } catch (Exception e) {
             e.printStackTrace();
@@ -67,7 +71,7 @@ public class EsquemaTurnoPresenter {
     @RequestMapping(value = "/auto-asignar", method = RequestMethod.POST)
     public ResponseEntity<Object> autoAsignarAgenda(@RequestBody AutoAgendaRequestDTO dto) {
         try {
-            List<EsquemaTurno> esquemas = esquemaTurnoService.autoAsignarAgenda(dto);
+            List<EsquemaTurno> esquemas = agendaService.autoAsignarAgenda(dto);
             return Response.response(HttpStatus.OK, "Agenda auto-asignada exitosamente.", esquemas);
         } catch (IllegalArgumentException | IllegalStateException e) {
             return Response.response(HttpStatus.CONFLICT, e.getMessage(), null);

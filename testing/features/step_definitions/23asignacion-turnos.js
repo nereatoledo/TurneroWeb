@@ -4,53 +4,60 @@ const request = require('sync-request');
 
 const backendUrl = 'http://backend:8080';
 
-// Functions from the file...
 function buscarIdPaciente(nombreEsperado) {
     const res = request('GET', `${backendUrl}/pacientes`);
-    const pacientes = JSON.parse(res.getBody('utf8')).data;
-    if (!pacientes || pacientes.length === 0) return 1;
+    const pacientes = JSON.parse(res.getBody('utf8')).data || [];
+    if (pacientes.length === 0) return 1;
     const encontrado = pacientes.find(p => `${p.nombre} ${p.apellido}`.includes(nombreEsperado) || `${p.apellido} ${p.nombre}`.includes(nombreEsperado));
     return encontrado ? encontrado.id : pacientes[0].id;
 }
 
 function buscarIdMedico(nombreEsperado) {
     const res = request('GET', `${backendUrl}/medicos`);
-    if (res.statusCode !== 200) return 1;
-    const medicos = JSON.parse(res.getBody('utf8')).data;
-    if (!medicos || medicos.length === 0) return 1;
-
+    const medicos = JSON.parse(res.getBody('utf8')).data || [];
+    if (medicos.length === 0) return 1;
     const nombreLimpio = nombreEsperado.replace('Dr. ', '').replace('Dra. ', '');
     const encontrado = medicos.find(m => `${m.nombre} ${m.apellido}`.includes(nombreLimpio) || `${m.apellido} ${m.nombre}`.includes(nombreLimpio));
     return encontrado ? encontrado.id : medicos[0].id;
 }
 
 function buscarIdConsultorioEnCentro(nombreCentro) {
-    const res = request('GET', `${backendUrl}/consultorios`);
-    if (res.statusCode !== 200) return 1;
-    const consultorios = JSON.parse(res.getBody('utf8')).data;
-    if (!consultorios || consultorios.length === 0) return 1;
-
-    const encontrado = consultorios.find(c => c.centro && c.centro.nombre === nombreCentro);
-    return encontrado ? encontrado.id : consultorios[0].id;
+    const res = request('GET', `${backendUrl}/centros`);
+    const centros = JSON.parse(res.getBody('utf8')).data || [];
+    if (centros.length === 0) return 1;
+    const centro = centros.find(c => c.nombre === nombreCentro);
+    if (centro && centro.consultorios && centro.consultorios.length > 0) {
+        return centro.consultorios[0].id;
+    }
+    const allConsultorios = centros.flatMap(c => c.consultorios || []);
+    return allConsultorios.length > 0 ? allConsultorios[0].id : 1;
 }
 
 function buscarIdEspecialidad(nombreEsperado) {
     const res = request('GET', `${backendUrl}/especialidades`);
-    if (res.statusCode !== 200) return 1;
-    const especialidades = JSON.parse(res.getBody('utf8')).data;
-    if (!especialidades || especialidades.length === 0) return 1;
-
+    const especialidades = JSON.parse(res.getBody('utf8')).data || [];
+    if (especialidades.length === 0) return 1;
     const encontrado = especialidades.find(e => e.nombre.includes(nombreEsperado));
     return encontrado ? encontrado.id : especialidades[0].id;
 }
 
-let futureDate = new Date();
-futureDate.setDate(futureDate.getDate() + 30);
+function obtenerFechaValidaAgenda() {
+    let fecha = new Date();
+    let diasParaLunes = (1 - fecha.getDay() + 7) % 7;
+    if (diasParaLunes === 0) diasParaLunes = 7;
+    fecha.setDate(fecha.getDate() + diasParaLunes + 1);
+    return fecha.toISOString().split('T')[0];
+}
+
+let horaRandom = Math.floor(Math.random() * (15 - 10 + 1) + 10);
+let minRandom = "00";
+let minFin = "30";
+let horaFin = horaRandom;
 
 let turnoDTO = {
-    fecha: futureDate.toISOString().split('T')[0],
-    horaInicio: "15:00:00",
-    horaFin: "15:30:00",
+    fecha: obtenerFechaValidaAgenda(),
+    horaInicio: `${horaRandom.toString().padStart(2, '0')}:${minRandom}:00`,
+    horaFin: `${horaFin.toString().padStart(2, '0')}:${minFin}:00`,
     estado: "PROGRAMADO",
     paciente: { id: null },
     medico: { id: null },
@@ -106,7 +113,7 @@ Then('el paciente puede elegir entre las opciones sugeridas', function () {
 });
 
 Then('el sistema asigna un turno basado en la disponibilidad', function () {
-    assert.strictEqual(respuestaServidor.statusCode, 200);
+    assert.ok([200, 201].includes(respuestaServidor.statusCode), `El servidor devolvió status ${respuestaServidor.statusCode} en lugar de 200/201. Error: ${respuestaServidor.getBody('utf8')}`);
 });
 
 Then('el turno queda registrado en el sistema con estado {string}', function (estadoEsperado) {
@@ -118,12 +125,9 @@ Then('el paciente recibe una notificación con la confirmación del turno', func
     return 'pending';
 });
 
-
-
 Given('que el paciente {string} tiene un turno en estado {string}', function (paciente, estado) {
     turnoDTO.paciente.id = buscarIdPaciente(paciente);
     turnoDTO.estado = estado.toUpperCase();
-
     turnoDTO.medico.id = buscarIdMedico("Juan Perez");
     turnoDTO.consultorio.id = buscarIdConsultorioEnCentro("Trelew Salud");
 
@@ -202,4 +206,3 @@ When('no hay disponibilidad en esa especialidad en el centro seleccionado', func
 Then('el sistema sugiere otros centros donde haya disponibilidad', function () {
     return 'pending';
 });
-

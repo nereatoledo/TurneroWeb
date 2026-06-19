@@ -29,8 +29,9 @@ function buscarIdConsultorio(nombreEsperado) {
     if (agendaDTO.idMedico) {
         return resolverIdConsultorio(nombreEsperado, agendaDTO.idMedico);
     }
-    const res = request('GET', `${backendUrl}/consultorios`);
-    const consultorios = JSON.parse(res.getBody('utf8')).data;
+    const res = request('GET', `${backendUrl}/centros`);
+    const centros = JSON.parse(res.getBody('utf8')).data;
+    const consultorios = centros.flatMap(c => c.consultorios || []);
     const encontrado = consultorios.find(c => c.nombre === nombreEsperado);
     return encontrado ? encontrado.id : 1;
 }
@@ -57,8 +58,9 @@ function resolverIdConsultorio(nombreConsultorio, idMedico) {
         }
     }
     if (mejorConsultorio) return mejorConsultorio.id;
-    const resAll = request('GET', `${backendUrl}/consultorios`);
-    const allCons = JSON.parse(resAll.getBody('utf8')).data;
+    const resAll = request('GET', `${backendUrl}/centros`);
+    const centrosAll = JSON.parse(resAll.getBody('utf8')).data;
+    const allCons = centrosAll.flatMap(c => c.consultorios || []);
     const encontrado = allCons.find(c => c.nombre === nombreConsultorio);
     return encontrado ? encontrado.id : 1;
 }

@@ -1,7 +1,5 @@
 package unpsjb.labprog.backend.presenter;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
@@ -12,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import unpsjb.labprog.backend.Response;
-import unpsjb.labprog.backend.business.EsquemaTurnoService;
 import unpsjb.labprog.backend.business.TurnoService;
 import unpsjb.labprog.backend.presenter.dto.TurnoReservaDTO;
 import unpsjb.labprog.backend.model.Paciente;
@@ -30,7 +27,7 @@ public class TurnoPresenter {
     TurnoService service;
 
     @Autowired
-    EsquemaTurnoService esquemaTurnoService;
+    unpsjb.labprog.backend.business.AgendaService agendaService;
 
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<Object> findAll() {
@@ -51,8 +48,7 @@ public class TurnoPresenter {
             @PathVariable("id") int id,
             @RequestParam(required = false) EstadoTurno estado,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
+            @RequestParam(defaultValue = "10") int size) {
         Page<Turno> turnos = service.buscarPorPaciente(id, estado, page, size);
         return Response.ok(turnos, "Turnos del paciente recuperados");
     }
@@ -61,12 +57,10 @@ public class TurnoPresenter {
     public ResponseEntity<Object> buscarDisponibles(
             @RequestParam(required = false, name = "especialidad_id") Integer especialidadId,
             @RequestParam(required = false, name = "medico_id") Integer medicoId,
-            @RequestParam(required = false, name = "centro_id") Integer centroId
-    ) {
+            @RequestParam(required = false, name = "centro_id") Integer centroId) {
         java.time.LocalDate hoy = java.time.LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires"));
-        AgendaBusquedaResultadoDTO resultado = esquemaTurnoService.buscarConFallback(
-            hoy, hoy.plusDays(7), especialidadId, medicoId, centroId
-        );
+        AgendaBusquedaResultadoDTO resultado = agendaService.buscarConFallback(
+                hoy, hoy.plusDays(7), especialidadId, medicoId, centroId);
         return Response.ok(resultado, "Agenda recuperada con éxito");
     }
 
@@ -119,10 +113,10 @@ public class TurnoPresenter {
             if (origen == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Turno origen no encontrado."));
             }
-            java.time.LocalDate desde = java.time.LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires")).plusDays(1);
-            AgendaBusquedaResultadoDTO resultado = esquemaTurnoService.buscarConFallback(
-                desde, desde.plusDays(7), null, origen.getMedico().getId(), null
-            );
+            java.time.LocalDate desde = java.time.LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires"))
+                    .plusDays(1);
+            AgendaBusquedaResultadoDTO resultado = agendaService.buscarConFallback(
+                    desde, desde.plusDays(7), null, origen.getMedico().getId(), null);
             return Response.ok(resultado, "Turnos disponibles para reprogramar");
         } catch (IllegalArgumentException | NoSuchElementException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", e.getMessage()));
@@ -131,17 +125,15 @@ public class TurnoPresenter {
 
     @RequestMapping(value = "/reservar", method = RequestMethod.POST)
     public ResponseEntity<Object> reservar(
-            @RequestBody TurnoReservaDTO dto
-    ) {
+            @RequestBody TurnoReservaDTO dto) {
         try {
             Turno turno = service.registrarNuevoTurno(
-                dto.getFecha(), 
-                dto.getHoraInicio(), 
-                dto.getHoraFin(), 
-                dto.getPacienteId(), 
-                dto.getMedicoId(), 
-                dto.getConsultorioId()
-            );
+                    dto.getFecha(),
+                    dto.getHoraInicio(),
+                    dto.getHoraFin(),
+                    dto.getPacienteId(),
+                    dto.getMedicoId(),
+                    dto.getConsultorioId());
             return Response.ok(turno, "Turno reservado. Tenés 15 minutos para confirmar.");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", e.getMessage()));
@@ -153,8 +145,7 @@ public class TurnoPresenter {
     @RequestMapping(value = "/id/{id}/cancelar-reserva", method = RequestMethod.PATCH)
     public ResponseEntity<Object> cancelarReserva(
             @PathVariable("id") int id,
-            @RequestBody Paciente aPaciente
-    ) {
+            @RequestBody Paciente aPaciente) {
         try {
             service.cancelarReserva(id, aPaciente.getId());
             return Response.ok(null, "Reserva deshecha correctamente.");
@@ -167,15 +158,13 @@ public class TurnoPresenter {
     public ResponseEntity<Object> confirmar(
             @PathVariable("id") int id,
             @RequestBody Paciente aPaciente,
-            @RequestParam(required = false, defaultValue = "false") boolean forzar
-    ) {
+            @RequestParam(required = false, defaultValue = "false") boolean forzar) {
         try {
             TurnoConfirmacionResultado resultado = service.confirmar(id, aPaciente, forzar);
             if (resultado.isRequiereConfirmacion()) {
                 return ResponseEntity.ok(Map.of(
                         "requiereConfirmacion", true,
-                        "advertencia", resultado.getAdvertencia()
-                ));
+                        "advertencia", resultado.getAdvertencia()));
             }
             return Response.ok(resultado.getTurno(), "Turno confirmado correctamente");
         } catch (IllegalArgumentException e) {

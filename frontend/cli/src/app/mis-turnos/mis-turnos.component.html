@@ -14,7 +14,6 @@
                 <label class="fw-bold mb-0">Filtrar:</label>
                 <select class="form-select form-select-sm" style="width: auto;" [(ngModel)]="estadoFiltro" (change)="onFiltroChange()">
                     <option value="">Todos los Estados</option>
-                    <option value="PROGRAMADO">Programado</option>
                     <option value="RESERVADO">Reservado</option>
                     <option value="CONFIRMADO">Confirmado</option>
                     <option value="CANCELADO">Cancelado</option>
@@ -44,8 +43,7 @@
                                 <span class="badge" [ngClass]="{
                                     'bg-success': turno.estado === 'CONFIRMADO',
                                     'bg-warning text-dark': turno.estado === 'RESERVADO',
-                                    'bg-danger': turno.estado === 'CANCELADO',
-                                    'bg-primary': turno.estado === 'PROGRAMADO'
+                                    'bg-danger': turno.estado === 'CANCELADO'
                                 }">{{ turno.estado }}</span>
                             </td>
                             <td class="text-center">
@@ -55,10 +53,10 @@
                                 <button *ngIf="turno.estado === 'RESERVADO' && !isTurnoPasado(turno)" class="btn btn-sm btn-outline-secondary me-1" (click)="cancelarReserva(turno)" title="Deshacer Reserva">
                                     <i class="fa fa-undo"></i>
                                 </button>
-                                <button *ngIf="(turno.estado === 'CANCELADO' || turno.estado === 'PROGRAMADO') && !isTurnoPasado(turno)" class="btn btn-sm btn-outline-primary me-1" (click)="iniciarReprogramacion(turno)" title="Reprogramar">
+                                <button *ngIf="turno.estado === 'CANCELADO' && !isTurnoPasado(turno)" class="btn btn-sm btn-outline-primary me-1" (click)="iniciarReprogramacion(turno)" title="Reprogramar">
                                     <i class="fa fa-calendar-alt"></i> Reprogramar
                                 </button>
-                                <button *ngIf="(turno.estado === 'PROGRAMADO' || turno.estado === 'CONFIRMADO') && !isTurnoPasado(turno)" class="btn btn-sm btn-outline-danger" (click)="cancelarTurno(turno)" title="Cancelar">
+                                <button *ngIf="turno.estado === 'CONFIRMADO' && !isTurnoPasado(turno)" class="btn btn-sm btn-outline-danger" (click)="cancelarTurno(turno)" title="Cancelar">
                                     <i class="fa fa-times"></i>
                                 </button>
                             </td>

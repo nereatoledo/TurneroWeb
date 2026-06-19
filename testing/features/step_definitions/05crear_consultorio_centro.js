@@ -18,7 +18,7 @@ When('se registra un consultorio con el número {int} y el nombre {string}', fun
         nombre: nombre === "" ? null : nombre
     };
 
-    this.lastResponse = request('POST', `http://backend:8080/consultorios/centro/${this.idCentro}`, {
-        json: consultorio
+    this.lastResponse = request('POST', `http://backend:8080/centros/${this.idCentro}/consultorios`, {
+        json: { numero: consultorio.numero, nombre: consultorio.nombre }, throw: false
     });
 });

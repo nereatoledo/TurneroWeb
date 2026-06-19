@@ -15,13 +15,20 @@ export interface CentroAtencionInfo {
     coordenadas: any;
 }
 
+export interface BloqueLibreDTO {
+    horaInicio: string;
+    horaFin: string;
+}
+
 export interface EsquemaTurnoAgenda {
     horaInicio: string;
     horaFin: string;
     medico: Medico;
     centroAtencion: CentroAtencionInfo;
     consultorio: Consultorio;
-    turnos: TurnoSlot[];
+    intervalo: number;
+    bloquesLibres: BloqueLibreDTO[];
+    turnos?: TurnoSlot[];
 }
 
 export interface AgendaDia {

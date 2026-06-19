@@ -11,8 +11,8 @@ export class AgendaService {
 
     constructor(private http: HttpClient) { }
 
-    agendarTurno(turno: any): Observable<any> {
-        return this.http.post<any>('/rest/turnos', turno);
+    agendarTurno(payload: any): Observable<DataPackage> {
+        return this.http.post<DataPackage>('/rest/turnos/reservar', payload);
     }
 
     buscarAgenda(

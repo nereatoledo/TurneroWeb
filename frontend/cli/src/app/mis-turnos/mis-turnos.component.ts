@@ -140,10 +140,31 @@ export class MisTurnosComponent implements OnInit {
     this.turnoAReprogramar = turno;
     this.turnoService.getTurnosParaReprogramar(turno.id).subscribe({
       next: (res: any) => {
-        this.opcionesReprogramar = res.data;
+        const resultado = res.data;
+        const opciones: any[] = [];
+        if (resultado.agendas) {
+            resultado.agendas.forEach((dia: any) => {
+                if (dia.agendaDetalles) {
+                    dia.agendaDetalles.forEach((esquema: any) => {
+                        const slots = this.generarSlots(esquema.bloquesLibres, esquema.intervalo);
+                        slots.forEach(slot => {
+                            opciones.push({
+                                fecha: dia.fecha,
+                                horaInicio: slot.horario,
+                                horaFin: this.calcularHoraFin(slot.horario, esquema.intervalo),
+                                consultorio: esquema.consultorio,
+                                medicoId: esquema.medico.id,
+                                consultorioId: esquema.consultorio.id
+                            });
+                        });
+                    });
+                }
+            });
+        }
+        this.opcionesReprogramar = opciones;
         this.reprogramacionActiva = true;
       },
-      error: (err) => this.errorMessage = err.error?.error || 'Error al buscar opciones.'
+      error: (err: any) => this.errorMessage = err.error?.error || 'Error al buscar opciones.'
     });
   }
 
@@ -161,18 +182,27 @@ export class MisTurnosComponent implements OnInit {
   ejecutarReprogramacion() {
     if (!this.turnoSeleccionadoParaReprogramar || !this.pacienteId) return;
 
-    this.turnoService.reservarTurno(this.turnoSeleccionadoParaReprogramar.id, { id: this.pacienteId }).subscribe({
-      next: (res) => {
+    const payload = {
+        fecha: this.turnoSeleccionadoParaReprogramar.fecha,
+        horaInicio: this.turnoSeleccionadoParaReprogramar.horaInicio,
+        horaFin: this.turnoSeleccionadoParaReprogramar.horaFin,
+        pacienteId: this.pacienteId,
+        medicoId: this.turnoSeleccionadoParaReprogramar.medicoId,
+        consultorioId: this.turnoSeleccionadoParaReprogramar.consultorioId
+    };
+
+    this.turnoService.reservarTurno(payload).subscribe({
+      next: (res: any) => {
+        const nuevoId = res.data?.id || res.id;
         
         this.turnoService.delete(this.turnoAReprogramar.id).subscribe({
           next: () => {
-             
-             this.confirmarNuevo(this.turnoSeleccionadoParaReprogramar.id);
+             this.confirmarNuevo(nuevoId);
           },
           error: () => this.errorMessage = 'Error al cancelar el turno original.'
         });
       },
-      error: (err) => this.errorMessage = err.error?.error || 'Ese horario ya fue tomado por otro paciente.'
+      error: (err: any) => this.errorMessage = err.error?.error || 'Ese horario ya fue tomado por otro paciente.'
     });
   }
 
@@ -209,4 +239,30 @@ export class MisTurnosComponent implements OnInit {
       error: () => this.errorMessage = 'Error al confirmar el nuevo turno.'
     });
   }
+
+  private generarSlots(bloques: any[], intervalo: number): any[] {
+        const slots: any[] = [];
+        if (!bloques || bloques.length === 0) return slots;
+        
+        bloques.forEach((bloque: any) => {
+            let actual = bloque.horaInicio;
+            while (actual < bloque.horaFin) {
+                const finSlot = this.calcularHoraFin(actual, intervalo);
+                if (finSlot <= bloque.horaFin) {
+                    slots.push({ horario: actual, estaDisponible: true });
+                }
+                actual = finSlot;
+            }
+        });
+        return slots;
+    }
+
+    private calcularHoraFin(horaInicio: string, intervaloMinutos?: number): string {
+        if (!intervaloMinutos) intervaloMinutos = 30;
+        const [horas, minutos, segundos] = horaInicio.split(':').map(Number);
+        const date = new Date();
+        date.setHours(horas, minutos, segundos || 0);
+        date.setMinutes(date.getMinutes() + intervaloMinutos);
+        return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:00`;
+    }
 }

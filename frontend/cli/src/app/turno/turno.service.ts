@@ -28,9 +28,10 @@ export class TurnoService {
         return this.http.get<DataPackage>(`${this.turnosUrl}/paciente/${pacienteId}`, { params });
     }
 
-    reservarTurno(turnoId: number, paciente: any): Observable<any> {
-        return this.http.patch<any>(`${this.turnosUrl}/id/${turnoId}/reservar`, paciente);
+    reservarTurno(payload: any): Observable<any> {
+        return this.http.post<any>(`${this.turnosUrl}/reservar`, payload);
     }
+
 
     cancelarReserva(turnoId: number, pacienteId: number): Observable<any> {
         return this.http.patch<any>(`${this.turnosUrl}/id/${turnoId}/cancelar-reserva`, { id: pacienteId });

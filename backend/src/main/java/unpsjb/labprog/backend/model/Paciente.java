@@ -23,7 +23,5 @@ public class Paciente extends Persona{
     private ObraSocial obraSocial;
 
     @Column(unique = true, nullable = false)
-    private String username; 
-
-    private LocalDate fechaFinRestriccion;
+    private String username;
 }

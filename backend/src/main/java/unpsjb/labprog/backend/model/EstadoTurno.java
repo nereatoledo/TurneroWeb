@@ -1,7 +1,7 @@
 package unpsjb.labprog.backend.model;
 
 public enum EstadoTurno {
-    RESERVADO,
+    PROGRAMADO,
     CONFIRMADO,
     CANCELADO,
     CANCELADO_TARDIO,

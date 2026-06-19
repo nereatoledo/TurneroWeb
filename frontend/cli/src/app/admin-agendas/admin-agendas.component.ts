@@ -74,11 +74,11 @@ export class AdminAgendasComponent implements OnInit {
     };
 
     this.agendaService.autoAsignarAgenda(payload).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.successMessage = 'Agendas generadas correctamente.';
         setTimeout(() => this.router.navigate(['/admin/centros_atencion/agenda']), 2000);
       },
-      error: (err) => {
+      error: (err: any) => {
         if (err.error && err.error.error) {
             this.errorMessage = err.error.error;
         } else {

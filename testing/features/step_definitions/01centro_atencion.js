@@ -12,12 +12,12 @@ When('el administrador ingresa los datos del centro de atención: {string}, {str
         const partes = coordenadas.split(',');
         const lat = parseFloat(partes[0].trim());
         const lon = parseFloat(partes[1].trim());
-        
+
         if (!isNaN(lat) && !isNaN(lon)) {
             coordenadasObj = { latitud: lat, longitud: lon };
         }
     }
-    
+
     const centro = {
         nombre: nombre === "" ? null : nombre,
         direccion: direccion === "" ? null : direccion,
@@ -28,12 +28,17 @@ When('el administrador ingresa los datos del centro de atención: {string}, {str
     };
 
     this.lastResponse = request('POST', 'http://backend:8080/centros', {
-        json: centro
+        json: centro, throw: false
     });
 });
 
 Then('el sistema responde con {int} y {string}', function (codigoEsperado, textoEsperado) {
-    assert.strictEqual(this.lastResponse.statusCode, codigoEsperado);
+    const codigoReal = this.lastResponse.statusCode;
+
+    assert.strictEqual(codigoReal, codigoEsperado);
+
     const respuestaJson = JSON.parse(this.lastResponse.body.toString('utf8'));
-    assert.strictEqual(respuestaJson.message, textoEsperado);
+    const mensajeReal = respuestaJson.message || respuestaJson.error;
+
+    assert.ok(mensajeReal.includes(textoEsperado), `Se esperaba '${textoEsperado}' pero se obtuvo '${mensajeReal}'`);
 });

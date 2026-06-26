@@ -11,10 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AgendaBusquedaResultadoDTO {
-
-    private boolean esSugerencia;
-
-    private String mensaje;
-
-    private List<AgendaResponseDTO> agendas;
+  private boolean esSugerencia;
+  private String mensaje;
+  private List<AgendaResponseDTO> agendas;
 }

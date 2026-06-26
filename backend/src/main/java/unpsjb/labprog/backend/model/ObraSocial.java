@@ -13,13 +13,10 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor
 public class ObraSocial {
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private int id;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
-
-    private String nombre;
-    
-    private String codigo;
-
+  private String nombre;
+  private String codigo;
 }

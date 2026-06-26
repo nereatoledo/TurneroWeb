@@ -13,19 +13,18 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class Medico extends Persona {
+  @Column(nullable = false, unique = true)
+  private String matricula;
 
-    @Column(nullable = false, unique = true)
-    private String matricula;
+  @ManyToOne
+  @JoinColumn(name = "especialidad_id")
+  private Especialidad especialidad;
 
-    @ManyToOne
-    @JoinColumn(name = "especialidad_id")
-    private Especialidad especialidad;
+  public Especialidad getEspecialidad() {
+    return especialidad;
+  }
 
-    public Especialidad getEspecialidad() {
-        return especialidad;
-    }
-
-    public void setEspecialidad(Especialidad especialidad) {
-        this.especialidad = especialidad;
-    }
+  public void setEspecialidad(Especialidad especialidad) {
+    this.especialidad = especialidad;
+  }
 }

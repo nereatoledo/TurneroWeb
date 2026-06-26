@@ -1,7 +1,7 @@
 package unpsjb.labprog.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import com.fasterxml.jackson.annotation.JsonIgnore; 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,20 +11,18 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class Consultorio {
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private int id;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+  @Column(nullable = false)
+  private String nombre;
 
-    @Column(nullable = false)
-    private String nombre;
+  @Column(nullable = false)
+  private Integer numero;
 
-    @Column(nullable = false)
-    private Integer numero;
-
-    @ManyToOne
-    @JoinColumn(name = "centro_atencion_id") 
-    @JsonIgnore
-    private CentroAtencion centro;
-
+  @ManyToOne
+  @JoinColumn(name = "centro_atencion_id")
+  @JsonIgnore
+  private CentroAtencion centro;
 }

@@ -1,5 +1,6 @@
 package unpsjb.labprog.backend.presenter.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import java.time.LocalTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,6 +12,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SlotDTO {
-    private LocalTime horario;
-    private boolean disponible;
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
+  private LocalTime horario;
+  private boolean disponible;
 }

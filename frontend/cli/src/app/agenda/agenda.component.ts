@@ -82,7 +82,7 @@ export class AgendaComponent implements OnInit {
             next: (res: DataPackage) => {
                 this.centroSeleccionado = res.data;
                 this.isCentroLocked = true;
-                this.buscarAgenda();
+                // No disparamos buscarAgenda() automáticamente para respetar las reglas de negocio
             },
             error: (err: any) => {
                 console.error('Error al cargar el centro preseleccionado', err);
@@ -176,6 +176,12 @@ export class AgendaComponent implements OnInit {
             return;
         }
 
+        // Reglas de negocio: Es obligatorio tener una especialidad o un médico seleccionado
+        if (!this.especialidadSeleccionada && !this.medicoSeleccionado) {
+            this.mensajeError = 'Por favor, seleccione una especialidad o un médico para buscar turnos.';
+            return;
+        }
+
         if (this.especialidadSeleccionada && typeof this.especialidadSeleccionada === 'string') {
             this.mensajeError = 'Por favor, seleccione una especialidad de la lista desplegable.';
             return;
@@ -198,7 +204,6 @@ export class AgendaComponent implements OnInit {
         this.esSugerencia = false;
         this.mensajeSugerencia = '';
 
-
         const idEspecialidad = this.especialidadSeleccionada
             ? this.especialidadSeleccionada.id
             : (this.medicoSeleccionado?.especialidad?.id ?? undefined);
@@ -213,12 +218,62 @@ export class AgendaComponent implements OnInit {
             idCentro
         ).subscribe({
             next: (res: DataPackage) => {
+                const resultado = res.data as any;
 
-                const resultado = res.data as { esSugerencia: boolean; mensaje: string; agendas: AgendaDia[] };
-                this.agendas = resultado.agendas ?? [];
+                // 1. Mapeamos las sugerencias
+                this.mensajeSugerencia = resultado.observaciones ?? '';
+                this.esSugerencia = this.mensajeSugerencia.toLowerCase().includes('sugerencia');
 
-                this.mensajeSugerencia = resultado.esSugerencia ? resultado.mensaje : '';
-                this.esSugerencia = resultado.esSugerencia ?? false;
+                const diasBackend = resultado.dias ?? [];
+
+                // 2. Transformamos la estructura plana de Java a la estructura agrupada que espera Angular
+                const agendasMapeadas: AgendaDia[] = diasBackend.map((diaBackend: any) => {
+                    // Usamos un mapa para agrupar los slots por médico y consultorio
+                    const esquemasMap = new Map<string, EsquemaTurnoAgenda>();
+
+                    (diaBackend.slots || []).forEach((slotBackend: any) => {
+                        const medicoId = slotBackend.medico?.id || 'sin-medico';
+                        const consId = slotBackend.consultorio?.id || 'sin-cons';
+                        const key = `${medicoId}-${consId}`;
+
+                        if (!esquemasMap.has(key)) {
+                            // Inicializamos el grupo
+                            esquemasMap.set(key, {
+                                horaInicio: slotBackend.horaInicio,
+                                horaFin: slotBackend.horaFin,
+                                medico: slotBackend.medico,
+                                centroAtencion: {
+                                    nombre: slotBackend.centroAtencionNombre || 'Centro Médico',
+                                    direccion: '', ciudad: '', provincia: '', telefono: '', coordenadas: null
+                                },
+                                consultorio: slotBackend.consultorio,
+                                intervalo: 30, // Estimación de seguridad
+                                slots: []
+                            });
+                        }
+
+                        const esquema = esquemasMap.get(key)!;
+                        // Actualizamos el rango horario de todo el bloque
+                        if (slotBackend.horaInicio < esquema.horaInicio) esquema.horaInicio = slotBackend.horaInicio;
+                        if (slotBackend.horaFin > esquema.horaFin) esquema.horaFin = slotBackend.horaFin;
+
+                        // Agregamos el cuadradito (slot) a su grupo correspondiente
+                        esquema.slots.push({
+                            horario: slotBackend.horaInicio,
+                            disponible: slotBackend.estado === 'LIBRE'
+                        });
+                    });
+
+                    return {
+                        fecha: diaBackend.fecha,
+                        diaSemana: diaBackend.diaSemana,
+                        esFeriado: false, // Asumido false a menos que el backend lo envíe
+                        agendaDetalles: Array.from(esquemasMap.values())
+                    };
+                });
+
+                this.agendas = agendasMapeadas;
+                console.log("Agendas procesadas para la vista:", this.agendas);
             },
             error: (err: any) => {
                 console.error(err);
@@ -226,7 +281,6 @@ export class AgendaComponent implements OnInit {
             }
         });
     }
-
 
     agendarTurno(dia: AgendaDia, esquema: EsquemaTurnoAgenda, slot: SlotDTO): void {
         const currentUser = this.loginService.getCurrentUser();
@@ -246,7 +300,7 @@ export class AgendaComponent implements OnInit {
             { icon: 'fa fa-user-md', label: 'Médico', value: `${esquema.medico.apellido}, ${esquema.medico.nombre}` },
             { icon: 'fa fa-stethoscope', label: 'Especialidad', value: esquema.medico.especialidad.nombre },
             { icon: 'fa fa-building', label: 'Centro de atención', value: esquema.centroAtencion.nombre },
-            { icon: 'fa fa-map-marker', label: 'Dirección', value: esquema.centroAtencion.direccion }
+            { icon: 'fa fa-map-marker', label: 'Dirección', value: esquema.centroAtencion.direccion || 'Sin dirección' }
         ];
 
         this.modalService.confirm('Confirmar Turno', '¿Querés agendar este turno?', '', detallesTurno)
@@ -277,7 +331,6 @@ export class AgendaComponent implements OnInit {
                                             });
                                         })
                                         .catch(() => {
-
                                             this.modalService.info('Aviso', 'El turno quedó reservado por 15 minutos en Mis Turnos.').then(() => this.buscarAgenda());
                                         });
                                 } else {
@@ -290,8 +343,7 @@ export class AgendaComponent implements OnInit {
                     error: (err: any) => this.mostrarError(err)
                 });
             })
-            .catch(() => {
-            });
+            .catch(() => { });
     }
 
     private mostrarError(err: any): void {

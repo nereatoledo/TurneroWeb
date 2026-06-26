@@ -13,23 +13,21 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class Especialidad {
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private int id;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+  private String nombre;
+  private String descripcion;
+  private Integer intervalo;
 
-    private String nombre;
-    private String descripcion;
+  @JsonIgnore
+  @OneToMany(mappedBy = "especialidad", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<Medico> medicos = new ArrayList<>();
 
-    private Integer intervalo;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "especialidad", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Medico> medicos = new ArrayList<>();
-
-    public Especialidad(String nombre, String descripcion, Integer intervalo) {
-        this.nombre = nombre;
-        this.descripcion = descripcion;
-        this.intervalo = intervalo;
-    }
+  public Especialidad(String nombre, String descripcion, Integer intervalo) {
+    this.nombre = nombre;
+    this.descripcion = descripcion;
+    this.intervalo = intervalo;
+  }
 }

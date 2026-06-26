@@ -1,10 +1,7 @@
 const { When } = require('@cucumber/cucumber');
 const request = require('sync-request');
-
 const URL_BASE = 'http://backend:8080/obras-sociales';
-
 let cleared = false;
-
 When('el administrador crea una obra social con el nombre {string} y el codigo {string}', function (nombre, codigo) {
     if (!cleared) {
         try {
@@ -13,7 +10,6 @@ When('el administrador crea una obra social con el nombre {string} y el codigo {
         }
         cleared = true;
     }
-
     try {
         this.lastResponse = request('POST', URL_BASE, {
             json: {

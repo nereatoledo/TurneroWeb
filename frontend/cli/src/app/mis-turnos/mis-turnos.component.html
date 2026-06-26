@@ -42,8 +42,10 @@
                             <td>
                                 <span class="badge" [ngClass]="{
                                     'bg-success': turno.estado === 'CONFIRMADO',
-                                    'bg-warning text-dark': turno.estado === 'RESERVADO',
-                                    'bg-danger': turno.estado === 'CANCELADO'
+                                    'bg-warning text-dark': turno.estado === 'RESERVADO' || turno.estado === 'PROGRAMADO',
+                                    'bg-danger': turno.estado === 'CANCELADO' || turno.estado === 'CANCELADO_TARDIO',
+                                    'bg-info text-dark': turno.estado === 'REAGENDADO',
+                                    'bg-secondary': turno.estado === 'FINALIZADO'
                                 }">{{ turno.estado }}</span>
                             </td>
                             <td class="text-center">
@@ -150,7 +152,8 @@
                                 'bg-success': mod.estadoNuevo === 'CONFIRMADO',
                                 'bg-danger': mod.estadoNuevo === 'CANCELADO' || mod.estadoNuevo === 'CANCELADO_TARDIO',
                                 'bg-info text-dark': mod.estadoNuevo === 'REAGENDADO',
-                                'bg-warning text-dark': mod.estadoNuevo === 'PROGRAMADO'
+                                'bg-warning text-dark': mod.estadoNuevo === 'PROGRAMADO',
+                                'bg-secondary': mod.estadoNuevo === 'FINALIZADO'
                             }">{{ mod.estadoNuevo }}</span>
                         </div>
                         <div class="text-muted small mt-1"><i class="fa fa-comment-alt"></i> {{ mod.motivo }}</div>

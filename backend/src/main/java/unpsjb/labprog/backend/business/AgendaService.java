@@ -1,338 +1,281 @@
 package unpsjb.labprog.backend.business;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import unpsjb.labprog.backend.model.CentroAtencion;
-import unpsjb.labprog.backend.model.Consultorio;
-import unpsjb.labprog.backend.model.DiaSemana;
-import unpsjb.labprog.backend.model.EstadoTurno;
-import unpsjb.labprog.backend.model.EsquemaTurno;
-import unpsjb.labprog.backend.model.StaffMedico;
-import unpsjb.labprog.backend.model.Turno;
-import unpsjb.labprog.backend.presenter.dto.AgendaBusquedaResultadoDTO;
-import unpsjb.labprog.backend.presenter.dto.AgendaResponseDTO;
-import unpsjb.labprog.backend.presenter.dto.AgendaResponseDTO.*;
-import unpsjb.labprog.backend.presenter.dto.AutoAgendaRequestDTO;
-import unpsjb.labprog.backend.presenter.dto.SlotDTO;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import unpsjb.labprog.backend.model.AgendaDTO;
+import unpsjb.labprog.backend.model.AgendaDTO.ItemGeneracionAgenda;
+import unpsjb.labprog.backend.model.CentroAtencion;
+import unpsjb.labprog.backend.model.Consultorio;
+import unpsjb.labprog.backend.model.DiaSemana;
+import unpsjb.labprog.backend.model.EsquemaTurno;
+import unpsjb.labprog.backend.model.EstadoTurno;
+import unpsjb.labprog.backend.model.StaffMedico;
+import unpsjb.labprog.backend.presenter.dto.AutoAgendaRequestDTO;
 
 @Service
 public class AgendaService {
+  private final int DEFAULT_CALENDAR_SPAN = 6;
+  @Autowired
+  CentroAtencionService centroAtencionService;
+  @Autowired
+  TurnoService turnoService;
+  @Autowired
+  AgendaGenerator generator;
+  @Autowired
+  EsquemaTurnoService esquemaTurnoService;
+  @Autowired
+  ConsultorioRepository consultorioRepository;
+  @Autowired
+  StaffMedicoRepository staffMedicoRepository;
+  @Autowired
+  EsquemaTurnoRepository esquemaTurnoRepository;
 
-    @Autowired
-    private EsquemaTurnoRepository esquemaTurnoRepository;
-    @Autowired
-    private ConsultorioRepository consultorioRepository;
-    @Autowired
-    private StaffMedicoRepository staffMedicoRepository;
-    @Autowired
-    private FeriadoRepository feriadoRepository;
-    @Autowired
-    private TurnoRepository turnoRepository;
-
-    public AgendaBusquedaResultadoDTO buscarConFallback(
-            LocalDate fechaInicio,
-            LocalDate fechaFin,
-            Integer idEspecialidad,
-            Integer idMedico,
-            Integer idCentro) {
-
-        List<DiaSemana> diasSemana = obtenerDiasSemana(fechaInicio, fechaFin);
-
-        List<AgendaResponseDTO> agendas = obtenerAgendaFrontend(
-                fechaInicio, fechaFin, idEspecialidad, idMedico, idCentro, null, null);
-
-        if (tieneSlotsDisponibles(agendas)) {
-            return new AgendaBusquedaResultadoDTO(false, null, agendas);
-        }
-
-        if (idMedico != null) {
-
-            if (idCentro != null &&
-                    esquemaTurnoRepository.existeEsquemaParaDias(
-                            diasSemana, idEspecialidad, idMedico, null, null, idCentro)) {
-
-                List<AgendaResponseDTO> fallbackA = obtenerAgendaFrontend(
-                        fechaInicio, fechaFin, idEspecialidad, idMedico, null, null, idCentro);
-                if (tieneSlotsDisponibles(fallbackA)) {
-                    return new AgendaBusquedaResultadoDTO(
-                            true,
-                            "El médico no tiene disponibilidad en el centro seleccionado. " +
-                                    "Te mostramos su agenda en otros centros de atención.",
-                            fallbackA);
-                }
-            }
-
-            if (esquemaTurnoRepository.existeEsquemaParaDias(
-                    diasSemana, idEspecialidad, null, null, idMedico, null)) {
-
-                List<AgendaResponseDTO> fallbackB = obtenerAgendaFrontend(
-                        fechaInicio, fechaFin, idEspecialidad, null, null, idMedico, null);
-                if (tieneSlotsDisponibles(fallbackB)) {
-                    return new AgendaBusquedaResultadoDTO(
-                            true,
-                            "No hay disponibilidad para ese médico. " +
-                                    "Te mostramos otros médicos disponibles de la misma especialidad.",
-                            fallbackB);
-                }
-            }
-        }
-
-        if (idCentro != null && idMedico == null &&
-                esquemaTurnoRepository.existeEsquemaParaDias(
-                        diasSemana, idEspecialidad, null, null, null, idCentro)) {
-
-            List<AgendaResponseDTO> fallbackC = obtenerAgendaFrontend(
-                    fechaInicio, fechaFin, idEspecialidad, null, null, null, idCentro);
-            if (tieneSlotsDisponibles(fallbackC)) {
-                return new AgendaBusquedaResultadoDTO(
-                        true,
-                        "No hay disponibilidad en el centro seleccionado para esa especialidad. " +
-                                "Te mostramos turnos disponibles en otros centros de atención.",
-                        fallbackC);
-            }
-        }
-
-        return new AgendaBusquedaResultadoDTO(false, null, agendas);
+  private List<LocalDate> fechasEntre(LocalDate diaInicio, LocalDate diaFin) {
+    List<LocalDate> fechas = new ArrayList<>();
+    LocalDate hoy = diaInicio;
+    while (!hoy.isAfter(diaFin)) {
+      fechas.add(hoy);
+      hoy = hoy.plusDays(1);
     }
+    return fechas;
+  }
 
-    private List<DiaSemana> obtenerDiasSemana(LocalDate fechaInicio, LocalDate fechaFin) {
-        Set<DiaSemana> dias = new HashSet<>();
-        LocalDate fecha = fechaInicio;
-        while (!fecha.isAfter(fechaFin) && dias.size() < 7) {
-            DiaSemana dia = DiaSemana.desdeJava(fecha.getDayOfWeek());
-            if (dia != null)
-                dias.add(dia);
-            fecha = fecha.plusDays(1);
-        }
-        return new ArrayList<>(dias);
+  private Map<DiaSemana, Collection<EsquemaTurno>> esquemaTurnosPorDiaSemana(
+      Collection<EsquemaTurno> someEsquemaTurnos) {
+    Map<DiaSemana, Collection<EsquemaTurno>> clasificados = new HashMap<>();
+    for (EsquemaTurno aEsquemaTurno : someEsquemaTurnos) {
+      if (clasificados.get(aEsquemaTurno.getDiaSemana()) == null) {
+        Collection<EsquemaTurno> lista = new ArrayList<>();
+        lista.add(aEsquemaTurno);
+        clasificados.put(aEsquemaTurno.getDiaSemana(), lista);
+      } else {
+        clasificados.get(aEsquemaTurno.getDiaSemana()).add(aEsquemaTurno);
+      }
     }
+    return clasificados;
+  }
 
-    private boolean tieneSlotsDisponibles(List<AgendaResponseDTO> agendas) {
-        if (agendas == null || agendas.isEmpty())
-            return false;
-        return agendas.stream()
-                .filter(dia -> !dia.isEsFeriado())
-                .flatMap(dia -> dia.getAgendaDetalles().stream())
-                .anyMatch(esquema -> esquema.getSlots().stream().anyMatch(SlotDTO::isDisponible));
+  private Map<LocalDate, Collection<ItemGeneracionAgenda>> generarItemsDeCentro(
+      CentroAtencion aCentroAtencion,
+      Collection<EsquemaTurno> esquemaTurnoSeleccionados,
+      LocalDate fechaInicio,
+      LocalDate fechaFin) {
+    Map<DiaSemana, Collection<EsquemaTurno>> mapEsquemaTurnos = esquemaTurnosPorDiaSemana(esquemaTurnoSeleccionados);
+    Map<LocalDate, Collection<ItemGeneracionAgenda>> someItemGeneracionAgenda = new HashMap<>();
+    for (LocalDate fecha : fechasEntre(fechaInicio, fechaFin)) {
+      Collection<EsquemaTurno> esquemaTurnosHoy = mapEsquemaTurnos.get(DiaSemana.from(fecha.getDayOfWeek()));
+      Collection<ItemGeneracionAgenda> itemsHoy = new ArrayList<>();
+      if (esquemaTurnosHoy == null)
+        continue;
+      for (EsquemaTurno esquemaTurnoHoy : esquemaTurnosHoy) {
+        itemsHoy.add(
+            new AgendaDTO().new ItemGeneracionAgenda(
+                fecha,
+                esquemaTurnoHoy.getDiaSemana(),
+                esquemaTurnoHoy.getConsultorio(),
+                esquemaTurnoHoy.getHoraInicio(),
+                esquemaTurnoHoy.getHoraFin(),
+                esquemaTurnoHoy.getIntervalo(),
+                aCentroAtencion,
+                esquemaTurnoHoy.getStaffMedico().getMedico(),
+                turnoService.find(
+                    fecha,
+                    esquemaTurnoHoy.getConsultorio().getId(),
+                    null,
+                    null,
+                    List.of(
+                        EstadoTurno.PROGRAMADO, EstadoTurno.CONFIRMADO, EstadoTurno.REAGENDADO))));
+      }
+      someItemGeneracionAgenda.put(fecha, itemsHoy);
     }
+    return someItemGeneracionAgenda;
+  }
 
-    private List<AgendaResponseDTO> obtenerAgendaFrontend(
-            LocalDate fechaInicio,
-            LocalDate fechaFin,
-            Integer idEspecialidad,
-            Integer idMedico,
-            Integer idCentro,
-            Integer idMedicoExcluido,
-            Integer idCentroExcluido) {
-
-        List<AgendaResponseDTO> agendasDiarias = new ArrayList<>();
-        LocalDate fechaActual = fechaInicio;
-
-        while (!fechaActual.isAfter(fechaFin)) {
-
-            DiaSemana diaJava = DiaSemana.desdeJava(fechaActual.getDayOfWeek());
-
-            if (feriadoRepository.existeFeriadoPorFecha(fechaActual)) {
-                AgendaResponseDTO agendaDiaFeriado = new AgendaResponseDTO(fechaActual, diaJava, new ArrayList<>(),
-                        true);
-                agendasDiarias.add(agendaDiaFeriado);
-                fechaActual = fechaActual.plusDays(1);
-                continue;
-            }
-
-            List<EsquemaTurno> esquemasDb = esquemaTurnoRepository.buscarParaAgenda(diaJava, idEspecialidad, idMedico,
-                    idCentro, idMedicoExcluido, idCentroExcluido);
-
-            if (!esquemasDb.isEmpty()) {
-                List<EsquemaTurnoAgenda> detallesDelDia = new ArrayList<>();
-
-                for (EsquemaTurno esquema : esquemasDb) {
-                    CentroAtencion centroEntity = esquema.getStaffMedico().getCentro();
-
-                    CentroAtencionInfo centroInfo = new CentroAtencionInfo(
-                            centroEntity.getNombre(),
-                            centroEntity.getDireccion(),
-                            centroEntity.getLocalidad(),
-                            centroEntity.getProvincia(),
-                            centroEntity.getTelefono(),
-                            centroEntity.getCoordenadas());
-
-                    Integer intervaloEsp = esquema.getStaffMedico().getMedico().getEspecialidad().getIntervalo();
-
-                    int intervaloMinutos = (intervaloEsp != null && intervaloEsp > 0) ? intervaloEsp : 30;
-
-                    List<Turno> turnosOcupados = turnoRepository.find(fechaActual, esquema.getConsultorio().getId(),
-                            Arrays.asList(EstadoTurno.PROGRAMADO, EstadoTurno.CONFIRMADO, EstadoTurno.REAGENDADO));
-                    List<SlotDTO> slots = generarGrillaSlots(fechaActual, esquema.getHoraInicio(),
-                            esquema.getHoraFin(), turnosOcupados, intervaloMinutos);
-
-                    if (!slots.isEmpty()) {
-                        EsquemaTurnoAgenda tarjeta = new EsquemaTurnoAgenda(
-                                esquema.getHoraInicio(),
-                                esquema.getHoraFin(),
-                                esquema.getStaffMedico().getMedico(),
-                                centroInfo,
-                                esquema.getConsultorio(),
-                                intervaloMinutos,
-                                slots);
-
-                        detallesDelDia.add(tarjeta);
-                    }
-                }
-
-                if (!detallesDelDia.isEmpty()) {
-                    AgendaResponseDTO agendaDia = new AgendaResponseDTO(fechaActual, diaJava, detallesDelDia, false);
-                    agendasDiarias.add(agendaDia);
-                }
-            }
-            fechaActual = fechaActual.plusDays(1);
-        }
-        return agendasDiarias;
+  private Map<LocalDate, Collection<ItemGeneracionAgenda>> obtenerItems(
+      Integer aEspecialidadId,
+      Integer aMedicoId,
+      Integer aCentroAtencionId,
+      LocalDate fechaInicio,
+      LocalDate fechaFin) {
+    Map<LocalDate, Collection<ItemGeneracionAgenda>> someItems = new HashMap<>();
+    if (aCentroAtencionId == null) {
+      for (CentroAtencion aCentroAtencion : centroAtencionService.findAll()) {
+        Collection<EsquemaTurno> esquemaTurnos = esquemaTurnoService.search(aEspecialidadId, aMedicoId,
+            aCentroAtencion.getId());
+        someItems.putAll(
+            generarItemsDeCentro(aCentroAtencion, esquemaTurnos, fechaInicio, fechaFin));
+      }
+    } else {
+      Collection<EsquemaTurno> esquemaTurnos = esquemaTurnoService.search(aEspecialidadId, aMedicoId,
+          aCentroAtencionId);
+      someItems.putAll(
+          generarItemsDeCentro(
+              centroAtencionService.findById(aCentroAtencionId),
+              esquemaTurnos,
+              fechaInicio,
+              fechaFin));
     }
+    return someItems;
+  }
 
-    private List<SlotDTO> generarGrillaSlots(LocalDate fechaActual, LocalTime inicio, LocalTime fin,
-            List<Turno> turnosOcupados, int intervaloMinutos) {
-        List<SlotDTO> slots = new ArrayList<>();
-        LocalDate hoy = LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires"));
-        LocalTime ahora = LocalTime.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires"));
-
-        LocalTime actual = inicio;
-
-        while (actual.isBefore(fin)) {
-            LocalTime finSlot = actual.plusMinutes(intervaloMinutos);
-            if (finSlot.isAfter(fin)) {
-                finSlot = fin;
-            }
-
-            boolean disponible = true;
-
-            // Past validation
-            if (fechaActual.isBefore(hoy) || (fechaActual.isEqual(hoy) && actual.isBefore(ahora))) {
-                disponible = false;
-            }
-
-            // Occupied validation
-            if (disponible) {
-                for (Turno t : turnosOcupados) {
-                    LocalTime tInicio = t.getHoraInicio();
-                    LocalTime tFin = t.getHoraFin() != null ? t.getHoraFin() : tInicio.plusMinutes(intervaloMinutos);
-                    
-                    if (tInicio.isBefore(finSlot) && tFin.isAfter(actual)) {
-                        disponible = false;
-                        break;
-                    }
-                }
-            }
-
-            slots.add(new SlotDTO(actual, disponible));
-            actual = finSlot;
-        }
-
-        return slots;
+  private AgendaDTO generarSugerencias(
+      Integer aEspecialidadId,
+      Integer aMedicoId,
+      Integer aCentroAtencionId,
+      LocalDate fechaInicio,
+      LocalDate fechaFin) {
+    Map<LocalDate, Collection<ItemGeneracionAgenda>> items;
+    AgendaDTO agenda;
+    items = obtenerItems(aEspecialidadId, aMedicoId, null, fechaInicio, fechaFin);
+    agenda = generator.generate(fechaInicio, fechaFin, items);
+    if (!agenda.isEmpty()) {
+      agenda.setObservaciones(
+          "No se encontraron turnos disponibles, mostrando sugerencias con otros centros de"
+              + " atención");
+      return agenda;
     }
-
-    @Transactional
-    public List<EsquemaTurno> autoAsignarAgenda(AutoAgendaRequestDTO dto) {
-        StaffMedico staffMedico = staffMedicoRepository.findByCentroIdYMedicoId(dto.getIdCentro(), dto.getIdMedico());
-        if (staffMedico == null) {
-            throw new IllegalArgumentException("El médico no está asociado al centro de atención indicado.");
-        }
-
-        List<Consultorio> consultoriosCentro = consultorioRepository.findByCentroIdOrdenados(dto.getIdCentro());
-        if (consultoriosCentro.isEmpty()) {
-            throw new IllegalArgumentException("El centro de atención no tiene consultorios.");
-        }
-
-        List<EsquemaTurno> esquemasGuardados = new ArrayList<>();
-        Set<DiaSemana> diasProcesados = new HashSet<>();
-        LocalDate diaActual = dto.getFechaInicio();
-
-        while (!diaActual.isAfter(dto.getFechaFin()) && diasProcesados.size() < 7) {
-            DiaSemana diaJava = DiaSemana.desdeJava(diaActual.getDayOfWeek());
-
-            if (diaJava != null && !diasProcesados.contains(diaJava)) {
-
-                boolean hayConflictoMedico = esquemaTurnoRepository.existeConflictoParaMedico(
-                        staffMedico.getId(), diaJava, dto.getHoraInicio(), dto.getHoraFin());
-                if (hayConflictoMedico) {
-                    throw new IllegalArgumentException(
-                            "El médico ya está asignado en otro consultorio en el día " + diaJava);
-                }
-
-                LocalTime currentInicio = dto.getHoraInicio();
-                List<Consultorio> consultoriosDisponibles = new ArrayList<>(consultoriosCentro);
-
-                while (currentInicio.isBefore(dto.getHoraFin())) {
-                    Consultorio mejorConsultorio = null;
-                    LocalTime mejorFinLibre = currentInicio;
-
-                    for (Consultorio c : consultoriosDisponibles) {
-                        LocalTime finLibre = calcularBloqueLibre(c, diaJava, currentInicio, dto.getHoraFin());
-                        if (finLibre.isAfter(mejorFinLibre)) {
-                            mejorFinLibre = finLibre;
-                            mejorConsultorio = c;
-                        }
-                        if (finLibre.equals(dto.getHoraFin())) {
-                            mejorConsultorio = c;
-                            mejorFinLibre = finLibre;
-                            break;
-                        }
-                    }
-
-                    if (mejorConsultorio == null || mejorFinLibre.equals(currentInicio)) {
-                        throw new IllegalStateException(
-                                "No hay consultorios disponibles para cubrir el bloque horario solicitado en el día "
-                                        + diaJava);
-                    }
-
-                    EsquemaTurno esquema = new EsquemaTurno();
-                    esquema.setNombre(dto.getNombre() != null ? dto.getNombre() : "Agenda Semanal Automática");
-                    esquema.setDescripcion(dto.getDescripcion());
-                    esquema.setDiaSemana(diaJava);
-                    esquema.setHoraInicio(currentInicio);
-                    esquema.setHoraFin(mejorFinLibre);
-                    esquema.setConsultorio(mejorConsultorio);
-                    esquema.setStaffMedico(staffMedico);
-
-                    esquemasGuardados.add(esquemaTurnoRepository.save(esquema));
-
-                    currentInicio = mejorFinLibre;
-                    consultoriosDisponibles.remove(mejorConsultorio);
-                }
-                diasProcesados.add(diaJava);
-            }
-            diaActual = diaActual.plusDays(1);
-        }
-
-        return esquemasGuardados;
+    items = obtenerItems(aEspecialidadId, null, aCentroAtencionId, fechaInicio, fechaFin);
+    agenda = generator.generate(fechaInicio, fechaFin, items);
+    if (!agenda.isEmpty()) {
+      agenda.setObservaciones(
+          "No se encontraron turnos disponibles, mostrando sugerencias con otros médicos");
+      return agenda;
     }
-
-    private LocalTime calcularBloqueLibre(Consultorio consultorio, DiaSemana dia, LocalTime inicioBuscado,
-            LocalTime finBuscado) {
-        List<EsquemaTurno> esquemas = esquemaTurnoRepository.findByConsultorioIdYDia(consultorio.getId(), dia);
-        LocalTime maxLibre = finBuscado;
-
-        for (EsquemaTurno eq : esquemas) {
-            if (inicioBuscado.isBefore(eq.getHoraFin()) && eq.getHoraInicio().isBefore(finBuscado)) {
-                if (!inicioBuscado.isBefore(eq.getHoraInicio())) {
-                    return inicioBuscado;
-                } else {
-                    if (eq.getHoraInicio().isBefore(maxLibre)) {
-                        maxLibre = eq.getHoraInicio();
-                    }
-                }
-            }
-        }
-        return maxLibre;
+    items = obtenerItems(aEspecialidadId, null, null, fechaInicio, fechaFin);
+    agenda = generator.generate(fechaInicio, fechaFin, items);
+    if (!agenda.isEmpty()) {
+      agenda.setObservaciones(
+          "No se encontraron turnos disponibles, mostrando sugerencias con otros médicos y"
+              + " centros");
+      return agenda;
     }
+    agenda.setObservaciones("Sin turnos encontrados");
+    return agenda;
+  }
+
+  public AgendaDTO generate(
+      Integer aEspecialidadId,
+      Integer aMedicoId,
+      Integer aCentroAtencionId,
+      LocalDate fechaInicio,
+      LocalDate fechaFin) {
+    if (fechaInicio == null)
+      fechaInicio = LocalDate.now();
+    if (fechaFin == null)
+      fechaFin = fechaInicio.plusDays(DEFAULT_CALENDAR_SPAN);
+    Map<LocalDate, Collection<ItemGeneracionAgenda>> items = obtenerItems(aEspecialidadId, aMedicoId, aCentroAtencionId,
+        fechaInicio, fechaFin);
+    AgendaDTO agenda = generator.generate(fechaInicio, fechaFin, items);
+    if (!agenda.isEmpty()) {
+      agenda.setObservaciones("Turnos disponibles encontrados");
+      return agenda;
+    }
+    agenda = generarSugerencias(aEspecialidadId, aMedicoId, aCentroAtencionId, fechaInicio, fechaFin);
+    return agenda;
+  }
+
+  @Transactional
+  public List<EsquemaTurno> autoAsignarAgenda(AutoAgendaRequestDTO dto) {
+    StaffMedico staffMedico = staffMedicoRepository.findByCentroIdYMedicoId(dto.getIdCentro(), dto.getIdMedico());
+    if (staffMedico == null) {
+      throw new IllegalArgumentException(
+          "El médico no está asociado al centro de atención indicado.");
+    }
+    List<Consultorio> consultoriosCentro = consultorioRepository.findByCentroIdOrdenados(dto.getIdCentro());
+    if (consultoriosCentro.isEmpty()) {
+      throw new IllegalArgumentException("El centro de atención no tiene consultorios.");
+    }
+    List<EsquemaTurno> esquemasGuardados = new ArrayList<>();
+    Set<DiaSemana> diasProcesados = new HashSet<>();
+    LocalDate diaActual = dto.getFechaInicio();
+    while (!diaActual.isAfter(dto.getFechaFin()) && diasProcesados.size() < 7) {
+      DiaSemana diaJava = DiaSemana.from(diaActual.getDayOfWeek());
+      if (diaJava != null && !diasProcesados.contains(diaJava)) {
+        boolean hayConflictoMedico = esquemaTurnoRepository.existeConflictoParaMedico(
+            staffMedico.getId(), diaJava, dto.getHoraInicio(), dto.getHoraFin());
+        if (hayConflictoMedico) {
+          throw new IllegalArgumentException(
+              "El médico ya está asignado en otro consultorio en el día " + diaJava);
+        }
+        LocalTime currentInicio = dto.getHoraInicio();
+        List<Consultorio> consultoriosDisponibles = new ArrayList<>(consultoriosCentro);
+        while (currentInicio.isBefore(dto.getHoraFin())) {
+          Consultorio mejorConsultorio = null;
+          LocalTime mejorFinLibre = currentInicio;
+          for (Consultorio c : consultoriosDisponibles) {
+            LocalTime finLibre = calcularBloqueLibre(c, diaJava, currentInicio, dto.getHoraFin());
+            if (finLibre.isAfter(mejorFinLibre)) {
+              mejorFinLibre = finLibre;
+              mejorConsultorio = c;
+            }
+            if (finLibre.equals(dto.getHoraFin())) {
+              mejorConsultorio = c;
+              mejorFinLibre = finLibre;
+              break;
+            }
+          }
+          if (mejorConsultorio == null || mejorFinLibre.equals(currentInicio)) {
+            throw new IllegalStateException(
+                "No hay consultorios disponibles para cubrir el bloque horario solicitado en el día"
+                    + " "
+                    + diaJava);
+          }
+          EsquemaTurno esquema = new EsquemaTurno();
+          esquema.setNombre(
+              dto.getNombre() != null ? dto.getNombre() : "Agenda Semanal Automática");
+          esquema.setDescripcion(dto.getDescripcion());
+          esquema.setDiaSemana(diaJava);
+          esquema.setHoraInicio(currentInicio);
+          esquema.setHoraFin(mejorFinLibre);
+          esquema.setConsultorio(mejorConsultorio);
+          esquema.setStaffMedico(staffMedico);
+
+          Integer intervalo = 30;
+          if (staffMedico != null && staffMedico.getMedico() != null
+              && staffMedico.getMedico().getEspecialidad() != null) {
+            Integer intervaloEsp = staffMedico.getMedico().getEspecialidad().getIntervalo();
+            if (intervaloEsp != null && intervaloEsp > 0) {
+              intervalo = intervaloEsp;
+            }
+          }
+          esquema.setIntervalo(intervalo);
+
+          esquemasGuardados.add(esquemaTurnoRepository.save(esquema));
+          currentInicio = mejorFinLibre;
+          consultoriosDisponibles.remove(mejorConsultorio);
+        }
+        diasProcesados.add(diaJava);
+      }
+      diaActual = diaActual.plusDays(1);
+    }
+    return esquemasGuardados;
+  }
+
+  private LocalTime calcularBloqueLibre(
+      Consultorio consultorio, DiaSemana dia, LocalTime inicioBuscado, LocalTime finBuscado) {
+    List<EsquemaTurno> esquemas = esquemaTurnoRepository.findByConsultorioIdYDia(consultorio.getId(), dia);
+    LocalTime maxLibre = finBuscado;
+    for (EsquemaTurno eq : esquemas) {
+      if (inicioBuscado.isBefore(eq.getHoraFin()) && eq.getHoraInicio().isBefore(finBuscado)) {
+        if (!inicioBuscado.isBefore(eq.getHoraInicio())) {
+          return inicioBuscado;
+        } else {
+          if (eq.getHoraInicio().isBefore(maxLibre)) {
+            maxLibre = eq.getHoraInicio();
+          }
+        }
+      }
+    }
+    return maxLibre;
+  }
 }

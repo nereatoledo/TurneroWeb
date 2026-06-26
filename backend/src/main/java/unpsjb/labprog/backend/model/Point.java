@@ -14,15 +14,13 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class Point {
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private int id;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+  @Column(nullable = false)
+  private double latitud;
 
-    @Column(nullable = false)
-    private double latitud;
-
-    @Column(nullable = false)
-    private double longitud;
-
+  @Column(nullable = false)
+  private double longitud;
 }

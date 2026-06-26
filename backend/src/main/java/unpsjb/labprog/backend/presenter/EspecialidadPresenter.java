@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import unpsjb.labprog.backend.Response;
 import unpsjb.labprog.backend.business.EspecialidadService;
 import unpsjb.labprog.backend.model.Especialidad;
@@ -12,88 +11,85 @@ import unpsjb.labprog.backend.model.Especialidad;
 @RestController
 @RequestMapping("especialidades")
 public class EspecialidadPresenter {
+  @Autowired EspecialidadService service;
 
-    @Autowired
-    EspecialidadService service;
-
-    @RequestMapping(method = RequestMethod.POST)
-    public ResponseEntity<Object> crearEspecialidad(@RequestBody Especialidad especialidad) {
-        if (especialidad.getNombre() == null || especialidad.getNombre().trim().isEmpty()) {
-            return Response.response(HttpStatus.BAD_REQUEST, "El nombre de la especialidad es requerido.", null);
-        }
-        if (especialidad.getDescripcion() == null || especialidad.getDescripcion().trim().isEmpty()) {
-            return Response.response(HttpStatus.CONFLICT, "La descripción de la especialidad es obligatoria", null);
-        }
-        if (especialidad.getIntervalo() == null || especialidad.getIntervalo() <= 0) {
-            return Response.response(HttpStatus.BAD_REQUEST, "Debe especificar un intervalo mayor a 0 minutos.", null);
-        }
-        if (service.findByNombre(especialidad.getNombre()) != null) {
-            return Response.response(HttpStatus.CONFLICT, "Ya existe una especialidad con ese nombre", null);
-        }
-
-        Especialidad guardada = service.save(especialidad);
-        return Response.response(HttpStatus.OK, "Especialidad creada exitosamente", guardada);
+  @RequestMapping(method = RequestMethod.POST)
+  public ResponseEntity<Object> crearEspecialidad(@RequestBody Especialidad especialidad) {
+    if (especialidad.getNombre() == null || especialidad.getNombre().trim().isEmpty()) {
+      return Response.response(
+          HttpStatus.BAD_REQUEST, "El nombre de la especialidad es requerido.", null);
     }
-
-    @RequestMapping(method = RequestMethod.GET)
-    public ResponseEntity<Object> findAll() {
-        return Response.ok(service.findAll(), "especialidades recuperadas correctamente");
+    if (especialidad.getDescripcion() == null || especialidad.getDescripcion().trim().isEmpty()) {
+      return Response.response(
+          HttpStatus.CONFLICT, "La descripción de la especialidad es obligatoria", null);
     }
-
-    @RequestMapping(method = RequestMethod.PUT)
-    public ResponseEntity<Object> update(@RequestBody Especialidad especialidadActualizada) {
-        if (especialidadActualizada.getId() <= 0) {
-            return Response.error(especialidadActualizada, "Debe especificar un id válido.");
-        }
-        Especialidad existente = service.findById(especialidadActualizada.getId());
-        if (existente == null)
-            return Response.notFound("Especialidad no encontrada.");
-
-        if (!existente.getNombre().equalsIgnoreCase(especialidadActualizada.getNombre())) {
-            if (service.findByNombre(especialidadActualizada.getNombre()) != null) {
-                return Response.response(HttpStatus.CONFLICT, "El nombre de la especialidad ya está en uso", null);
-            }
-        }
-        
-        if (especialidadActualizada.getIntervalo() == null || especialidadActualizada.getIntervalo() <= 0) {
-            return Response.response(HttpStatus.BAD_REQUEST, "Debe especificar un intervalo mayor a 0 minutos.", null);
-        }
-
-        existente.setNombre(especialidadActualizada.getNombre());
-        existente.setDescripcion(especialidadActualizada.getDescripcion());
-        existente.setIntervalo(especialidadActualizada.getIntervalo());
-        
-        service.save(existente);
-        return Response.response(HttpStatus.OK, "Especialidad editada exitosamente", existente);
+    if (especialidad.getIntervalo() == null || especialidad.getIntervalo() <= 0) {
+      return Response.response(
+          HttpStatus.BAD_REQUEST, "Debe especificar un intervalo mayor a 0 minutos.", null);
     }
-
-    @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
-    public ResponseEntity<Object> delete(@PathVariable("id") int id) {
-        Especialidad e = service.findById(id);
-        if (e != null) {
-            service.delete(id);
-            return Response.response(HttpStatus.OK, "Especialidad eliminada exitosamente", null);
-        }
-        return Response.notFound("No se pudo eliminar.");
+    if (service.findByNombre(especialidad.getNombre()) != null) {
+      return Response.response(
+          HttpStatus.CONFLICT, "Ya existe una especialidad con ese nombre", null);
     }
+    Especialidad guardada = service.save(especialidad);
+    return Response.response(HttpStatus.OK, "Especialidad creada exitosamente", guardada);
+  }
 
-    @RequestMapping(value = "/search/{term}", method = RequestMethod.GET)
-    public ResponseEntity<Object> search(
-            @PathVariable("term") String term,
-            @RequestParam(required = false) Integer centroId) {
-        return Response.ok(service.search(term, centroId));
-    }
+  @RequestMapping(method = RequestMethod.GET)
+  public ResponseEntity<Object> findAll() {
+    return Response.ok(service.findAll(), "especialidades recuperadas correctamente");
+  }
 
-    @RequestMapping(value = "/id/{id}", method = RequestMethod.GET)
-    public ResponseEntity<Object> findById(@PathVariable("id") int id) {
-        Especialidad e = service.findById(id);
-        return (e != null) ? Response.ok(e) : Response.notFound("Especialidad no encontrada.");
+  @RequestMapping(method = RequestMethod.PUT)
+  public ResponseEntity<Object> update(@RequestBody Especialidad especialidadActualizada) {
+    if (especialidadActualizada.getId() <= 0) {
+      return Response.error(especialidadActualizada, "Debe especificar un id válido.");
     }
+    Especialidad existente = service.findById(especialidadActualizada.getId());
+    if (existente == null) return Response.notFound("Especialidad no encontrada.");
+    if (!existente.getNombre().equalsIgnoreCase(especialidadActualizada.getNombre())) {
+      if (service.findByNombre(especialidadActualizada.getNombre()) != null) {
+        return Response.response(
+            HttpStatus.CONFLICT, "El nombre de la especialidad ya está en uso", null);
+      }
+    }
+    if (especialidadActualizada.getIntervalo() == null
+        || especialidadActualizada.getIntervalo() <= 0) {
+      return Response.response(
+          HttpStatus.BAD_REQUEST, "Debe especificar un intervalo mayor a 0 minutos.", null);
+    }
+    existente.setNombre(especialidadActualizada.getNombre());
+    existente.setDescripcion(especialidadActualizada.getDescripcion());
+    existente.setIntervalo(especialidadActualizada.getIntervalo());
+    service.save(existente);
+    return Response.response(HttpStatus.OK, "Especialidad editada exitosamente", existente);
+  }
 
-    @RequestMapping(value = "/page", method = RequestMethod.GET)
-    public ResponseEntity<Object> findByPage(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return Response.ok(service.findByPage(page, size));
+  @RequestMapping(value = "/{id}", method = RequestMethod.DELETE)
+  public ResponseEntity<Object> delete(@PathVariable("id") int id) {
+    Especialidad e = service.findById(id);
+    if (e != null) {
+      service.delete(id);
+      return Response.response(HttpStatus.OK, "Especialidad eliminada exitosamente", null);
     }
+    return Response.notFound("No se pudo eliminar.");
+  }
+
+  @RequestMapping(value = "/search/{term}", method = RequestMethod.GET)
+  public ResponseEntity<Object> search(
+      @PathVariable("term") String term, @RequestParam(required = false) Integer centroId) {
+    return Response.ok(service.search(term, centroId));
+  }
+
+  @RequestMapping(value = "/id/{id}", method = RequestMethod.GET)
+  public ResponseEntity<Object> findById(@PathVariable("id") int id) {
+    Especialidad e = service.findById(id);
+    return (e != null) ? Response.ok(e) : Response.notFound("Especialidad no encontrada.");
+  }
+
+  @RequestMapping(value = "/page", method = RequestMethod.GET)
+  public ResponseEntity<Object> findByPage(
+      @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+    return Response.ok(service.findByPage(page, size));
+  }
 }

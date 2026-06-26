@@ -6,5 +6,5 @@ import unpsjb.labprog.backend.model.ModificacionTurno;
 
 @Repository
 public interface ModificacionTurnoRepository extends JpaRepository<ModificacionTurno, Integer> {
-    java.util.List<ModificacionTurno> findByTurnoIdOrderByFechaModificacionDesc(int turnoId);
+  java.util.List<ModificacionTurno> findByTurnoIdOrderByFechaModificacionDesc(int turnoId);
 }

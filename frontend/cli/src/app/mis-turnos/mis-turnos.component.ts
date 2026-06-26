@@ -111,28 +111,72 @@ export class MisTurnosComponent implements OnInit {
   }
 
   cancelarReserva(turno: any) {
-    this.modalService.confirm('Deshacer Reserva', '¿Estás seguro de que querés deshacer esta reserva?', 'El turno volverá a estar disponible para otros pacientes.')
+    const ahora = new Date();
+    const fechaHoraTurno = new Date(`${turno.fecha}T${turno.horaInicio}`);
+    const diferenciaMs = fechaHoraTurno.getTime() - ahora.getTime();
+    const diferenciaHoras = diferenciaMs / (1000 * 60 * 60);
+
+    if (diferenciaHoras <= 0) {
+      this.errorMessage = 'No se puede cancelar un turno cuya fecha y hora ya han pasado.';
+      return;
+    }
+
+    let titulo = 'Deshacer Reserva';
+    let mensaje = '¿Estás seguro de que querés deshacer esta reserva?';
+    let advertencia = 'El turno volverá a estar disponible para otros pacientes.';
+
+    if (diferenciaHoras < 24) {
+      titulo = 'Cancelación Tardía';
+      mensaje = 'Estás cancelando con menos de 24 horas de anticipación.';
+      advertencia = 'Se registrará una penalización en tu cuenta. Al acumular 3 cancelaciones tardías, el sistema suspenderá tu capacidad de sacar turnos por 30 días. ¿Querés continuar?';
+    }
+
+    this.modalService.confirm(titulo, mensaje, advertencia)
       .then(() => {
         this.turnoService.cancelarReserva(turno.id, this.pacienteId!).subscribe({
           next: () => {
             this.successMessage = 'Reserva deshecha.';
             this.cargarTurnos(this.page);
           },
-          error: (err) => this.errorMessage = 'Error al deshacer la reserva.'
+          error: (err: any) => {
+              this.errorMessage = err.error?.error || 'Ocurrió un error inesperado al cancelar el turno.';
+          }
         });
       })
       .catch(() => {});
   }
 
   cancelarTurno(turno: any) {
-    this.modalService.confirm('Cancelar Turno', '¿Estás seguro de que querés cancelar este turno?', 'Esta acción no se puede deshacer.')
+    const ahora = new Date();
+    const fechaHoraTurno = new Date(`${turno.fecha}T${turno.horaInicio}`);
+    const diferenciaMs = fechaHoraTurno.getTime() - ahora.getTime();
+    const diferenciaHoras = diferenciaMs / (1000 * 60 * 60);
+
+    if (diferenciaHoras <= 0) {
+      this.errorMessage = 'No se puede cancelar un turno cuya fecha y hora ya han pasado.';
+      return;
+    }
+
+    let titulo = 'Cancelar Turno';
+    let mensaje = '¿Estás seguro de que querés cancelar este turno?';
+    let advertencia = 'Esta acción no se puede deshacer.';
+
+    if (diferenciaHoras < 24) {
+      titulo = 'Cancelación Tardía';
+      mensaje = 'Estás cancelando con menos de 24 horas de anticipación.';
+      advertencia = 'Se registrará una penalización en tu cuenta. Al acumular 3 cancelaciones tardías, el sistema suspenderá tu capacidad de sacar turnos por 30 días. ¿Querés continuar?';
+    }
+
+    this.modalService.confirm(titulo, mensaje, advertencia)
       .then(() => {
         this.turnoService.delete(turno.id).subscribe({
           next: () => {
             this.successMessage = 'Turno cancelado.';
             this.cargarTurnos(this.page);
           },
-          error: (err) => this.errorMessage = 'Error al cancelar el turno.'
+          error: (err: any) => {
+              this.errorMessage = err.error?.error || 'Ocurrió un error inesperado al cancelar el turno.';
+          }
         });
       })
       .catch(() => {});

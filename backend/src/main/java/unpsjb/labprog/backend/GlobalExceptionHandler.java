@@ -1,36 +1,55 @@
 package unpsjb.labprog.backend;
 
-import java.util.HashMap;
-import java.util.Map;
-import org.springframework.http.HttpStatus;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import unpsjb.labprog.backend.exceptions.AtributoDuplicadoException;
+import unpsjb.labprog.backend.exceptions.AtributoInvalidoException;
+import unpsjb.labprog.backend.exceptions.EntidadNoEncontradaException;
+import unpsjb.labprog.backend.exceptions.HorarioIncompatibleException;
 
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<Object> handleValidationErrors(MethodArgumentNotValidException aException) {
+    List<String> errores =
+        aException.getBindingResult().getFieldErrors().stream()
+            .map(error -> error.getDefaultMessage())
+            .collect(Collectors.toList());
+    return Response.error409(null, String.join(", ", errores));
+  }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException ex) {
-        Map<String, String> response = new HashMap<>();
-        response.put("error", "Petición inválida");
-        response.put("message", ex.getMessage());
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST); // Retorna 400
-    }
+  @ExceptionHandler(HttpMessageNotReadableException.class)
+  public ResponseEntity<Object> handleParseErrors(HttpMessageNotReadableException aException) {
+    return Response.error409(null, aException.getMessage());
+  }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Map<String, String>> handleIllegalStateException(IllegalStateException ex) {
-        Map<String, String> response = new HashMap<>();
-        response.put("error", "Conflicto de estado");
-        response.put("message", ex.getMessage());
-        return new ResponseEntity<>(response, HttpStatus.CONFLICT); // Retorna 409
-    }
+  @ExceptionHandler(AtributoInvalidoException.class)
+  public ResponseEntity<Object> handleAtributoInvalido(AtributoInvalidoException aException) {
+    return Response.error409(null, aException.getMessage());
+  }
 
-    @ExceptionHandler(AtributoInvalidoException.class)
-    public ResponseEntity<Map<String, String>> handleAtributoInvalidoException(AtributoInvalidoException ex) {
-        Map<String, String> response = new HashMap<>();
-        response.put("error", "Atributo inválido");
-        response.put("message", ex.getMessage());
-        return new ResponseEntity<>(response, HttpStatus.CONFLICT); // Retorna 409
-    }
+  @ExceptionHandler(AtributoDuplicadoException.class)
+  public ResponseEntity<Object> handleAtributoDuplicado(AtributoDuplicadoException aException) {
+    return Response.error409(null, aException.getMessage());
+  }
+
+  @ExceptionHandler(EntidadNoEncontradaException.class)
+  public ResponseEntity<Object> handleEntidadNoEncontrada(EntidadNoEncontradaException aException) {
+    return Response.error409(null, aException.getMessage());
+  }
+
+  @ExceptionHandler(HorarioIncompatibleException.class)
+  public ResponseEntity<Object> handleHorarioIncompatible(HorarioIncompatibleException aException) {
+    return Response.error409(null, aException.getMessage());
+  }
+
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<Object> lastHandle(Exception aException) {
+    return Response.error409(aException.getStackTrace(), aException.getMessage());
+  }
 }

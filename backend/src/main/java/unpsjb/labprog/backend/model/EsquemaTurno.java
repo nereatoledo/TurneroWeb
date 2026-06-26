@@ -1,7 +1,5 @@
 package unpsjb.labprog.backend.model;
 
-import java.time.LocalTime;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -10,6 +8,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import java.time.LocalTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,25 +21,30 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EsquemaTurno {
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private int id;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Integer id; 
+  private String nombre;
+  private String descripcion;
 
-    private String nombre;
-    private String descripcion;
+  @Enumerated(EnumType.STRING)
+  private DiaSemana diaSemana;
 
-    @Enumerated(EnumType.STRING)
-    private DiaSemana diaSemana;
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
+  private LocalTime horaInicio;
 
-    private LocalTime horaInicio;
-    private LocalTime horaFin;
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm")
+  private LocalTime horaFin;
+  private Integer intervalo;
 
-    @ManyToOne(optional = false) 
-    @JoinColumn(nullable = false)
-    private Consultorio consultorio;
+  @ManyToOne(optional = false)
+  @JoinColumn(nullable = false)
+  private Consultorio consultorio;
 
-    @ManyToOne(optional = true) 
-    @JoinColumn(nullable = true)
-    private StaffMedico staffMedico;
+  @ManyToOne(optional = true)
+  @JoinColumn(nullable = true)
+  private StaffMedico staffMedico;
+
+  private int sobreturno;
 }
